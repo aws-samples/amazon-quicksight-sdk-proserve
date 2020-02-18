@@ -18,7 +18,7 @@ def lambda_handler(event, context):
     describeResponse = client.describe_ingestion(AwsAccountId=account_id, DataSetId=ds_id, IngestionId=i_id)
   else:
     sns =boto3.client('sns')
-    responsesns = sns.publish(TopicArn='arn:aws:sns:us-east-1:889399602426:IngestionDone',
+    responsesns = sns.publish(TopicArn='arn:aws:sns:us-east-1:<AwsAccountId>:IngestionDone',
     Message='Ingestion is finished successfully!!')
 
   return {
