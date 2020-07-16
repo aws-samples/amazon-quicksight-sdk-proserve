@@ -1,0 +1,101 @@
+{
+		    "inputContentType": "CSV",
+		    "outputContentType": "CSV",
+		    "input": [
+		        {
+		            "name": "State",
+		            "type": "STRING"
+		        },
+		        {
+		            "name": "Account Length",
+		            "type": "INTEGER"
+		        },
+		        {
+		            "name": "Area Code",
+		            "type": "INTEGER"
+		        },
+		        {
+		            "name": "Phone",
+		            "type": "STRING"
+		        },
+		        {
+		            "name": "Int'l Plan",
+		            "type": "STRING"
+		        },
+		        {
+		            "name": "VMail Plan",
+		            "type": "STRING"
+		        },
+            {
+		            "name": "VMail Message",
+		            "type": "INTEGER"
+		        },
+		        {
+		            "name": "Day Mins",
+		            "type": "DECIMAL"
+		        },
+		        {
+		            "name": "Day Calls",
+		            "type": "INTEGER"
+		        },
+		        {
+		            "name": "Day Charge",
+		            "type": "DECIMAL"
+		        },
+		        {
+		            "name": "Eve Mins",
+		            "type": "DECIMAL"
+		        },
+            {
+		            "name": "Eve Calls",
+		            "type": "INTEGER"
+		        },
+            {
+		            "name": "Eve Charge",
+		            "type": "DECIMAL"
+		        },
+            {
+		            "name": "Night Mins",
+		            "type": "DECIMAL"
+		        },
+            {
+		            "name": "Night Calls",
+		            "type": "INTEGER"
+		        },
+            {
+		            "name": "Night Charge",
+		            "type": "DECIMAL"
+		        },
+            {
+		            "name": "Intl Mins",
+		            "type": "DECIMAL"
+		        },
+            {
+		            "name": "Intl Calls",
+		            "type": "INTEGER"
+		        },
+            {
+		            "name": "Intl Charge",
+		            "type": "DECIMAL"
+		        },
+            {
+		            "name": "CustServ Calls",
+		            "type": "DECIMAL"
+		        }
+
+		    ],
+		    "output": [
+		        {
+		            "name": "Churn",
+		            "type": "STRING"
+		        }
+		    ],
+		    "description": "Use ml.m4.xlarge instance for small datasets, and ml.m4.4xlarge for datasets over 10 GB",
+		    "version": "1.0",
+		    "instanceCount": 1,
+		    "instanceTypes": [
+		        "ml.m4.xlarge",
+		        "ml.m4.4xlarge"
+		    ],
+		    "defaultInstanceType": "ml.m4.xlarge"
+		}
