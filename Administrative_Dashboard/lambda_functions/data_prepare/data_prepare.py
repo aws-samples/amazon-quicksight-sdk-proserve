@@ -68,7 +68,7 @@ def lambda_handler(event, context):
             additional_info = principal[-2]
             principal = principal[-1]
 
-            access.append(['dashboard', dashboard['Name'], ptype, principal, additional_info, actions])
+            access.append(['dashboard', dashboard['Name'], dashboardid, ptype, principal, additional_info, actions])
 
     datasets = list_datasets(account_id, aws_region)
 
@@ -87,7 +87,7 @@ def lambda_handler(event, context):
                 additional_info = principal[-2]
                 principal = principal[-1]
 
-                access.append(['dataset', dataset['Name'], ptype, principal, additional_info,actions])
+                access.append(['dataset', dataset['Name'], datasetid, ptype, principal, additional_info,actions])
 
     datasources = list_datasources(account_id, aws_region)
 
@@ -111,7 +111,7 @@ def lambda_handler(event, context):
                         additional_info = principal[-2]
                         principal = principal[-1]
 
-                        access.append(['data_source', datasource['Name'], ptype, principal, additional_info,actions])
+                        access.append(['data_source', datasource['Name'], datasourceid,ptype, principal, additional_info,actions])
                 except Exception as e:
                     pass
 
