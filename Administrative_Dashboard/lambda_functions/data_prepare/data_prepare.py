@@ -24,6 +24,7 @@ def lambda_handler(event, context):
 
     key = 'monitoring/quicksight/group_membership/group_membership.csv'
     key2 = 'monitoring/quicksight/object_access/object_access.csv'
+    key3 = 'monitoring/quicksight/users/users.csv'
 
     tmpdir = tempfile.mkdtemp()
 
@@ -31,16 +32,21 @@ def lambda_handler(event, context):
 
     local_file_name2 = 'object_access.csv'
 
+    local_file_name3 = 'users.csv'
+
     path = os.path.join(tmpdir, local_file_name)
     print(path)
 
     lists = []
     access = []
-    groups = list_groups(account_id, aws_region)
-    for group in groups:
-        members = list_group_memberships(group['GroupName'], account_id, aws_region)
-        for member in members:
-            lists.append([group['GroupName'], member['MemberName']])
+    users = list_users(account_id, aws_region)
+    for user in users:
+        groups = list_user_groups(user['UserName'], account_id, aws_region)
+        if len(groups) == 0:
+            lists.append([aws_region, None, user['UserName']])
+        else:
+            for group in groups:
+                lists.append([aws_region, group['GroupName'], user['UserName']])
 
     print(len(lists))
     print(lists)
@@ -68,7 +74,8 @@ def lambda_handler(event, context):
             additional_info = principal[-2]
             principal = principal[-1]
 
-            access.append(['dashboard', dashboard['Name'], dashboardid, ptype, principal, additional_info, actions])
+            access.append(
+                [aws_region, 'dashboard', dashboard['Name'], dashboardid, ptype, principal, additional_info, actions])
 
     datasets = list_datasets(account_id, aws_region)
 
@@ -87,7 +94,8 @@ def lambda_handler(event, context):
                 additional_info = principal[-2]
                 principal = principal[-1]
 
-                access.append(['dataset', dataset['Name'], datasetid, ptype, principal, additional_info,actions])
+                access.append(
+                    [aws_region, 'dataset', dataset['Name'], datasetid, ptype, principal, additional_info, actions])
 
     datasources = list_datasources(account_id, aws_region)
 
@@ -111,7 +119,8 @@ def lambda_handler(event, context):
                         additional_info = principal[-2]
                         principal = principal[-1]
 
-                        access.append(['data_source', datasource['Name'], datasourceid,ptype, principal, additional_info,actions])
+                        access.append([aws_region, 'data_source', datasource['Name'], datasourceid, ptype, principal,
+                                       additional_info, actions])
                 except Exception as e:
                     pass
 
@@ -188,6 +197,17 @@ def list_users(account_id, aws_region) -> List[Dict[str, Any]]:
         func_name="list_users",
         attr_name="UserList",
         Namespace='default',
+        account_id=account_id,
+        aws_region=aws_region
+    )
+
+
+def list_user_groups(UserName, account_id, aws_region) -> List[Dict[str, Any]]:
+    return _list(
+        func_name="list_user_groups",
+        attr_name="GroupList",
+        Namespace='default',
+        UserName=UserName,
         account_id=account_id,
         aws_region=aws_region
     )
