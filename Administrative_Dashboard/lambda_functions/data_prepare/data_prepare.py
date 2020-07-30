@@ -24,15 +24,12 @@ def lambda_handler(event, context):
 
     key = 'monitoring/quicksight/group_membership/group_membership.csv'
     key2 = 'monitoring/quicksight/object_access/object_access.csv'
-    key3 = 'monitoring/quicksight/users/users.csv'
 
     tmpdir = tempfile.mkdtemp()
 
     local_file_name = 'group_membership.csv'
 
     local_file_name2 = 'object_access.csv'
-
-    local_file_name3 = 'users.csv'
 
     path = os.path.join(tmpdir, local_file_name)
     print(path)
