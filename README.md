@@ -2,6 +2,7 @@
 
 1. Ingest Excel data automatically into Amazon QuickSight
 2. Migration Scripts
+3. Administrative Dashboard
 
 Author: Ying Wang
 Email: wangzyn@amazon.com
