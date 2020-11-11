@@ -1,7 +1,7 @@
 
-# Welcome to your CDK Python project!
+Please note: for Create_Group Lambda function, it can be extended to pull specific groups that might be associated with the username (e.g. in LDAP) and then used to create groups in QuickSIght that correspond to it.
 
-This is a blank project for Python development with CDK.
+# Welcome to your CDK Python project!
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
