@@ -15,11 +15,13 @@ print(lambda_aws_region)
 aws_region = 'us-east-1'
 ssm = boto3.client('ssm', region_name=lambda_aws_region)
 
+
 def get_ssm_parameters(ssm_string):
     config_str = ssm.get_parameter(
         Name=ssm_string
     )['Parameter']['Value']
     return json.loads(config_str)
+
 
 def get_s3_info(account_id, lambda_aws_region):
     bucket_name = get_ssm_parameters('/qs/config/groups')
@@ -46,11 +48,18 @@ def lambda_handler(event, context):
 
     lists = []
     access = []
-    groups = list_groups(account_id, aws_region)
-    for group in groups:
-        members = list_group_memberships(group['GroupName'], account_id, aws_region)
-        for member in members:
-            lists.append([group['GroupName'], member['MemberName']])
+    namespaces = list_namespaces(account_id, aws_region)
+    for ns in namespaces:
+        ns = ns['Name']
+        users = list_users(account_id, aws_region, ns)
+
+        for user in users:
+            groups = list_user_groups(user['UserName'], account_id, aws_region, ns)
+            if len(groups) == 0:
+                lists.append([ns, None, user['UserName']])
+            else:
+                for group in groups:
+                    lists.append([ns, group['GroupName'], user['UserName']])
 
     print(len(lists))
     print(lists)
@@ -63,39 +72,70 @@ def lambda_handler(event, context):
 
     path = os.path.join(tmpdir, local_file_name2)
     print(path)
-    dashboards = list_dashboards(account_id, lambda_aws_region)
+    dashboards = list_dashboards(account_id, aws_region)
 
     for dashboard in dashboards:
         dashboardid = dashboard['DashboardId']
 
-        response = describe_dashboard_permissions(account_id, dashboardid, lambda_aws_region)
+        response = describe_dashboard_permissions(account_id, dashboardid, aws_region)
         permissions = response['Permissions']
         for principal in permissions:
+            actions = '|'.join(principal['Actions'])
             principal = principal['Principal'].split("/")
             ptype = principal[0].split(":")
             ptype = ptype[-1]
             additional_info = principal[-2]
             principal = principal[-1]
 
-            access.append(['dashboard', dashboard['Name'], ptype, principal, additional_info])
+            access.append(
+                [aws_region, 'dashboard', dashboard['Name'], dashboardid, ptype, principal, additional_info, actions])
 
-    datasets = list_datasets(account_id, lambda_aws_region)
+    datasets = list_datasets(account_id, aws_region)
 
     for dataset in datasets:
         if dataset['Name'] not in ['Business Review', 'People Overview', 'Sales Pipeline',
                                    'Web and Social Media Analytics']:
             datasetid = dataset['DataSetId']
 
-            response = describe_data_set_permissions(account_id, datasetid, lambda_aws_region)
+            response = describe_data_set_permissions(account_id, datasetid, aws_region)
             permissions = response['Permissions']
             for principal in permissions:
+                actions = '|'.join(principal['Actions'])
                 principal = principal['Principal'].split("/")
                 ptype = principal[0].split(":")
                 ptype = ptype[-1]
                 additional_info = principal[-2]
                 principal = principal[-1]
 
-                access.append(['dataset', dataset['Name'], ptype, principal, additional_info])
+                access.append(
+                    [aws_region, 'dataset', dataset['Name'], datasetid, ptype, principal, additional_info, actions])
+
+    datasources = list_datasources(account_id, aws_region)
+
+    for datasource in datasources:
+        print(datasource)
+        if datasource['Name'] not in ['Business Review', 'People Overview', 'Sales Pipeline',
+                                      'Web and Social Media Analytics']:
+            datasourceid = datasource['DataSourceId']
+            if 'DataSourceParameters' in datasource:
+                print(datasourceid)
+                try:
+                    response = describe_data_source_permissions(account_id, datasourceid, aws_region)
+                    print(response)
+                    permissions = response['Permissions']
+                    print(permissions)
+                    for principal in permissions:
+                        actions = '|'.join(principal['Actions'])
+                        principal = principal['Principal'].split("/")
+                        ptype = principal[0].split(":")
+                        ptype = ptype[-1]
+                        additional_info = principal[-2]
+                        principal = principal[-1]
+
+                        access.append([aws_region, 'data_source', datasource['Name'], datasourceid, ptype, principal,
+                                       additional_info, actions])
+                except Exception as e:
+                    pass
 
     print(access)
     with open(path, 'w', newline='') as outfile:
@@ -112,7 +152,7 @@ def list_group_memberships(
         group_name: str,
         account_id: str,
         aws_region: str,
-        namespace: str = "gademo"
+        namespace: str = "default"
 ) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_group_memberships",
@@ -124,11 +164,11 @@ def list_group_memberships(
     )
 
 
-def list_users(account_id, aws_region) -> List[Dict[str, Any]]:
+def list_users(account_id, aws_region, ns) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_users",
         attr_name="UserList",
-        Namespace='gademo',
+        Namespace=ns,
         account_id=account_id,
         aws_region=aws_region
     )
@@ -153,12 +193,34 @@ def _list(
 
 
 def list_groups(
-        account_id, aws_region
+        account_id, aws_region, ns
 ) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_groups",
         attr_name="GroupList",
-        Namespace='gademo',
+        Namespace=ns,
+        account_id=account_id,
+        aws_region=aws_region
+    )
+
+
+def list_user_groups(UserName, account_id, aws_region, ns) -> List[Dict[str, Any]]:
+    return _list(
+        func_name="list_user_groups",
+        attr_name="GroupList",
+        Namespace=ns,
+        UserName=UserName,
+        account_id=account_id,
+        aws_region=aws_region
+    )
+
+
+def list_namespaces(
+        account_id, aws_region
+) -> List[Dict[str, Any]]:
+    return _list(
+        func_name="list_namespaces",
+        attr_name="Namespaces",
         account_id=account_id,
         aws_region=aws_region
     )
@@ -197,11 +259,32 @@ def list_datasets(
     )
 
 
+def list_datasources(
+        account_id,
+        aws_region
+) -> List[Dict[str, Any]]:
+    return _list(
+        func_name="list_data_sources",
+        attr_name="DataSources",
+        account_id=account_id,
+        aws_region=aws_region
+    )
+
+
 def describe_data_set_permissions(account_id, datasetid, aws_region):
     qs_client = boto3.client('quicksight', region_name=aws_region)
     res = qs_client.describe_data_set_permissions(
         AwsAccountId=account_id,
         DataSetId=datasetid
+    )
+    return res
+
+
+def describe_data_source_permissions(account_id, DataSourceId, aws_region):
+    qs_client = boto3.client('quicksight', region_name=aws_region)
+    res = qs_client.describe_data_source_permissions(
+        AwsAccountId=account_id,
+        DataSourceId=DataSourceId
     )
     return res
 

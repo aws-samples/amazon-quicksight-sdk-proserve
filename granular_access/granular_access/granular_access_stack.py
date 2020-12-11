@@ -33,17 +33,17 @@ class GranularAccess(core.Construct):
         super().__init__(scope, id, **kwargs)
 
         aws_region = os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
-        #account_id = stack.account
+        account_id = os.environ.get("CDK_DEPLOY_ACCOUNT", os.environ["CDK_DEFAULT_ACCOUNT"])
 
         ssm_client = boto3.client('ssm', aws_region)
         # Prepare pipeline config details in SSM parameters
         if prefix == 'us':
             self.qs_reports_env_config = {"Permissions":
                                               [{"Group_Name": "Critical",
-                                                "Reports": ["Results - Critical"]},
+                                                "Reports": ["Sales Results - Critical"]},
                                                {"Group_Name": "HighlyConfidential",
                                                 "Reports": ["Field Operations Dashboard",
-                                                            "Results - Highly Confidential"
+                                                            "Sales Results - Highly Confidential"
                                                             ]},
                                                {"Group_Name": "BI-developer",
                                                 "Reports": ["all"]},
@@ -73,12 +73,41 @@ class GranularAccess(core.Construct):
             parameter_name='/qs/config/access'
         )
 
-        self.qs_user_group_config = {'bucket-name':"granular-access-demo"}
+        #group-user mapping information is stored in s3 bucket. A ssm parameter stores the bucket name.
+        self.qs_user_group_config = {'bucket-name':f'qs-granular-access-demo-{account_id}'}
 
         self.qs_user_group_config_ssm = ssm.StringParameter(
             self, '/qs/config/groups',
             string_value=json.dumps(self.qs_user_group_config),
             parameter_name='/qs/config/groups'
+        )
+
+        # group-role mapping information is stored in a ssm parameter.
+        self.qs_role_config = {'BI-developer': 'AUTHOR',
+                               'BI-Admin': 'ADMIN',
+                               'Power-reader': 'AUTHOR',
+                               'Critical': 'READER',
+                               'HighlyConfidential': 'READER'
+                               }
+
+        self.qs_role_config_ssm = ssm.StringParameter(
+            self, '/qs/config/roles',
+            string_value=json.dumps(self.qs_role_config),
+            parameter_name='/qs/config/roles'
+        )
+
+        # group-namespace mapping information is stored in a ssm parameter.
+        self.qs_ns_config = {'BI-developer': 'default',
+                               'BI-Admin': 'default',
+                               'Power-reader': 'default',
+                               'Critical': 'default',
+                               'HighlyConfidential': 'default'
+                               }
+
+        self.qs_ns_config_ssm = ssm.StringParameter(
+            self, '/qs/config/ns',
+            string_value=json.dumps(self.qs_ns_config),
+            parameter_name='/qs/config/ns'
         )
 
         lambda_role = iam.Role(
@@ -211,7 +240,7 @@ class GranularAccess(core.Construct):
             "SAML:aud": "https://signin.aws.amazon.com/saml"}}
 
         quicksight_federated_prin_with_conditionb_obj = iam.FederatedPrincipal(
-            f'arn:aws:iam::{core.Aws.ACCOUNT_ID}:saml-provider/amazon', quicksight_assume_condition_object,
+            f'arn:aws:iam::{core.Aws.ACCOUNT_ID}:saml-provider/saml', quicksight_assume_condition_object,
             'sts:AssumeRoleWithSAML')
 
         quicksight_resource_scope = '${aws:userid}'
