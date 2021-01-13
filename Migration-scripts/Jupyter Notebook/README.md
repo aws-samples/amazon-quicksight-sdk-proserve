@@ -3,8 +3,7 @@
 Quicksight Migration Scripts
 
 Author: Ying Wang        Email: wangzyn@amazon.com
-
-        Vamsi Bhadriraju Email: bhadrir@amazon.com
+Author: Vamsi Bhadriraju Email: bhadrir@amazon.com
 
 ## License
 
