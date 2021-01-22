@@ -9,13 +9,20 @@ from typing import Any, Callable, Dict, List, Optional
 
 lambda_aws_region = os.environ['AWS_REGION']
 aws_region = 'us-east-1'
+ssm = boto3.client("ssm", region_name=lambda_aws_region)
 
-def delete_user(username, account_id, aws_region):
+def get_ssm_parameters(ssm_string):
+    config_str = ssm.get_parameter(
+        Name=ssm_string
+    )['Parameter']['Value']
+    return json.loads(config_str)
+
+def delete_user(username, account_id, aws_region, ns):
     qs_client = boto3.client('quicksight', region_name=aws_region)
     res = qs_client.delete_user(
         UserName=username,
         AwsAccountId=account_id,
-        Namespace='default'
+        Namespace=ns
     )
     return res
 
@@ -37,26 +44,35 @@ def _list(
     return result
 
 
-def list_users(account_id, aws_region) -> List[Dict[str, Any]]:
+def list_users(account_id, aws_region, ns) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_users",
         attr_name="UserList",
-        Namespace='default',
+        Namespace=ns,
         account_id=account_id,
         aws_region=aws_region
     )
 
 
-def list_user_groups(UserName, account_id, aws_region) -> List[Dict[str, Any]]:
+def list_user_groups(UserName, account_id, aws_region, ns) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_user_groups",
         attr_name="GroupList",
-        Namespace='default',
+        Namespace=ns,
         UserName=UserName,
         account_id=account_id,
         aws_region=aws_region
     )
 
+def list_namespaces(
+        account_id, aws_region
+) -> List[Dict[str, Any]]:
+    return _list(
+        func_name="list_namespaces",
+        attr_name="Namespaces",
+        account_id=account_id,
+        aws_region=aws_region
+    )
 
 def lambda_handler(event, context):
     # get account_id
@@ -66,36 +82,44 @@ def lambda_handler(event, context):
     qs_client = boto3.client('quicksight', region_name='us-east-1')
     qs_local_client = boto3.client('quicksight', region_name=lambda_aws_region)
 
-    users = list_users(account_id, aws_region)
-    for user in users:
-        print(user['UserName'])
-        email = user['UserName'].split('/')[-1]
-        role = user['Role']
-        print(role)
-        groups = list_user_groups(user['UserName'], account_id, aws_region)
-        # print(groups)
-        author = False
-        admin = False
-        for group in groups:
-            if group['GroupName'] in ['quicksight-fed-bi-developer',
-                                      'quicksight-fed-power-reader']:
-                author = True
-                break
-            elif group['GroupName'] in ['quicksight-fed-bi-admin']:
-                admin = True
-                break
+    # load qs user role information
+    roles = get_ssm_parameters('/qs/config/roles')
+    # dict {groupname:role}
+    print(roles)
 
-        if not author:
-            if not admin:
-                if role != 'READER':
-                    try:
-                        delete_user(user['UserName'], account_id, aws_region)
-                        print(user[
-                                  'UserName'] + " is deleted because of permissions downgrade from author/admin to reader!")
-                    except Exception as e:
-                        if str(e).find('does not exist'):
-                            print(e)
-                            pass
-                        else:
-                            raise e
+    namespaces = list_namespaces(account_id, aws_region)
+    for ns in namespaces:
+        ns = ns['Name']
+        users = list_users(account_id, aws_region, ns)
+        for user in users:
+            print(user['UserName'])
+            email = user['UserName'].split('/')[-1]
+            role = user['Role']
+            print(role)
+            groups = list_user_groups(user['UserName'], account_id, aws_region, ns)
+            # print(groups)
+            author = False
+            admin = False
+            for group in groups:
+                nsplusgroup = ns + '_' + group.split('-', 2)[2]
+                roles[nsplusgroup]
+                if roles[nsplusgroup] == 'AUTHOR':
+                    author = True
+                    break
+                elif roles[nsplusgroup] == 'ADMIN':
+                    admin = True
+                    break
+
+            if not author:
+                if not admin:
+                    if role != 'READER':
+                        try:
+                            delete_user(user['UserName'], account_id, aws_region, ns)
+                            print(user['UserName'] + " is deleted because of permissions downgrade from author/admin to reader!")
+                        except Exception as e:
+                            if str(e).find('does not exist'):
+                                print(e)
+                                pass
+                            else:
+                                raise e
 
