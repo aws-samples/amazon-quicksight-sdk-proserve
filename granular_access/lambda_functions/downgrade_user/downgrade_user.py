@@ -11,11 +11,19 @@ lambda_aws_region = os.environ['AWS_REGION']
 aws_region = 'us-east-1'
 ssm = boto3.client("ssm", region_name=lambda_aws_region)
 
+
 def get_ssm_parameters(ssm_string):
     config_str = ssm.get_parameter(
         Name=ssm_string
     )['Parameter']['Value']
     return json.loads(config_str)
+
+
+def get_s3_info():
+    bucket_name = get_ssm_parameters('/qs/config/groups')
+    bucket_name = bucket_name['bucket-name']
+    return bucket_name
+
 
 def delete_user(username, account_id, aws_region, ns):
     qs_client = boto3.client('quicksight', region_name=aws_region)
@@ -25,6 +33,7 @@ def delete_user(username, account_id, aws_region, ns):
         Namespace=ns
     )
     return res
+
 
 def _list(
         func_name: str,
@@ -64,6 +73,7 @@ def list_user_groups(UserName, account_id, aws_region, ns) -> List[Dict[str, Any
         aws_region=aws_region
     )
 
+
 def list_namespaces(
         account_id, aws_region
 ) -> List[Dict[str, Any]]:
@@ -74,6 +84,7 @@ def list_namespaces(
         aws_region=aws_region
     )
 
+
 def lambda_handler(event, context):
     # get account_id
     sts_client = boto3.client("sts", region_name=aws_region)
@@ -81,6 +92,17 @@ def lambda_handler(event, context):
 
     qs_client = boto3.client('quicksight', region_name='us-east-1')
     qs_local_client = boto3.client('quicksight', region_name=lambda_aws_region)
+
+    s3 = boto3.resource('s3')
+    bucketname = get_s3_info()
+    bucket = s3.Bucket(bucketname)
+
+    key = 'monitoring/quicksight/logs/delete_user_log.csv'
+    tmpdir = tempfile.mkdtemp()
+    local_file_name = 'delete_user_log.csv'
+    path = os.path.join(tmpdir, local_file_name)
+
+    delete_user_lists = []
 
     # load qs user role information
     roles = get_ssm_parameters('/qs/config/roles')
@@ -101,25 +123,36 @@ def lambda_handler(event, context):
             author = False
             admin = False
             for group in groups:
-                nsplusgroup = ns + '_' + group.split('-', 2)[2]
-                roles[nsplusgroup]
-                if roles[nsplusgroup] == 'AUTHOR':
+                if 'quicksight-fed' in group['GroupName']:
+                    nsplusgroup = ns + '_' + group['GroupName'].split('-', 2)[2]
+                    if nsplusgroup in roles:
+                        if roles[nsplusgroup] == 'AUTHOR':
+                            author = True
+                            break
+                        elif roles[nsplusgroup] == 'ADMIN':
+                            admin = True
+                            break
+                else:
                     author = True
-                    break
-                elif roles[nsplusgroup] == 'ADMIN':
-                    admin = True
-                    break
 
             if not author:
                 if not admin:
                     if role != 'READER':
                         try:
                             delete_user(user['UserName'], account_id, aws_region, ns)
-                            print(user['UserName'] + " is deleted because of permissions downgrade from author/admin to reader!")
+                            print(user[
+                                      'UserName'] + " is deleted because of permissions downgrade from author/admin to reader!")
+                            delete_user_lists.append(['Deleted', ns, user['UserName'], user['Role']])
                         except Exception as e:
                             if str(e).find('does not exist'):
                                 print(e)
                                 pass
                             else:
                                 raise e
+
+    with open(path, 'w', newline='') as outfile:
+        writer = csv.writer(outfile)
+        for line in delete_user_lists:
+            writer.writerow(line)
+    bucket.upload_file(path, key)
 

@@ -541,7 +541,10 @@ def lambda_handler(event, context):
 
         # revoke dashboard access of a group
         group = "quicksight-fed-" + permission['Group_Name'].lower()
-        print(group + 'can view ' + reportnamels + 'and ids are: ' + reportlist)
+        print(group + 'can view ')
+        print(reportnamels)
+        print('and ids are: ')
+        print(reportlist)
         # get dashboards list
         #dashboards = list_dashboards(account_id, lambda_aws_region)
         for dashboard in dashboards:
