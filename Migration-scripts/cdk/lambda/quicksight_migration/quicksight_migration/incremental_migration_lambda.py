@@ -19,7 +19,8 @@ def migrate(
     sourceadmin,
     targetroot,
     targetadmin,
-    migrate_resource
+    migration_resource,
+    migration_items
     ) -> None:
     # current date and time
     now = str(datetime.now().strftime("%m-%d-%Y_%H_%M"))
@@ -28,17 +29,14 @@ def migrate(
     successlocation = "/tmp/Migration_Results/Successful/"
     faillocation = "/tmp/Migration_Results/Fail/"
 
-    migrate_p = migrate_resource
+    analysis_migrate_list = []
+    dataset_migrate_list = []
+    dashboard_migrate_list = []
+    source_migrate_list = []
+    theme_migrate_list = []
 
-    source_migrate_list = ["redshift-auto", "mssql", "athena_1","redshift_manual"]
-    dataset_migrate_list = ["patient_info"]
-    theme_migrate_list= ["orange"]
-    analysis_migrate_list= ["QuickSight_Access_Last_24_H_Analysis","Marketing Analysis"]
-    dashboard_migrate_list = ["QuickSight_Access_Last_24_H", "Marketing Dashboard"]
-
-    if migrate_p in ['dashboard']:
-        source_migrate_list = []
-        dataset_migrate_list = []
+    if migration_resource in ['dashboard']:
+        dashboard_migrate_list = migration_items
         for dashboard in dashboard_migrate_list:
             logger.info(dashboard)
             datasources = qs_utils.data_sources_ls_of_dashboard(dashboard, sourcesession)
@@ -50,9 +48,8 @@ def migrate(
             for dataset in datasets:
                 dataset_migrate_list.append(dataset)
 
-    if migrate_p in ['analysis']:
-        source_migrate_list = []
-        dataset_migrate_list = []
+    if migration_resource in ['analysis']:
+        analysis_migrate_list = migration_items
         for analysis_name in analysis_migrate_list:
             logger.info(analysis_name)
             datasources = qs_utils.data_sources_ls_of_analysis(analysis_name, sourcesession)
@@ -64,7 +61,7 @@ def migrate(
             for dataset in datasets:
                 dataset_migrate_list.append(dataset)
 
-    if migrate_p in ['all']:
+    if migration_resource in ['all']:
         for dashboard in dashboard_migrate_list:
             datasources = qs_utils.data_sources_ls_of_dashboard(dashboard, sourcesession)
             for datasource in datasources:
@@ -252,12 +249,14 @@ def migrate(
     with open(successlocation+now+'Datasets_Creation_Success.json', "w") as file_:
         json.dump(successfulls, file_, indent=4, sort_keys=True, default=str)
 
-    themes_list_complete = qs_utils.themes(sourcesession)
     themes_list = []
+    if migration_resource in ['theme']:
+        theme_migrate_list = migration_items
+        themes_list_complete = qs_utils.themes(sourcesession)
 
-    for theme in themes_list_complete:
-        if theme["Name"] in theme_migrate_list:
-            themes_list.append(theme)
+        for theme in themes_list_complete:
+            if theme["Name"] in theme_migrate_list:
+                themes_list.append(theme)
 
     #get themes which already migrated
     targetthemes = qs_utils.themes(targetsession)

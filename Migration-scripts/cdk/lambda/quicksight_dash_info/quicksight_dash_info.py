@@ -108,7 +108,7 @@ class Dynamo:
         self.logger.info(self.__class__.__name__)
         self.region = os.environ.get('AWS_REGION')
         self.table_name = os.environ.get('TABLE_NAME')
-        # self.quicksight = QuickSight()
+
         # AWS clients
         self.session = boto3.session.Session()
         self.client = self.session.client(
@@ -173,15 +173,10 @@ class Dynamo:
         if len(dash_error_list) > 0:
             for dash_error in dash_error_list:
                 # Add dasboard ID and error type to errors dict
-                dash_errors.append(dash_errors_dict['Type'])
+                dash_errors.append(dash_error['Type'])
         else:
             self.logger.debug("No errors found for dashboard: %s", dashboard['DashboardId'])
             dash_errors.append("None")
-
-        # data_set_names = []
-        # for dataset_arn in dashboard['Version']['DataSetArns']:
-        #     dataset_id = dataset_arn.split('/')[1]
-        #     data_set_names.append(self.quicksight.describe_dataset(dataset_id))
 
         try:
             response = self.client.update_item(
@@ -217,21 +212,6 @@ class Dynamo:
                             "N": str(dashboard['Version']['VersionNumber'])
                         }
                     },
-                    # "dataset_names":{
-                    #     "Action": "PUT", "Value":{
-                    #         "SS": data_set_names
-                    #     }
-                    # },
-                    # "status":{
-                    #     "Action": "PUT", "Value":{
-                    #         "S": dashboard['Version']['Status']
-                    #     }
-                    # },
-                    # "description":{
-                    #     "Action": "PUT", "Value":{
-                    #         "S": dashboard['Version']['Description']
-                    #     }
-                    # },
                     "errors":{
                         "Action": "PUT", "Value":{
                             "SS": dash_errors
@@ -241,7 +221,7 @@ class Dynamo:
             )
             return response
         except ClientError as ex:
-            self.logger.exception('Unable to insert or update dashboard_id %s.', dashboard_id)
+            self.logger.exception('Unable to insert or update dashboard_id %s.', dashboard['DashboardId'])
             raise ex
 
 
