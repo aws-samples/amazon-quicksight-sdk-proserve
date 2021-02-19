@@ -58,6 +58,9 @@ class GranularAccess(core.Construct):
                                                 "ns_name": "default"},
                                                {"Group_Name": "3rd-party",
                                                 "Reports": ["Marketing KPIs"],
+                                                "ns_name": "3rd-party"},
+                                               {"Group_Name": "3rd-party-reader",
+                                                "Reports": ["Marketing KPIs"],
                                                 "ns_name": "3rd-party"}
                                                ]
                                           }
@@ -97,7 +100,8 @@ class GranularAccess(core.Construct):
                                'default_critical': 'READER',
                                'default_highlyconfidential': 'READER',
                                'default_marketing': 'AUTHOR',
-                               '3rd-party_3rd-party': 'AUTHOR'
+                               '3rd-party_3rd-party': 'AUTHOR',
+                               '3rd-party_3rd-party-reader': 'READER'
                                }
 
         self.qs_role_config_ssm = ssm.StringParameter(
