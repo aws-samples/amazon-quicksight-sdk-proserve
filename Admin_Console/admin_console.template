@@ -1,0 +1,277 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {},
+    "Resources": {
+        "QuickSightAdminConsole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "QuickSightAdminConsole",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Policies": [
+                    {
+                        "PolicyName": "QuickSight-AdminConsole",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "ssm:GetParameters",
+                                        "ssm:GetParameter",
+                                        "ssm:GetParametersByPath",
+                                        "lambda:InvokeFunction",
+                                        "logs:CreateLogStream",
+                                        "logs:CreateLogGroup",
+                                        "logs:PutLogEvents",
+                                        "quicksight:ListNamespaces",
+                                        "quicksight:DescribeNamespace",
+                                        "quicksight:PassDataSet",
+                                        "quicksight:ListThemeVersions",
+                                        "quicksight:ListUserGroups",
+                                        "quicksight:DescribeThemeAlias",
+                                        "quicksight:SearchDashboards",
+                                        "quicksight:DescribeUser",
+                                        "quicksight:GetAuthCode",
+                                        "quicksight:DescribeDataSetPermissions",
+                                        "quicksight:DescribeDashboard",
+                                        "quicksight:ListDataSources",
+                                        "quicksight:ListGroups",
+                                        "quicksight:DescribeDataSourcePermissions",
+                                        "quicksight:DescribeAnalysisPermissions",
+                                        "quicksight:ListThemeAliases",
+                                        "quicksight:DescribeDataSource",
+                                        "quicksight:ListGroupMemberships",
+                                        "quicksight:DescribeDashboardPermissions",
+                                        "quicksight:ListDashboards",
+                                        "quicksight:PassDataSource",
+                                        "quicksight:ListDataSets",
+                                        "quicksight:ListUsers",
+                                        "quicksight:ListIngestions",
+                                        "quicksight:SearchAnalyses",
+                                        "quicksight:ListAnalyses",
+                                        "quicksight:ListDashboardVersions",
+                                        "quicksight:DescribeIngestion",
+                                        "quicksight:DescribeGroup",
+                                        "quicksight:DescribeAnalysis",
+                                        "quicksight:DescribeDataSet",
+                                        "quicksight:GetGroupMapping",
+                                        "quicksight:DescribeTheme",
+                                        "quicksight:DescribeThemePermissions",
+                                        "quicksight:ListThemes",
+                                        "s3:HeadBucket",
+                                        "s3:ListAllMyBuckets",
+                                        "s3:PutObject",
+                                        "s3:GetObject",
+                                        "s3:ListBucket",
+                                        "s3:GetObjectVersionForReplication",
+                                        "s3:GetBucketPolicy",
+                                        "s3:GetObjectVersion",
+                                        "cloudwatch:PutMetricData",
+                                        "sts:GetCallerIdentity",
+                                        "sts:AssumeRole"
+                                    ],
+                                    "Resource": "*",
+                                    "Effect": "Allow"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "137f8de2-0d45-4490-a6a7-04356c185c4a"
+                }
+            }
+        },
+        "adminconsole": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "AccessControl": "Private",
+                "BucketName": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "admin-console",
+                            {
+                                "Ref": "AWS::AccountId"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "494a8dba-26e5-4efa-93ea-d49a84c99390"
+                }
+            }
+        },
+        "adminconsoledataprepare": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Description": "admin console dataprepare lambda function",
+                "Environment": {
+                    "Variables": {
+                        "aws_region": {
+                            "Ref": "AWS::Region"
+                        }
+                    }
+                },
+                "Handler": "data_prepare.lambda_handler",
+                "Runtime": "python3.7",
+                "FunctionName": "data_prepare",
+                "MemorySize": 512,
+                "Timeout": 900,
+                "Role": {
+                    "Fn::GetAtt": [
+                        "QuickSightAdminConsole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                    "S3Bucket": "admin-console-dataprepare-code",
+                    "S3Key": "data_prepare.zip"
+                }
+            },
+            "DependsOn": [
+                "adminconsole"
+            ],
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "c4462e36-ef27-43d6-a0df-01246a77b117"
+                }
+            }
+        },
+        "adminconsolehourlyschedule": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+                "Description": "CloudWatch rule to run lambda every hour",
+                "Name": "admin-console-every-hour",
+                "ScheduleExpression": "cron(0 * * * ? *)",
+                "State": "ENABLED",
+                "Targets": [
+                    {
+                        "Arn": {
+                            "Fn::GetAtt": [
+                                "adminconsoledataprepare",
+                                "Arn"
+                            ]
+                        },
+                        "Id": "Target0"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "2d875ca8-973f-4c0c-8455-1f15eb588bdb"
+                }
+            }
+        },
+        "adminconsolehourlyscheduledataprepare": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "adminconsoledataprepare",
+                        "Arn"
+                    ]
+                },
+                "Principal": "events.amazonaws.com",
+                "SourceArn": {
+                    "Fn::GetAtt": [
+                        "adminconsolehourlyschedule",
+                        "Arn"
+                    ]
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "a59461e8-9fcb-415c-b8a0-0f21f2b4e38b"
+                }
+            }
+        }
+    },
+    "Metadata": {
+        "AWS::CloudFormation::Designer": {
+            "494a8dba-26e5-4efa-93ea-d49a84c99390": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 60,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "137f8de2-0d45-4490-a6a7-04356c185c4a": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 180,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "c4462e36-ef27-43d6-a0df-01246a77b117": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 60,
+                    "y": 210
+                },
+                "z": 1,
+                "embeds": [],
+                "dependson": [
+                    "494a8dba-26e5-4efa-93ea-d49a84c99390"
+                ]
+            },
+            "2d875ca8-973f-4c0c-8455-1f15eb588bdb": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 180,
+                    "y": 210
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "a59461e8-9fcb-415c-b8a0-0f21f2b4e38b": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 300,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": [],
+                "isassociatedwith": [
+                    "c4462e36-ef27-43d6-a0df-01246a77b117"
+                ]
+            }
+        }
+    }
+}
