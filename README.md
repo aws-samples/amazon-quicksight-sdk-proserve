@@ -5,7 +5,7 @@
 3. Administrative Dashboard
 4. Admin Console of Usage Metrics
 
-Author: Ying Wang
+Author: AWS Pro-Serve
 Email: wangzyn@amazon.com
 
 ## License
