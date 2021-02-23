@@ -19,9 +19,11 @@ class QuicksightEmbedStack(core.Stack):
         super().__init__(scope, id, **kwargs)
         self.current_dir = os.path.dirname(__file__)
 
-        self.bucket = s3.Bucket(
+        self.website_bucket = s3.Bucket(
             self, "qs-embed-bucket",
-            bucket_name=f'quicksight-embed-{core.Aws.ACCOUNT_ID}'
+            bucket_name=f'quicksight-embed-{core.Aws.ACCOUNT_ID}',
+            website_index_document="index.html",
+            public_read_access=True
         )
 
         self.quicksight_embed_lambda_role = iam.Role(
@@ -50,17 +52,6 @@ class QuicksightEmbedStack(core.Stack):
                             ],
                             resources=[
                                 "arn:aws:iam::*:role/quicksight-migration-*-assume-role"
-                            ]
-                        ),
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            actions=[
-                                "s3:PutObject",
-                                "s3:ListBucket"
-                            ],
-                            resources=[
-                                self.bucket.bucket_arn,
-                                f"{self.bucket.bucket_arn}/*"
                             ]
                         ),
                         iam.PolicyStatement(

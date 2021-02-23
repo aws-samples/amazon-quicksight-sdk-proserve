@@ -1,7 +1,9 @@
 
-# Welcome to your CDK Python project!
+# BIOps: QuickSight Objects Migration and Version Control
 
-This is a blank project for Python development with CDK.
+Please refer to the AWS blogpost.
+
+## CDK Instructions
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
