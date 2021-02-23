@@ -3,6 +3,7 @@
 1. Ingest Excel data automatically into Amazon QuickSight
 2. Migration Scripts
 3. Administrative Dashboard
+4. Admin Console of Usage Metrics
 
 Author: Ying Wang
 Email: wangzyn@amazon.com
