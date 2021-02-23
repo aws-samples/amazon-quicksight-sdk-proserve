@@ -1,61 +1,18 @@
 import os
-import json
 from aws_cdk import (
-    aws_apigateway as apigw,
-    aws_events as events,
     aws_ec2 as ec2,
-    aws_events_targets as targets,
-    aws_lambda as _lambda,
     aws_iam as iam,
     aws_redshift as redshift,
     aws_rds as rds,
-    aws_s3 as s3,
-    aws_ssm as ssm,
     aws_secretsmanager as secrets,
     core
 )
 
-class InfraStack(core.Stack):
+class OptionalInfraTargetAccountStack(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         self.current_dir = os.path.dirname(__file__)
-
-        self.quicksight_migration_source_assume_role = iam.Role(
-            self, 'quicksight-migration-source-assume-role',
-            description='Role for the Quicksight dashboard migration Lambdas to assume',
-            role_name='quicksight-migration-source-assume-role',
-            max_session_duration=core.Duration.seconds(3600),
-            assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
-            inline_policies={
-                'AllowAccess': iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            actions=[
-                                "quicksight:*",
-                            ],
-                            resources=["*"]
-                        ),
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            actions=[
-                                "ssm:GetParameter",
-                            ],
-                            resources=["arn:aws:ssm:*:*:parameter/infra/config"]
-                        )
-                    ]
-                )
-            }
-        )
-
-        self.quicksight_migration_source_assume_role.assume_role_policy.add_statements(
-            iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=['sts:AssumeRole'],
-                principals=[iam.AccountPrincipal("123456789123")]
-            )
-        )
 
         self.vpc = ec2.Vpc(self, "VPC",
             cidr="10.0.0.0/21",
@@ -114,7 +71,8 @@ class InfraStack(core.Stack):
 
         self.rds_cluster = rds.DatabaseCluster(self, "datasource-rds",
             engine=rds.DatabaseClusterEngine.aurora_mysql(
-                version=rds.AuroraMysqlEngineVersion.VER_2_08_1),
+                version=rds.AuroraMysqlEngineVersion.VER_2_08_1
+            ),
             instance_props={
                 "vpc_subnets": {
                     "subnet_type": ec2.SubnetType.ISOLATED
@@ -124,22 +82,14 @@ class InfraStack(core.Stack):
             credentials=rds.Credentials.from_secret(self.rds_secret)
         )
 
-        ssm.StringParameter(self, 'InfraConfigParam',
-                            parameter_name='/infra/config',
-                            string_value=json.dumps(self.to_dict()))
-
-    def to_dict(self):
-        config={}
-        config['vpcId'] = self.vpc.vpc_id
-        config['redshiftUsername'] = 'admin'
-        config['redshiftPassword'] = self.redshift_secret.secret_name
-        config['redshiftClusterId'] = self.redshift_cluster.cluster_name
-        config['redshiftHost'] = self.redshift_cluster.cluster_endpoint.hostname
-        config['redshiftDB'] = 'dev'
-        config['rdsUsername'] = 'admin'
-        config['rdsPassword'] = self.rds_secret.secret_name
-        config['rdsClusterId'] = self.rds_cluster.cluster_identifier
-        config['namespace'] = 'default'
-        config['version'] = '1'
-
-        return config
+        core.CfnOutput(self, "vpcId", value=self.vpc.vpc_id)
+        core.CfnOutput(self, "redshiftUsername", value="admin")
+        core.CfnOutput(self, "redshiftPassword", value=self.redshift_secret.secret_name)
+        core.CfnOutput(self, "redshiftClusterId", value=self.redshift_cluster.cluster_name)
+        core.CfnOutput(self, "redshiftHost", value=self.redshift_cluster.cluster_endpoint.hostname)
+        core.CfnOutput(self, "redshiftDB", value="dev")
+        core.CfnOutput(self, "rdsUsername", value="admin")
+        core.CfnOutput(self, "rdsPassword", value=self.rds_secret.secret_name)
+        core.CfnOutput(self, "rdsClusterId", value=self.rds_cluster.cluster_identifier)
+        core.CfnOutput(self, "namespace", value="default")
+        core.CfnOutput(self, "version", value="1")

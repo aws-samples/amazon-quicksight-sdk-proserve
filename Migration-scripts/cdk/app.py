@@ -4,7 +4,7 @@ from aws_cdk import core
 
 from cdk.quicksight_status_stack import QuicksightStatusStack
 from cdk.quicksight_migration_stack import QuicksightMigrationStack
-from cdk.infra_stack import InfraStack
+from cdk.optional_infra_target_account_stack import OptionalInfraTargetAccountStack
 from cdk.infra_target_account_stack import InfraTargetAccountStack
 from cdk.quicksight_embed_stack import QuicksightEmbedStack
 
@@ -15,12 +15,13 @@ ENV = core.Environment(
 
 app = core.App()
 
-infra = InfraStack(
-    app, id="infra-stack",
+# Deploys a test Redshift and RDS
+optional_infra_target_accounts = OptionalInfraTargetAccountStack(
+    app, id="optional-infra-target-account-stack",
     env=ENV
 )
 
-infra_target_account = InfraTargetAccountStack(
+infra_target_accounts = InfraTargetAccountStack(
     app, id="infra-target-account-stack",
     env=ENV
 )

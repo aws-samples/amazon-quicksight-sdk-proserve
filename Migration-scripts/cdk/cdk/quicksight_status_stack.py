@@ -1,6 +1,5 @@
 import os
 from aws_cdk import (
-    aws_dynamodb as dynamodb,
     aws_events as events,
     aws_events_targets as targets,
     aws_lambda as _lambda,
@@ -20,16 +19,6 @@ class QuicksightStatusStack(core.Stack):
             bucket_name=f'quicksight-dash-{core.Aws.ACCOUNT_ID}',
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
 
-        )
-
-        self.quicksight_dash_info_table = dynamodb.Table(
-            self,
-            "quicksight-dash-info-table",
-            table_name="quicksight-dash-info",
-            partition_key=dynamodb.Attribute(
-                name="dashboardId",
-                type=dynamodb.AttributeType.STRING
-            )
         )
 
         self.quicksight_dash_info_lambda_role = iam.Role(
@@ -53,17 +42,6 @@ class QuicksightStatusStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "dynamodb:DescribeTable", 
-                                "dynamodb:PutItem",
-                                "dynamodb:GetItem",
-                                "dynamodb:Scan",
-                                "dynamodb:UpdateItem"
-                            ],
-                            resources=[self.quicksight_dash_info_table.table_arn]
-                        ),
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            actions=[
                                 "s3:PutObject",
                                 "s3:ListBucket"
                             ],
@@ -82,29 +60,6 @@ class QuicksightStatusStack(core.Stack):
                     ]
                 )
             }
-        )
-
-        self.quicksight_dash_info_lambda = _lambda.Function(
-            self, 'quicksight-dash-info-lambda',
-            handler='quicksight_dash_info.lambda_handler',
-            runtime=_lambda.Runtime.PYTHON_3_7,
-            code=_lambda.Code.from_asset(os.path.join(self.current_dir,
-                                                        '../lambda/quicksight_dash_info/')),
-            function_name='quicksight_dash_info',
-            role=self.quicksight_dash_info_lambda_role,
-            timeout=core.Duration.minutes(5),
-            memory_size=128,
-            environment={
-                "TABLE_NAME": self.quicksight_dash_info_table.table_name
-            }
-        )
-
-        events.Rule(
-            self, 'quicksight_dash_info_event',
-            description='CloudWatch cron to get QuickSight dashboards information',
-            rule_name='quicksight-dash-info-event-rule',
-            targets=[targets.LambdaFunction(self.quicksight_dash_info_lambda)],
-            schedule=events.Schedule.rate(core.Duration.minutes(15))
         )
 
         self.quicksight_status = _lambda.Function(
