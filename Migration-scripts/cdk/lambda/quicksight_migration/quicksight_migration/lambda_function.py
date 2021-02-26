@@ -50,7 +50,7 @@ def lambda_handler(event, context):
         source_role_name = request_dict['source_role_name']
     else:
         source_role_name = request_dict.get('source_role_name',
-                                            'quicksight-migration-source-assume-role')
+                                            'quicksight-migration-target-assume-role')
 
     if request_dict.get('target_role_name') is not None:
         target_role_name = request_dict['target_role_name']

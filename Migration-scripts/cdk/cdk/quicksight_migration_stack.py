@@ -1,8 +1,6 @@
 import os
 from aws_cdk import (
     aws_apigateway as apigw,
-    aws_events as events,
-    aws_events_targets as targets,
     aws_lambda as _lambda,
     aws_lambda_event_sources as event_sources,
     aws_iam as iam,
