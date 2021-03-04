@@ -5,6 +5,7 @@ import csv
 import io
 import os
 import tempfile
+from datetime import datetime
 # import awswrangler as wr
 from typing import Any, Callable, Dict, List, Optional
 
@@ -26,6 +27,14 @@ def describe_user(username, account_id, aws_region):
         UserName=username,
         AwsAccountId=account_id,
         Namespace='default'
+    )
+    return res
+
+def describe_namespace(Namespace, account_id, aws_region):
+    qs_client = boto3.client('quicksight', region_name=aws_region)
+    res = qs_client.describe_namespace(
+        AwsAccountId=account_id,
+        Namespace=Namespace
     )
     return res
 
@@ -90,6 +99,14 @@ def create_group_membership(username, userrole, account_id, aws_region, ns):
     )
     return res
 
+def create_namespace(account_id, aws_region, ns, IdentityStore):
+    qs_client = boto3.client('quicksight', region_name=aws_region)
+    res = qs_client.create_namespace(
+        AwsAccountId=account_id,
+        Namespace=ns,
+        IdentityStore=IdentityStore
+    )
+    return res
 
 def delete_group_membership(username, userrole, account_id, aws_region, ns):
     qs_client = boto3.client('quicksight', region_name=aws_region)
@@ -191,6 +208,13 @@ def list_group_memberships(
         aws_region=aws_region
     )
 
+def list_namespaces(account_id, aws_region) -> List[Dict[str, Any]]:
+    return _list(
+        func_name="list_namespaces",
+        attr_name="Namespaces",
+        account_id=account_id,
+        aws_region=aws_region
+    )
 
 def list_users(account_id, aws_region,ns) -> List[Dict[str, Any]]:
     return _list(
@@ -283,11 +307,45 @@ def lambda_handler(event, context):
         iamrole = 'quicksight-fed-eu-users'
         arn = 'arn:aws:iam::' + account_id + ':role/quicksight-fed-eu-users'
 
+    nslogkey = 'monitoring/quicksight/logs/create_namespace_log.csv'
+    local_file_name2 = 'create_namespace_log.csv'
+    nslogpath = os.path.join(tmpdir, local_file_name2)
+
     # load qs namespace information. in QS account, there might be some namespaces which are not list in the ssm.
     # But this solution only controls the namespaces stored in ssm.
     ns_list = get_ssm_parameters('/qs/config/ns')
     ns_list = ns_list['ns']
     print(ns_list)
+
+    nslog=[]
+    currentnslist=[]
+    lscurrentnsres=list_namespaces(account_id, aws_region)
+    for i in lscurrentnsres:
+        currentnslist.append(i['Name'])
+    for i in ns_list:
+        if i in currentnslist:
+            if lscurrentnsres[currentnslist.index(i)]['CreationStatus']=='CREATED':
+                nslog.append(['CREATED', i, 'N/A'])
+            continue
+        elif i not in currentnslist:
+            create_namespace(account_id, aws_region, i, 'QUICKSIGHT')
+            desnsres=describe_namespace(i, account_id, aws_region)
+            while (desnsres['Namespace']['CreationStatus'] == 'CREATING'):
+                desnsres = describe_namespace(i, account_id, aws_region)
+            else:
+                if desnsres['Namespace']['CreationStatus'] == 'CREATED':
+                    nslog.append(['CREATED', i, datetime.now().strftime("%d/%m/%Y %H:%M:%S")])
+                    continue
+                else:
+                    nslog.append([desnsres['Namespace']['CreationStatus'], i, datetime.now().strftime("%d/%m/%Y %H:%M:%S")])
+                    ns_list.remove(i)
+
+    #upload namespace creation results:
+    with open(nslogpath, 'w', newline='') as outfile:
+        writer = csv.writer(outfile)
+        for line in nslog:
+            writer.writerow(line)
+    bucket.upload_file(nslogpath, nslogkey)
 
     #place holder to store the group/users info
     new = []

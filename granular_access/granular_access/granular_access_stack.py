@@ -1,5 +1,7 @@
 from aws_cdk import (
             core,
+            aws_s3 as s3,
+            aws_s3_deployment as s3deploy,
             aws_iam as iam,
             aws_ssm as ssm,
             aws_lambda as _lambda,
@@ -86,6 +88,18 @@ class GranularAccess(core.Construct):
 
         #group-user mapping information is stored in s3 bucket. A ssm parameter stores the bucket name.
         self.qs_user_group_config = {'bucket-name':f'qs-granular-access-demo-{account_id}'}
+
+        bucket = s3.Bucket(self, f'qs-granular-access-demo-{account_id}',
+                           bucket_name=f'qs-granular-access-demo-{account_id}',
+                           versioned=True,
+                           removal_policy=core.RemovalPolicy.DESTROY,
+                           auto_delete_objects=True)
+
+        s3deploy.BucketDeployment(self, "DeployMembership",
+                                  sources=[s3deploy.Source.asset('membership.zip')],
+                                destination_bucket=bucket,
+                                destination_key_prefix='membership',
+                                                  prune=False)
 
         self.qs_user_group_config_ssm = ssm.StringParameter(
             self, '/qs/config/groups',
