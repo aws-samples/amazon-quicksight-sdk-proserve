@@ -173,6 +173,7 @@ class GranularAccess(core.Construct):
                                      "logs:CreateLogGroup",
                                      "logs:PutLogEvents",
                                      "quicksight:*",
+                                     "ds:CreateIdentityPoolDirectory",
                                      "s3:HeadBucket",
                                      "s3:ListAllMyBuckets",
                                      "s3:PutObject",
