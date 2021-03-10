@@ -174,6 +174,13 @@ class GranularAccess(core.Construct):
                                      "logs:PutLogEvents",
                                      "quicksight:*",
                                      "ds:CreateIdentityPoolDirectory",
+                                     "ds:DescribeDirectories",
+                                     "ds:AuthorizeApplication",
+                                     "ds:UnauthorizeApplication",
+                                     "ds:CheckAlias",
+                                     "ds:CreateAlias",
+                                     "ds:DescribeTrusts",
+                                     "ds:DeleteDirectory",
                                      "s3:HeadBucket",
                                      "s3:ListAllMyBuckets",
                                      "s3:PutObject",
@@ -184,6 +191,11 @@ class GranularAccess(core.Construct):
                                      "s3:GetObjectVersion",
                                      "cloudwatch:PutMetricData",
                                      "sts:GetCallerIdentity"],
+                            resources=['*']
+                        ),
+                        iam.PolicyStatement(
+                            effect=iam.Effect.DENY,
+                            actions=["quicksight:Unsubscribe"],
                             resources=['*']
                         )
                     ]
