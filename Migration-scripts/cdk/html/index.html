@@ -38,7 +38,9 @@
             const apiGatewayUrl = 'https://APIID.execute-api.us-east-1.amazonaws.com/prod';
 
             var source_account_id = $("#source_account_id").val(),
+                source_region = $("#source_region").val(),
                 target_account_id = $("#target_account_id").val(),
+                target_region = $("#target_region").val(),
                 migration_type = $("#migration_type").val(),
                 migration_resource = $("#migration_resource").val(),
                 migration_items = $("#migration_items").val();
@@ -49,7 +51,9 @@
                 contentType: 'application/json',
                 data: JSON.stringify({
                     'source_account_id': source_account_id,
+                    'source_region': source_region,
                     'target_account_id': target_account_id,
+                    'target_region': target_region,
                     'migration_type': migration_type,
                     'migration_resource': migration_resource,
                     'migration_items': migration_items
@@ -407,8 +411,12 @@
                 </select>
                 <label for="source_account_id">Source Account ID:</label>
                 <input type="text" id="source_account_id" placeholder="Source Account ID" name="source_account_id">
+                <label for="source_region">Source Region:</label>
+                <input type="text" id="source_region" placeholder="Source Region" name="source_region">
                 <label for="target_account_id">Target Account ID:</label>
                 <input type="text" id="target_account_id" placeholder="Target Account ID" name="target_account_id">
+                <label for="target_region">Target Region:</label>
+                <input type="text" id="target_region" placeholder="Target Region" name="target_region">
                 <label for="migration_resource">Migration Resource:</label>
                 <select id="migration_resource">
                     <option value="analysis">Analysis</option>
