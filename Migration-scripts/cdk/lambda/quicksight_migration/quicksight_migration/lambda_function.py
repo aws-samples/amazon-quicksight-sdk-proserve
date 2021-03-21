@@ -32,7 +32,6 @@ def delete_sqs_message(sqs_queue, aws_region, receipt_handle):
 
 def lambda_handler(event, context):
     logger.info(event)
-    aws_region = 'us-east-1'
 
     # SQS Message
     sqs_url = os.getenv('SQS_URL')
@@ -42,6 +41,8 @@ def lambda_handler(event, context):
 
     source_account_id = request_dict['source_account_id']
     target_account_id = request_dict['target_account_id']
+    source_region = request_dict['source_region']
+    target_region = request_dict['target_region']
     infra_config_param_name = os.getenv('INFRA_CONFIG_PARAM')
     s3_bucket = os.getenv('BUCKET_NAME')
     s3_key = os.getenv('S3_KEY')
@@ -58,24 +59,17 @@ def lambda_handler(event, context):
         target_role_name = request_dict.get('target_role_name',
                                             'quicksight-migration-target-assume-role')
 
-    sourcesession = qs_utils.assume_role(source_account_id, source_role_name, aws_region)
-    targetsession = qs_utils.assume_role(target_account_id, target_role_name, aws_region)
+    source_session = qs_utils.assume_role(source_account_id, source_role_name,
+                                            source_region)
+    target_session = qs_utils.assume_role(target_account_id, target_role_name,
+                                            target_region)
+    target_admin = qs_utils.get_user_arn(target_session, 'quicksight-migration-user')
+    infra_details = qs_utils.get_ssm_parameters(target_session, infra_config_param_name)
+    redshift_password = qs_utils.get_secret(target_session, infra_details['redshiftPassword'])
+    rds_password = qs_utils.get_secret(target_session, infra_details['rdsPassword'])
 
-    sourceroot = qs_utils.get_user_arn(sourcesession, 'root')
-    sourceadmin = qs_utils.get_user_arn(sourcesession, 'Administrator/quicksight-migration-user')
-
-    targetroot = qs_utils.get_user_arn(targetsession, 'root')
-    targetadmin = qs_utils.get_user_arn(targetsession, 'Administrator/quicksight-migration-user')
-
-    infra_details = qs_utils.get_ssm_parameters(targetsession, infra_config_param_name)
-
-
-    redshift_password = qs_utils.get_secret(targetsession, infra_details['redshiftPassword'])
-    rds_password = qs_utils.get_secret(targetsession, infra_details['rdsPassword'])
-
+    # QuickSight VPC connection will use VPC ID as name
     vpc = infra_details['vpcId']
-
-    owner = targetadmin
 
     rds = infra_details['rdsClusterId']
     rdscredential = {
@@ -105,20 +99,19 @@ def lambda_handler(event, context):
         ]
 
     target = qs_utils.get_target(
-        targetsession, rds, redshift, s3_bucket, s3_key,
-        vpc, tag, owner, rdscredential, redshiftcredential)
+        target_session, rds, redshift, s3_bucket, s3_key,
+        vpc, tag, target_admin, rdscredential, redshiftcredential, target_region,
+        namespace, version)
 
     if request_dict['migration_type'] == "BATCH":
         try:
             batch(
-                aws_region,
-                sourcesession,
-                targetsession,
+                source_region,
+                target_region,
+                source_session,
+                target_session,
                 target,
-                sourceroot,
-                sourceadmin,
-                targetroot,
-                targetadmin
+                target_admin
             )
         except:
             raise Exception('Failed batch migration')
@@ -135,14 +128,12 @@ def lambda_handler(event, context):
 
         try:
             incremental(
-                aws_region,
-                sourcesession,
-                targetsession,
+                source_region,
+                target_region,
+                source_session,
+                target_session,
                 target,
-                sourceroot,
-                sourceadmin,
-                targetroot,
-                targetadmin,
+                target_admin,
                 request_dict['migration_resource'],
                 request_dict['migration_items'].split(",")
             )
