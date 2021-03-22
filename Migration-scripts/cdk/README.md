@@ -3,6 +3,7 @@
 
 Please refer to the AWS blogpost.
 
+
 ## CDK Instructions
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
