@@ -397,7 +397,7 @@ def analysis(session):
             logger.error("Failed to list analyses")
             logger.error(exc.response['Error']['Message'])
         next_token = response.get("NextToken", None)
-        analysis += response["analysis"]
+        analysis += response["AnalysisSummaryList"]
     return analysis
 
 def themes(session):
