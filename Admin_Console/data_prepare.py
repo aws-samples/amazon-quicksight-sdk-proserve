@@ -38,7 +38,7 @@ def lambda_handler(event, context):
 
     # call s3 bucket
     s3 = boto3.resource('s3')
-    bucketname = get_s3_info(account_id, lambda_aws_region)
+    bucketname = 'admin-console' + account_id
     bucket = s3.Bucket(bucketname)
 
     key = 'monitoring/quicksight/group_membership/group_membership.csv'

@@ -1,5 +1,7 @@
 from aws_cdk import (
             core,
+            aws_s3 as s3,
+            aws_s3_deployment as s3deploy,
             aws_iam as iam,
             aws_ssm as ssm,
             aws_lambda as _lambda,
@@ -33,38 +35,49 @@ class GranularAccess(core.Construct):
         super().__init__(scope, id, **kwargs)
 
         aws_region = os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
-        #account_id = stack.account
+        account_id = os.environ.get("CDK_DEPLOY_ACCOUNT", os.environ["CDK_DEFAULT_ACCOUNT"])
 
         ssm_client = boto3.client('ssm', aws_region)
         # Prepare pipeline config details in SSM parameters
         if prefix == 'us':
             self.qs_reports_env_config = {"Permissions":
-                                              [{"Group_Name": "Critical",
-                                                "Reports": ["Results - Critical"]},
-                                               {"Group_Name": "HighlyConfidential",
+                                              [{"Group_Name": "critical",
+                                                "Reports": ["Sales Results - Critical"],
+                                                "ns_name": "default"},
+                                               {"Group_Name": "highlyconfidential",
                                                 "Reports": ["Field Operations Dashboard",
-                                                            "Results - Highly Confidential"
-                                                            ]},
-                                               {"Group_Name": "BI-developer",
-                                                "Reports": ["all"]},
-                                               {"Group_Name": "BI-Admin",
-                                                "Reports": ["all"]},
-                                               {"Group_Name": "Power-reader",
-                                                "Reports": ["read-all"]}
+                                                            "Sales Results - Highly Confidential"
+                                                            ],
+                                                "ns_name": "default"},
+                                               {"Group_Name": "bi-developer",
+                                                "Reports": ["all"],
+                                                "ns_name": "default"},
+                                               {"Group_Name": "bi-admin",
+                                                "Reports": ["all"],
+                                                "ns_name": "default"},
+                                               {"Group_Name": "power-reader",
+                                                "Reports": ["read-all"],
+                                                "ns_name": "default"},
+                                               {"Group_Name": "3rd-party",
+                                                "Reports": ["Marketing KPIs"],
+                                                "ns_name": "3rd-party"},
+                                               {"Group_Name": "3rd-party-reader",
+                                                "Reports": ["Marketing KPIs"],
+                                                "ns_name": "3rd-party"}
                                                ]
                                           }
         if prefix == 'eu':
             self.qs_reports_env_config = {"Permissions":
-                                              [{"Group_Name": "EU-Critical",
+                                              [{"Group_Name": "eu-critical",
                                                 "Reports": ["EUResults - Critical"]},
-                                               {"Group_Name": "BI-developer",
+                                               {"Group_Name": "bi-developer",
                                                 "Reports": ["all"]},
-                                               {"Group_Name": "BI-Admin",
+                                               {"Group_Name": "bi-admin",
                                                 "Reports": ["all"]},
-                                               {"Group_Name": "EU-HighlyConfidential",
+                                               {"Group_Name": "eu-highlyconfidential",
                                                 "Reports": ["EUField Operations Dashboard",
                                                             "EUResults - Highly Confidential"]},
-                                               {"Group_Name": "Power-reader",
+                                               {"Group_Name": "power-reader",
                                                 "Reports": ["read-all"]}]}
 
         self.qs_reports_env_config_ssm = ssm.StringParameter(
@@ -73,12 +86,52 @@ class GranularAccess(core.Construct):
             parameter_name='/qs/config/access'
         )
 
-        self.qs_user_group_config = {'bucket-name':"granular-access-demo"}
+        #group-user mapping information is stored in s3 bucket. A ssm parameter stores the bucket name.
+        self.qs_user_group_config = {'bucket-name':f'qs-granular-access-demo-{account_id}'}
+
+        bucket = s3.Bucket(self, f'qs-granular-access-demo-{account_id}',
+                           bucket_name=f'qs-granular-access-demo-{account_id}',
+                           versioned=True,
+                           removal_policy=core.RemovalPolicy.DESTROY,
+                           auto_delete_objects=True)
+
+        s3deploy.BucketDeployment(self, "DeployMembership",
+                                  sources=[s3deploy.Source.asset('membership.zip')],
+                                destination_bucket=bucket,
+                                destination_key_prefix='membership',
+                                                  prune=False)
 
         self.qs_user_group_config_ssm = ssm.StringParameter(
             self, '/qs/config/groups',
             string_value=json.dumps(self.qs_user_group_config),
             parameter_name='/qs/config/groups'
+        )
+
+        # group-role mapping information is stored in a ssm parameter.
+        self.qs_role_config = {'default_bi-developer': 'AUTHOR',
+                               'default_bi-admin': 'ADMIN',
+                               'default_power-reader': 'AUTHOR',
+                               'default_critical': 'READER',
+                               'default_highlyconfidential': 'READER',
+                               'default_marketing': 'AUTHOR',
+                               '3rd-party_3rd-party': 'AUTHOR',
+                               '3rd-party_3rd-party-reader': 'READER'
+                               }
+
+        self.qs_role_config_ssm = ssm.StringParameter(
+            self, '/qs/config/roles',
+            string_value=json.dumps(self.qs_role_config),
+            parameter_name='/qs/config/roles'
+        )
+
+        # group-namespace mapping information is stored in a ssm parameter.
+        self.qs_ns_config = {"ns":['default',
+                             '3rd-party']}
+
+        self.qs_ns_config_ssm = ssm.StringParameter(
+            self, '/qs/config/ns',
+            string_value=json.dumps(self.qs_ns_config),
+            parameter_name='/qs/config/ns'
         )
 
         lambda_role = iam.Role(
@@ -120,6 +173,14 @@ class GranularAccess(core.Construct):
                                      "logs:CreateLogGroup",
                                      "logs:PutLogEvents",
                                      "quicksight:*",
+                                     "ds:CreateIdentityPoolDirectory",
+                                     "ds:DescribeDirectories",
+                                     "ds:AuthorizeApplication",
+                                     "ds:UnauthorizeApplication",
+                                     "ds:CheckAlias",
+                                     "ds:CreateAlias",
+                                     "ds:DescribeTrusts",
+                                     "ds:DeleteDirectory",
                                      "s3:HeadBucket",
                                      "s3:ListAllMyBuckets",
                                      "s3:PutObject",
@@ -130,6 +191,11 @@ class GranularAccess(core.Construct):
                                      "s3:GetObjectVersion",
                                      "cloudwatch:PutMetricData",
                                      "sts:GetCallerIdentity"],
+                            resources=['*']
+                        ),
+                        iam.PolicyStatement(
+                            effect=iam.Effect.DENY,
+                            actions=["quicksight:Unsubscribe"],
                             resources=['*']
                         )
                     ]
@@ -172,17 +238,29 @@ class GranularAccess(core.Construct):
                                                 environment={'aws_region': f'{core.Aws.REGION}'}
                                                 )
 
-        granular_access = _lambda.Function(self, 'granular_access',
-                                                 handler='granular_access.lambda_handler',
+        granular_user_govenance = _lambda.Function(self, 'granular_user_govenance',
+                                                 handler='granular_user_govenance.lambda_handler',
                                                  runtime=_lambda.Runtime.PYTHON_3_7,
                                                  code=_lambda.Code.from_asset(os.path.join(current_dir,
-                                                                                           '../lambda_functions/granular_access/')),
-                                                 function_name='granular_access',
+                                                                                           '../lambda_functions/granular_user_govenance')),
+                                                 function_name='granular_user_govenance',
                                                  role=lambda_role,
                                                  timeout=core.Duration.minutes(15),
                                                  memory_size=2048,
                                                  environment={'aws_region': f'{core.Aws.REGION}'}
                                                 )
+
+        granular_access_assets_govenance = _lambda.Function(self, 'granular_access_assets_govenance',
+                                                   handler='granular_access_assets_govenance.lambda_handler',
+                                                   runtime=_lambda.Runtime.PYTHON_3_7,
+                                                   code=_lambda.Code.from_asset(os.path.join(current_dir,
+                                                                                             '../lambda_functions/granular_access_assets_govenance')),
+                                                   function_name='granular_access_assets_govenance',
+                                                   role=lambda_role,
+                                                   timeout=core.Duration.minutes(15),
+                                                   memory_size=2048,
+                                                   environment={'aws_region': f'{core.Aws.REGION}'}
+                                                   )
 
         quicksight_event_rule = events.Rule(self, 'QuickSightCWEventRule',
                                              description='CloudWatch rule to detect new QuickSight user creation',
@@ -203,15 +281,14 @@ class GranularAccess(core.Construct):
                                                description='CloudWatch rule to run QS objects/groups assignment every hour',
                                                rule_name='qs-gc-every-hour',
                                                schedule=events.Schedule.cron(minute="0"),
-                                               targets=[targets.LambdaFunction(check_team_members),
-                                                        targets.LambdaFunction(granular_access)]
+                                               targets=[targets.LambdaFunction(granular_user_govenance)]
                                                )
 
         quicksight_assume_condition_object = {"StringEquals": {
             "SAML:aud": "https://signin.aws.amazon.com/saml"}}
 
         quicksight_federated_prin_with_conditionb_obj = iam.FederatedPrincipal(
-            f'arn:aws:iam::{core.Aws.ACCOUNT_ID}:saml-provider/amazon', quicksight_assume_condition_object,
+            f'arn:aws:iam::{core.Aws.ACCOUNT_ID}:saml-provider/saml', quicksight_assume_condition_object,
             'sts:AssumeRoleWithSAML')
 
         quicksight_resource_scope = '${aws:userid}'

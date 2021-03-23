@@ -14,31 +14,13 @@ lambda_aws_region = os.environ['AWS_REGION']
 qs_client = boto3.client('quicksight')
 qs_local_client = boto3.client('quicksight', region_name=lambda_aws_region)
 
-print(lambda_aws_region)
-
-ssm = boto3.client('ssm', region_name=lambda_aws_region)
-
-
-def get_ssm_parameters(ssm_string):
-    config_str = ssm.get_parameter(
-        Name=ssm_string
-    )['Parameter']['Value']
-    return json.loads(config_str)
-
-
-def get_s3_info(account_id, lambda_aws_region):
-    bucket_name = get_ssm_parameters('/qs/config/groups')
-    bucket_name = bucket_name['bucket-name']
-    return bucket_name
-
-
 def lambda_handler(event, context):
     sts_client = boto3.client("sts", region_name=aws_region)
     account_id = sts_client.get_caller_identity()["Account"]
 
     # call s3 bucket
     s3 = boto3.resource('s3')
-    bucketname = get_s3_info(account_id, lambda_aws_region)
+    bucketname = 'admin-console' + account_id
     bucket = s3.Bucket(bucketname)
 
     key = 'monitoring/quicksight/group_membership/group_membership.csv'
@@ -47,7 +29,6 @@ def lambda_handler(event, context):
     local_file_name = 'group_membership.csv'
     local_file_name2 = 'object_access.csv'
     path = os.path.join(tmpdir, local_file_name)
-    print(path)
 
     lists = []
     access = []
@@ -59,13 +40,10 @@ def lambda_handler(event, context):
         for user in users:
             groups = list_user_groups(user['UserName'], account_id, aws_region, ns)
             if len(groups) == 0:
-                lists.append([ns, None, user['UserName']])
+                lists.append([account_id,ns, None, user['UserName']])
             else:
                 for group in groups:
-                    lists.append([ns, group['GroupName'], user['UserName']])
-
-    print(len(lists))
-    print(lists)
+                    lists.append([account_id,ns, group['GroupName'], user['UserName']])
 
     with open(path, 'w', newline='') as outfile:
         writer = csv.writer(outfile)
@@ -74,7 +52,6 @@ def lambda_handler(event, context):
     bucket.upload_file(path, key)
 
     path = os.path.join(tmpdir, local_file_name2)
-    print(path)
     dashboards = list_dashboards(account_id, lambda_aws_region)
 
     for dashboard in dashboards:
@@ -90,8 +67,8 @@ def lambda_handler(event, context):
             additional_info = principal[-2]
             principal = principal[-1]
 
-            access.append(
-                [lambda_aws_region, 'dashboard', dashboard['Name'], dashboardid, ptype, principal, additional_info, actions])
+            access.append([account_id, lambda_aws_region, 'dashboard', dashboard['Name'],
+                            dashboardid, ptype, principal, additional_info, actions])
 
     datasets = list_datasets(account_id, lambda_aws_region)
 
@@ -110,23 +87,20 @@ def lambda_handler(event, context):
                 additional_info = principal[-2]
                 principal = principal[-1]
 
-                access.append(
-                    [lambda_aws_region, 'dataset', dataset['Name'], datasetid, ptype, principal, additional_info, actions])
+                access.append([account_id, lambda_aws_region, 'dataset', dataset['Name'],
+                                datasetid, ptype, principal, additional_info, actions])
 
     datasources = list_datasources(account_id, lambda_aws_region)
 
     for datasource in datasources:
-        print(datasource)
         if datasource['Name'] not in ['Business Review', 'People Overview', 'Sales Pipeline',
                                       'Web and Social Media Analytics']:
             datasourceid = datasource['DataSourceId']
             if 'DataSourceParameters' in datasource:
-                print(datasourceid)
                 try:
-                    response = describe_data_source_permissions(account_id, datasourceid, lambda_aws_region)
-                    print(response)
+                    response = describe_data_source_permissions(account_id, datasourceid,
+                                                                lambda_aws_region)
                     permissions = response['Permissions']
-                    print(permissions)
                     for principal in permissions:
                         actions = '|'.join(principal['Actions'])
                         principal = principal['Principal'].split("/")
@@ -135,8 +109,9 @@ def lambda_handler(event, context):
                         additional_info = principal[-2]
                         principal = principal[-1]
 
-                        access.append([lambda_aws_region, 'data_source', datasource['Name'], datasourceid, ptype, principal,
-                                       additional_info, actions])
+                        access.append([account_id, lambda_aws_region, 'data_source',
+                                        datasource['Name'], datasourceid, ptype, principal,
+                                        additional_info, actions])
                 except Exception as e:
                     pass
 
@@ -156,8 +131,8 @@ def lambda_handler(event, context):
                 additional_info = principal[-2]
                 principal = principal[-1]
 
-                access.append(
-                    [lambda_aws_region, 'analysis', analysis['Name'], analysisid, ptype, principal, additional_info, actions])
+                access.append([account_id, lambda_aws_region, 'analysis', analysis['Name'],
+                                analysisid, ptype, principal, additional_info, actions])
 
     themes = list_themes(account_id, lambda_aws_region)
     for theme in themes:
@@ -172,21 +147,16 @@ def lambda_handler(event, context):
                 ptype = ptype[-1]
                 additional_info = principal[-2]
                 principal = principal[-1]
+                access.append([account_id, lambda_aws_region, 'theme', theme['Name'],
+                                themeid, ptype, principal, additional_info, actions])
 
-                access.append(
-                    [lambda_aws_region, 'theme', theme['Name'], themeid, ptype, principal, additional_info,
-                     actions])
-
-    print(access)
     with open(path, 'w', newline='') as outfile:
         writer = csv.writer(outfile)
         for line in access:
             writer.writerow(line)
 
     # upload file from tmp to s3 key
-
     bucket.upload_file(path, key2)
-
 
 def list_group_memberships(
         group_name: str,
@@ -203,7 +173,6 @@ def list_group_memberships(
         aws_region=aws_region
     )
 
-
 def list_users(account_id, aws_region, ns) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_users",
@@ -212,7 +181,6 @@ def list_users(account_id, aws_region, ns) -> List[Dict[str, Any]]:
         account_id=account_id,
         aws_region=aws_region
     )
-
 
 def _list(
         func_name: str,
@@ -231,7 +199,6 @@ def _list(
         result += response[attr_name]
     return result
 
-
 def list_groups(
         account_id, aws_region, ns
 ) -> List[Dict[str, Any]]:
@@ -243,7 +210,6 @@ def list_groups(
         aws_region=aws_region
     )
 
-
 def list_user_groups(UserName, account_id, aws_region, ns) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_user_groups",
@@ -254,7 +220,6 @@ def list_user_groups(UserName, account_id, aws_region, ns) -> List[Dict[str, Any
         aws_region=aws_region
     )
 
-
 def list_namespaces(
         account_id, aws_region
 ) -> List[Dict[str, Any]]:
@@ -264,7 +229,6 @@ def list_namespaces(
         account_id=account_id,
         aws_region=aws_region
     )
-
 
 def list_dashboards(
         account_id,
@@ -334,7 +298,6 @@ def list_datasets(
         aws_region=aws_region
     )
 
-
 def list_datasources(
         account_id,
         aws_region
@@ -346,21 +309,18 @@ def list_datasources(
         aws_region=aws_region
     )
 
-
-def describe_data_set_permissions(account_id, datasetid, aws_region):
+def describe_data_set_permissions(account_id, dataset_id, aws_region):
     qs_client = boto3.client('quicksight', region_name=aws_region)
     res = qs_client.describe_data_set_permissions(
         AwsAccountId=account_id,
-        DataSetId=datasetid
+        DataSetId=dataset_id
     )
     return res
 
-
-def describe_data_source_permissions(account_id, DataSourceId, aws_region):
+def describe_data_source_permissions(account_id, data_source_id, aws_region):
     qs_client = boto3.client('quicksight', region_name=aws_region)
     res = qs_client.describe_data_source_permissions(
         AwsAccountId=account_id,
-        DataSourceId=DataSourceId
+        DataSourceId=data_source_id
     )
     return res
-

@@ -6,7 +6,7 @@ with open("README.md") as fp:
 
 
 setuptools.setup(
-    name="administrative_dashboard",
+    name="test",
     version="0.0.1",
 
     description="An empty CDK Python app",
@@ -15,11 +15,11 @@ setuptools.setup(
 
     author="author",
 
-    package_dir={"": "administrative_dashboard"},
-    packages=setuptools.find_packages(where="administrative_dashboard"),
+    package_dir={"": "test"},
+    packages=setuptools.find_packages(where="test"),
 
     install_requires=[
-        "aws-cdk.core==1.72.0",
+        "aws-cdk.core==1.75.0",
     ],
 
     python_requires=">=3.6",

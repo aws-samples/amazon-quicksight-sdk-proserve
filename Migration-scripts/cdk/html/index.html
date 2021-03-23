@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="shortcut icon"
+        href="https://d758cqe2bs24d.cloudfront.net/images/quick_sight_default.6ca85d52df472e94c5cf5fae9c28459e.14.svg"
+        type="image/x-icon">
+    <script type="text/javascript"
+        src="https://unpkg.com/amazon-quicksight-embedding-sdk@1.0.6/dist/quicksight-embedding-js-sdk.min.js"></script>
+    <title>Active Dashboards</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.517.0.min.js"></script>
+    <script>
+
+        if (location.search == "") {
+            var params = [
+                "dashboardName=ActiveDashboards"
+            ];
+
+            window.location.href =
+                "https://" +
+                window.location.host +
+                window.location.pathname +
+                '?' + params.join('&');
+        }
+
+        function getParameterValues(param) {
+            var url = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for (var i = 0; i < url.length; i++) {
+                var urlparam = url[i].split('=');
+                if (urlparam[0].toLowerCase() === param) {
+                    return decodeURIComponent(urlparam[1]);
+                }
+            }
+        }
+
+        function pocBtnClick() {
+            const apiGatewayUrl = 'https://APIID.execute-api.us-east-1.amazonaws.com/prod';
+
+            var source_account_id = $("#source_account_id").val(),
+                source_region = $("#source_region").val(),
+                target_account_id = $("#target_account_id").val(),
+                target_region = $("#target_region").val(),
+                migration_type = $("#migration_type").val(),
+                migration_resource = $("#migration_resource").val(),
+                migration_items = $("#migration_items").val();
+
+            $.ajax({
+                method: 'POST',
+                url: apiGatewayUrl,
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    'source_account_id': source_account_id,
+                    'source_region': source_region,
+                    'target_account_id': target_account_id,
+                    'target_region': target_region,
+                    'migration_type': migration_type,
+                    'migration_resource': migration_resource,
+                    'migration_items': migration_items
+                }),
+                success: function (res) {
+                    $('#form-response').html('<div class="alert alert-info" role="alert">Migration request submitted</div>');
+                },
+                error: function () {
+                    $('#form-response').html('<div class="alert alert-info" role="alert">Migration request failed</div>');
+                }
+            });
+        }
+
+        function selectChanged() {
+            var x = document.getElementById("migration_type").value;
+            document.getElementById("migration_resource").disabled = (x == 'BATCH');
+            document.getElementById("migration_items").disabled = (x == 'BATCH');
+        }
+
+        $(document).ready(function () {
+            var dashboardNameParam = getParameterValues('dashboardname');
+
+            var awsData = {
+                dashboardName: dashboardNameParam,
+                apiGatewayUrl: 'https://APIID.execute-api.us-east-1.amazonaws.com/prod/embedurl?'
+            }
+            embedDashboardQuickSightAuthenticated(awsData);
+
+            function onVisualLoaded() {
+                console.log("Dashboard fully loaded");
+            }
+
+            function onError() {
+                var div = document.getElementById("errorContainer");
+                div.innerHTML = "Please switch to incognito mode if you are having trouble accessing the dashboard. We are working on this issue.";
+            }
+
+            function embedDashboard(embedUrl) {
+                let scrollHeight = Math.max(
+                    document.body.scrollHeight, document.documentElement.scrollHeight,
+                    document.body.offsetHeight, document.documentElement.offsetHeight,
+                    document.body.clientHeight, document.documentElement.clientHeight
+                );
+                var iFrameHeight = scrollHeight - 70; // to get rid of the extra scroll bar on the side
+                var containerDiv = document.getElementById("dashboardContainer");
+                var params = {
+                    url: embedUrl,
+                    container: containerDiv,
+                    height: iFrameHeight,
+                    className: "iframe-container",
+                    locale: "en-US"
+                };
+                var dashboard = QuickSightEmbedding.embedDashboard(params);
+                dashboard.on('error', onError);
+                dashboard.on('load', onVisualLoaded);
+                selectChanged();
+            }
+
+            function embedDashboardQuickSightAuthenticated(awsData) {
+                apiGatewayGetDashboardEmbedUrl(
+                    awsData.apiGatewayUrl,
+                    awsData.dashboardName
+                );
+            }
+
+            function apiGatewayGetDashboardEmbedUrl(
+                apiGatewayUrl,
+                dashboardName
+            ) {
+                const parameters = {
+                    dashboardName: dashboardName
+                }
+
+                const myQueryString = $.param(parameters);
+                apiGatewayUrl = apiGatewayUrl + myQueryString;
+
+                $.ajax({
+                    url: apiGatewayUrl,
+                    contentType: 'application/json',
+                    method: 'GET',
+                    success: function (data) {
+                        document.getElementsByClassName("loading-icon")[0].style.display = "none";
+                        embedDashboard(data.EmbedUrl);
+                    },
+                    error: function (data) {
+                        document.getElementsByClassName("loading-icon")[0].style.display = "none";
+                        console.log('Error obtaining QuickSight dashboard embed url.');
+                    }
+                });
+            }
+        });
+
+    </script>
+
+    <style>
+        body {
+            margin: 0px;
+        }
+
+        .header {
+            height: 60px;
+            background: #103C4C;
+        }
+
+        .footer {
+            height: 60px;
+            background: #103C4C;
+        }
+
+        .icon-quick-sight-img {
+            min-width: 36px;
+            min-height: 36px;
+            width: 36px;
+            height: 36px;
+            padding: 11px 0px 11px 17px;
+            float: left;
+        }
+
+        .brandname-quick-sight {
+            padding-left: 6px;
+            font-size: 24px;
+            display: block;
+            color: #00B7F4;
+            float: left;
+            font-family: "Helvetica Neue", "Segoe UI", Roboto, Helvetica, Arial, Tahoma, Verdana, sans-serif;
+            line-height: 50px;
+            font-weight: 400;
+            text-align: center;
+            white-space: nowrap;
+            padding-top: 5px;
+        }
+
+        .migration {
+            padding-left: 6px;
+            padding-right: 6px;
+            font-size: 24px;
+            display: block;
+            color: #00B7F4;
+            background: #01384d;
+            float: left;
+            font-family: "Helvetica Neue", "Segoe UI", Roboto, Helvetica, Arial, Tahoma, Verdana, sans-serif;
+            line-height: 50px;
+            font-weight: 400;
+            text-align: center;
+            white-space: nowrap;
+            padding-bottom: 5px;
+            border-right: 2px solid #e15500;
+        }
+
+        .header-section {
+            box-sizing: border-box;
+            display: inline-block;
+            padding-left: 6px;
+        }
+
+        .header-section-left {
+            width: 200px;
+            float: left;
+        }
+
+        .header-section-right {
+            float: right;
+        }
+
+        .header:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .footer-section {
+            box-sizing: border-box;
+            display: inline-block;
+            padding-left: 6px;
+        }
+
+        .footer-section-left {
+            width: 200px;
+            float: left;
+        }
+
+        .footer-section-right {
+            float: right;
+        }
+
+        .footer:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .pocBtn {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .pocBtn-inner {
+            font-size: 14px;
+            line-height: 1.6;
+            font-weight: 400;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 3px;
+            border-color: #e76d0c #e15500 #e15500;
+            text-shadow: rgba(0, 0, 0, .05) 0 1px 0;
+            background-color: #ec7211;
+            background-image: linear-gradient(180deg, #f67c1b 0, #e15500);
+            box-shadow: inset 0 1px 0 hsla(0, 0%, 100%, .2);
+            margin: 17px;
+            padding-left: 20px;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .iframe-container {
+            border: none;
+        }
+
+        .loading-icon {
+            background-size: contain;
+            height: 40px;
+            width: 40px;
+            margin: auto;
+            overflow: hidden;
+            position: relative;
+            margin-top: 50px;
+        }
+
+        .loading-bar {
+            position: absolute;
+            height: 40px;
+            width: 6px;
+            animation: loading-icon-animation 1.23s infinite;
+            animation-timing-function: cubic-bezier(0.785, 0.135, 0.150, 0.860);
+            transform: translateY(100%);
+            background-color: rgb(33, 159, 215);
+        }
+
+        .loading-icon .loading-bar:nth-child(1) {
+            left: 0;
+            animation-delay: 0.08s;
+        }
+
+        .loading-icon .loading-bar:nth-child(2) {
+            left: 8px;
+            animation-delay: 0.16s;
+        }
+
+        .loading-icon .loading-bar:nth-child(3) {
+            left: 16px;
+            animation-delay: 0.24s;
+        }
+
+        .loading-icon .loading-bar:nth-child(4) {
+            left: 24px;
+            animation-delay: 0.32s;
+        }
+
+        .loading-icon .loading-bar:nth-child(5) {
+            left: 32px;
+            animation-delay: 0.40s;
+        }
+
+        @keyframes loading-icon-animation {
+            0% {
+                transform: translateY(100%);
+            }
+
+            7% {
+                transform: translateY(100%);
+            }
+
+            37% {
+                transform: translateY(0%);
+            }
+
+            50% {
+                transform: translateY(0%);
+            }
+
+            80% {
+                transform: translateY(100%);
+            }
+
+            100% {
+                transform: translateY(100%);
+            }
+        }
+
+        /* STARTING NEW HERE */
+        /* Style the form - display items horizontally */
+        .form-inline {
+            display: flex;
+            flex-flow: row wrap;
+            align-items: center;
+            color: #00B7F4;
+        }
+        
+        /* Add some margins for each label */
+        .form-inline label {
+            margin: 5px 10px 5px;
+        }
+        
+        /* Style the input fields */
+        .form-inline input {
+            vertical-align: middle;
+            margin: 5px 10px 5px 0;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+        
+        /* Add responsiveness - display the form controls vertically instead of horizontally on screens that are less than 800px wide */
+        @media (max-width: 800px) {
+            .form-inline input {
+            margin: 10px 0;
+            }
+        
+            .form-inline {
+            flex-direction: column;
+            align-items: stretch;
+            }
+        } 
+
+    </style>
+</head>
+
+<body onload="">
+    <div id="container">
+        <div class="header">
+            <div class="header-section header-section-left">
+                <div class="brandname-quick-sight">Active Dashboards</div>
+            </div>
+        </div>
+        <div class='loading-icon'>
+            <div class='loading-bar'></div>
+            <div class='loading-bar'></div>
+            <div class='loading-bar'></div>
+            <div class='loading-bar'></div>
+            <div class='loading-bar'></div>
+        </div>
+
+        <div id="dashboardContainer"></div>
+        <div id="errorContainer"></div>
+        <div class="footer">
+            <div class="footer-section footer-section-left">
+                <div class="migration">Migration Tool</div>
+            </div>
+
+            <form class="form-inline">
+                <label for="migration_type">Migration Type:</label>
+                <select id="migration_type" onChange="selectChanged()">
+                    <option value="INCREMENTAL">Incremental</option>
+                    <option value="BATCH" selected>Batch</option>
+                </select>
+                <label for="source_account_id">Source Account ID:</label>
+                <input type="text" id="source_account_id" placeholder="Source Account ID" name="source_account_id">
+                <label for="source_region">Source Region:</label>
+                <input type="text" id="source_region" placeholder="Source Region" name="source_region">
+                <label for="target_account_id">Target Account ID:</label>
+                <input type="text" id="target_account_id" placeholder="Target Account ID" name="target_account_id">
+                <label for="target_region">Target Region:</label>
+                <input type="text" id="target_region" placeholder="Target Region" name="target_region">
+                <label for="migration_resource">Migration Resource:</label>
+                <select id="migration_resource">
+                    <option value="analysis">Analysis</option>
+                    <option value="dashboard">Dashboard</option>
+                    <option value="theme">Theme</option>
+                </select>
+                <label for="migration_items">Migration Items:</label>
+                <input type="migration_items" id="migration_items" placeholder="item1, item2" name="migration_items">
+                <a class="pocBtn" onclick="pocBtnClick();">
+                    <input type="button" class="pocBtn-inner" value="Submit" />
+                </a>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

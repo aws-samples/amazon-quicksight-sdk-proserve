@@ -22,7 +22,7 @@ def describe_user(username, account_id, aws_region):
     res = qs_client.describe_user(
         UserName=username,
         AwsAccountId=account_id,
-        Namespace='gademo'
+        Namespace='default'
     )
     return res
 
@@ -32,7 +32,7 @@ def delete_user(username, account_id, aws_region):
     res = qs_client.delete_user(
         UserName=username,
         AwsAccountId=account_id,
-        Namespace='gademo'
+        Namespace='default'
     )
     return res
 
@@ -42,7 +42,7 @@ def create_group(userrole, account_id, aws_region):
     res = qs_client.create_group(
         GroupName=userrole,
         AwsAccountId=account_id,
-        Namespace='gademo'
+        Namespace='default'
     )
     return res
 
@@ -53,7 +53,7 @@ def create_group_membership(username, userrole, account_id, aws_region):
         MemberName=username,
         GroupName=userrole,
         AwsAccountId=account_id,
-        Namespace='gademo'
+        Namespace='default'
     )
     return res
 
@@ -114,7 +114,7 @@ def list_groups(
     return _list(
         func_name="list_groups",
         attr_name="GroupList",
-        Namespace='gademo',
+        Namespace='default',
         account_id=account_id,
         aws_region=aws_region
     )
@@ -123,7 +123,7 @@ def list_group_memberships(
         group_name: str,
         account_id: str,
         aws_region: str,
-        namespace: str = "gademo"
+        namespace: str = "default"
 ) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_group_memberships",
@@ -138,7 +138,7 @@ def list_users(account_id, aws_region) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_users",
         attr_name="UserList",
-        Namespace='gademo',
+        Namespace='default',
         account_id=account_id,
         aws_region=aws_region
     )
