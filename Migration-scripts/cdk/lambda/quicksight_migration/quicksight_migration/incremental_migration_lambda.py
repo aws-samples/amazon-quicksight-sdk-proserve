@@ -359,7 +359,7 @@ def migrate(
                     )
                     continue
 
-        dataset = qs_utils.data_sets(targetsession)
+        datasets = qs_utils.data_sets(targetsession)
         template = source_template['Template']
         dsref = []
         missing = False
