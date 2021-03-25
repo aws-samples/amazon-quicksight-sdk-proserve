@@ -20,7 +20,7 @@ def lambda_handler(event, context):
 
     # call s3 bucket
     s3 = boto3.resource('s3')
-    bucketname = 'admin-console' + account_id
+    bucketname = 'quicksight-dash-' + account_id
     bucket = s3.Bucket(bucketname)
 
     key = 'monitoring/quicksight/group_membership/group_membership.csv'
