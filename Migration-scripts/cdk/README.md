@@ -116,7 +116,27 @@ ___
 
 Update self.central_account_id = "123456789123" with the central account ID.
 
-Update the `/infra/config` Systems Manager parameter with the values of your existing Amazon Redshift or RDS clusters. Set redshiftPassword and rdsPassword to the name of the secret found in Secrets Manager for these resources.
+Update the `/infra/config` Systems Manager parameter found in `infra_target_account_stack.py` file with the values of your existing Amazon Redshift or RDS clusters. Set redshiftPassword and rdsPassword to the name of the secret found in Secrets Manager for these resources.
+
+For example:
+
+```python
+def to_dict(self):
+    config={}
+    config['vpcId'] = 'vpc-0b13eb0989c8de79f'
+    config['redshiftUsername'] = 'admin'
+    config['redshiftPassword'] = 'redshift-secret-name-here'
+    config['redshiftClusterId'] = 'test-redshift-cluster'
+    config['redshiftHost'] = 'test-redshift-cluster-1fsoudi1bunb6.c6mqlnbwke57.us-east-1.redshift.amazonaws.com'
+    config['redshiftDB'] = 'test'
+    config['rdsUsername'] = 'admin'
+    config['rdsPassword'] = 'rds-secrent-name-here'
+    config['rdsClusterId'] = 'test-rds-cluster-socet72ltstg'
+    config['namespace'] = 'default'
+    config['version'] = '1'
+```
+
+Deploy the target account stack:
 
 ```bash
 export CDK_DEPLOY_ACCOUNT=TARGET_ACCOUNT_ID
@@ -131,7 +151,7 @@ Optionally, the optional-infra-stack deploys test Amazon Redshift and Amazon Rel
 cdk deploy optional-infra-target-account-stack
 ```
 
-If OptionalInfraTargetAccountStack was deployed, update the `/infra/config` Systems Manager parameter with the values of your existing Amazon Redshift or RDS clusters. Set `redshiftPassword` and `rdsPassword` to the name of the secret found in Secrets Manager for these resources.
+If OptionalInfraTargetAccountStack was deployed, update the `/infra/config` Systems Manager parameter with the values of the newly created Amazon Redshift or RDS clusters. All values are provided as CloudFormation outputs.
 
 ___
 
