@@ -1,61 +1,150 @@
-
 # BIOps: QuickSight Objects Migration and Version Control
 
-Please refer to the AWS blogpost.
+Please refer to the AWS blogpost BIOps: QuickSight Objects Migration and Version Control for a complete walk-through.
 
+## Prerequisites
 
-## CDK Instructions
+For this walk-through, you should have the following prerequisites:
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+- Access to the following AWS services:
+    - API Gateway
+    - Amazon Athena
+    - Lambda
+    - QuickSight
+    - Amazon SQS
+    - Amazon S3
+- Two different QuickSight accounts, such as development and production
+- Basic knowledge of Python
+- Basic AWS SDK knowledge
+- Git and NPM installed
+- CDK installed, see AWS CDK Intro Workshop: Python Workshop.
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+___
 
-To manually create a virtualenv on MacOS and Linux:
+### Setup your environment
 
-```
-$ python3 -m venv .venv
-```
-
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
-
-```
-$ source .venv/bin/activate
-```
-
-If you are a Windows platform, you would activate the virtualenv like this:
-
-```
-% .venv\Scripts\activate.bat
+```bash
+cd ~/amazon-quicksight-sdk-proserve/Migration-scripts/cdk/
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Once the virtualenv is activated, you can install the required dependencies.
+___
 
+### Deploy to central account
+
+#### Deploy QuickSight Status and Migration stacks
+
+```bash
+export CDK_DEPLOY_ACCOUNT=CENTRAL_ACCOUNT_ID
+export CDK_DEPLOY_REGION=CENTRAL_REGION
+cdk bootstrap aws://CENTRAL_ACCOUNT_ID/TARGET_REGION
+cdk deploy quicksight-status-stack quicksight-migration-stack
 ```
-$ pip install -r requirements.txt
+
+Note down the API Gateway endpoint from the output for a future step.
+
+#### Create a dashboard
+
+In the central account, you can run the following SQL query to create two Athena tables (group_membership and object_access):
+
+```sql
+CREATE EXTERNAL TABLE `group_membership`(
+`namespace` string,   
+`group` string, 
+`user` string)
+ROW FORMAT DELIMITED 
+FIELDS TERMINATED BY ',' 
+STORED AS INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION 's3://quicksight-dash-<CENTRAL_ACCOUNT_ID>/monitoring/quicksight/group_membership/'
+TBLPROPERTIES (
+'areColumnsQuoted'='false', 
+'classification'='csv', 
+'columnsOrdered'='true', 
+'compressionType'='none', 
+'delimiter'=',',
+'typeOfData'='file')
+
+CREATE EXTERNAL TABLE `object_access`(
+`aws_region` string,   
+`object_type` string, 
+`object_name` string,
+`object_id` string,
+`principal_type` string,
+`principal_name` string,
+`namespace` string,
+`permissions` string)
+ROW FORMAT DELIMITED 
+FIELDS TERMINATED BY ',' 
+STORED AS INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat' OUTPUTFORMAT   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+'s3://quicksight-dash-<CENTRAL_ACCOUNT_ID>/monitoring/quicksight/object_access/'
+TBLPROPERTIES (
+'areColumnsQuoted'='false', 
+'classification'='csv', 
+'columnsOrdered'='true', 
+'compressionType'='none', 
+  'delimiter'=',',
+  'typeOfData'='file')
 ```
 
-At this point you can now synthesize the CloudFormation template for this code.
+You can create a SPICE dataset in QuickSight with the two new Athena tables joined, and then, create a dashboard based on this dataset. You can refer to Using administrative dashboards for a centralized view of Amazon QuickSight objects for the detail.
 
+#### Deploy QuickSight Embed stack
+
+Update `DASHBOARD_ID` in `quicksight_embed_stack.py` file with the dashboard ID that you’ve just created above with the two joined Athena tables.
+
+**Note:** For this POC, the `quicksight-embed-stack` creates a S3 public bucket to host the sample embedded QuickSight dashboard.
+
+```bash
+cdk deploy quicksight-embed-stack
 ```
-$ cdk synth
+
+In the `html/index.html` file, update the following `APIID` to the output value from QuicksightMigrationStack deployment step and QuicksightEmbedStack, then upload it to the S3 bucket (quicksight-embed-CENTRAL_ACCOUNT_ID) created by this stack:
+
+- APIID of the embed URL endpoint – apiGatewayUrl: 'https://APIID.execute-api.us-east-1.amazonaws.com/prod/embedurl?'
+- APIID of the migration endpoint – const apiGatewayUrl = 'https://APIID.execute-api.us-east-1.amazonaws.com/prod';
+
+___
+
+### Deploy to the target account(s)
+
+**InfraTargetAccountStack** – Deploys an IAM role that can be assumed by the migration Lambda role. This stack should also be deployed to any target accounts that contain QuickSight resources.
+
+**OptionalInfraTargetAccountStack** – Deploys Amazon Virtual Private Cloud (Amazon VPC), an Amazon Redshift cluster, and an Amazon Aurora cluster. This stack is optional and can be ignored if you have existing infrastructure for this POC. 
+
+Update self.central_account_id = "123456789123" with the central account ID.
+
+Update the `/infra/config` Systems Manager parameter with the values of your existing Amazon Redshift or RDS clusters. Set redshiftPassword and rdsPassword to the name of the secret found in Secrets Manager for these resources.
+
+```bash
+export CDK_DEPLOY_ACCOUNT=TARGET_ACCOUNT_ID
+export CDK_DEPLOY_REGION=TARGET_REGION
+cdk bootstrap aws://TARGET_ACCOUNT_ID/TARGET_REGION
+cdk deploy infra-target-account-stack
 ```
 
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
+Optionally, the optional-infra-stack deploys test Amazon Redshift and Amazon Relational Database Service (Amazon RDS) clusters in the target accounts:
 
-## Useful commands
+```bash
+cdk deploy optional-infra-target-account-stack
+```
 
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
+If OptionalInfraTargetAccountStack was deployed, update the `/infra/config` Systems Manager parameter with the values of your existing Amazon Redshift or RDS clusters. Set `redshiftPassword` and `rdsPassword` to the name of the secret found in Secrets Manager for these resources.
 
-Enjoy!
+___
+
+### Cleanup
+
+#### Central account
+
+```bash
+cdk destroy quicksight-status-stack quicksight-migration-stack quicksight-embed-stack
+```
+
+#### Target account
+
+```bash
+cdk destroy infra-target-account-stack optional-infra-target-account-stack
+```
