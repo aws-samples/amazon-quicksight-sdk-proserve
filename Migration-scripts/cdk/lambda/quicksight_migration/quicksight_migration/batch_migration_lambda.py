@@ -27,7 +27,8 @@ def migrate(
     newsourceslist = []
     datasource_failed = []
     for datasource in datasources:
-        if datasource['DataSourceId'] not in already_migrated and ['DataSourceParameters', 'TIMESTREAM'] in datasource:
+        if (datasource['DataSourceId'] not in already_migrated and
+            'DataSourceParameters' in datasource or datasource['Type']=='TIMESTREAM'):
             newdsource = qs_utils.create_data_source(datasource, targetsession, target)
             if 'Error' in newdsource:
                 datasource_failed.append(newdsource)
