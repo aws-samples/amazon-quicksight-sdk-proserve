@@ -24,8 +24,7 @@ class QuicksightEmbedStack(core.Stack):
         self.website_bucket = s3.Bucket(
             self, "qs-embed-bucket",
             bucket_name=f'quicksight-embed-{core.Aws.ACCOUNT_ID}',
-            website_index_document="index.html",
-            public_read_access=True
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL
         )
 
         self.quicksight_embed_lambda_role = iam.Role(
@@ -200,7 +199,7 @@ class QuicksightEmbedStack(core.Stack):
             runtime=_lambda.Runtime.NODEJS_10_X,
             code=_lambda.Code.from_asset(os.path.join(self.current_dir,
                                                         '../lambda/embed_auth/')),
-            function_name='embed_auth_lambda2',
+            function_name='embed_auth_lambda',
             role=self.embed_auth_lambda_role,
             timeout=core.Duration.seconds(5),
             memory_size=128
@@ -224,5 +223,6 @@ class QuicksightEmbedStack(core.Stack):
         )
 
         core.CfnOutput(self, "embed-dist-url",
-                        value="https://"+self.embed_auth_dist.distribution_domain_name,
-                        description="CloudFront Distribution URL")
+            value="https://"+self.embed_auth_dist.distribution_domain_name,
+            description="CloudFront Distribution URL"
+        )
