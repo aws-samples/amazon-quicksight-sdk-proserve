@@ -135,8 +135,9 @@
                     contentType: 'application/json',
                     method: 'GET',
                     success: function (data) {
+                        var body = JSON.parse(data.body)
                         document.getElementsByClassName("loading-icon")[0].style.display = "none";
-                        embedDashboard(data.EmbedUrl);
+                        embedDashboard(body.EmbedUrl);
                     },
                     error: function (data) {
                         document.getElementsByClassName("loading-icon")[0].style.display = "none";
