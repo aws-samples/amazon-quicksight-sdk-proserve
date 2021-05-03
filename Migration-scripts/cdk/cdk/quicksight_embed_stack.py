@@ -210,7 +210,7 @@ class QuicksightEmbedStack(core.Stack):
             enabled=True,
             default_root_object="index.html",
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3Origin(self.bucket),
+                origin=origins.S3Origin(self.website_bucket),
                 allowed_methods= cloudfront.AllowedMethods.ALLOW_GET_HEAD,
                 edge_lambdas=[
                     {
