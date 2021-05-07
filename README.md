@@ -1,4 +1,4 @@
-## Amazon quicksight sdk proserve
+## Amazon QuickSight SDK by AWS Pro-Serve
 
 1. Ingest Excel data automatically into Amazon QuickSight
 2. Migration Scripts
