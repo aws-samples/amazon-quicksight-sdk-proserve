@@ -75,7 +75,7 @@ def lambda_handler(event, context):
     rdscredential = {
         'CredentialPair': {
             'Username': infra_details['rdsUsername'],
-            'Password': redshift_password
+            'Password': rds_password
         }
     }
     redshift = {
@@ -86,7 +86,7 @@ def lambda_handler(event, context):
     redshiftcredential = {
         'CredentialPair': {
             'Username': infra_details['redshiftUsername'],
-            'Password': rds_password
+            'Password': redshift_password
         }
     }
     namespace = infra_details['namespace']

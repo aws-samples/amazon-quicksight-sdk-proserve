@@ -48,16 +48,6 @@ class QuicksightEmbedStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "sts:AssumeRole",
-                                "iam:ListRoles"
-                            ],
-                            resources=[
-                                "arn:aws:iam::*:role/quicksight-migration-*-assume-role"
-                            ]
-                        ),
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            actions=[
                                 "secrets:GetSecretValue"
                             ],
                             resources=[

@@ -36,8 +36,17 @@ class InfraTargetAccountStack(core.Stack):
                             actions=[
                                 "ssm:GetParameter",
                             ],
-                            resources=["arn:aws:ssm:*:*:parameter/infra/config"]
-                        )
+                            resources=[f"arn:aws:ssm:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:parameter/infra/config"]
+                        ),
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                "secretsmanager:GetSecretValue"
+                            ],
+                            resources=[
+                                f"arn:aws:secretsmanager:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:secret:*"
+                            ]
+                        ),
                     ]
                 )
             }
