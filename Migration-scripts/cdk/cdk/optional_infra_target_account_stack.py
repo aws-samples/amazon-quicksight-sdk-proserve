@@ -46,6 +46,32 @@ class OptionalInfraTargetAccountStack(core.Stack):
             )
         )
 
+        self.rs_security_group = ec2.SecurityGroup(
+            self, "redshift-sg",
+            vpc=self.vpc,
+            allow_all_outbound=False,
+            description="Redshift SG"
+        )
+
+        self.rs_security_group.add_ingress_rule(
+            self.rs_security_group,
+            ec2.Port.all_tcp(),
+            'Redshift-basic'
+        )
+
+        self.rs_security_group.add_ingress_rule(
+            # https://docs.aws.amazon.com/quicksight/latest/user/regions.html
+            ec2.Peer.ipv4('52.23.63.224/27'),
+            ec2.Port.tcp(5439),
+            'QuickSight-basic'
+        )
+
+        self.rs_security_group.add_egress_rule(
+            self.rs_security_group,
+            ec2.Port.all_tcp(),
+            'Allow outbound for QuickSight'
+        )
+
         self.redshift_cluster = redshift.Cluster(self, "datasource-redshift",
             master_user=redshift.Login(
                 master_username="admin",
@@ -54,7 +80,8 @@ class OptionalInfraTargetAccountStack(core.Stack):
             vpc=self.vpc,
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.ISOLATED
-            )
+            ),
+            security_groups=[self.rs_security_group]
         )
 
         self.rds_secret = secrets.Secret(self,'rds-admin',

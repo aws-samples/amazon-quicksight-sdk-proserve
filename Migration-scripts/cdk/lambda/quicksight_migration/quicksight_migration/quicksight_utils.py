@@ -60,8 +60,7 @@ def get_secret(session, secret_name):
         # one of these fields will be populated.
         if 'SecretString' in get_secret_value_response:
             secret = json.loads(get_secret_value_response['SecretString'])
-            return secret
-            #return secret['username'], secret['password']
+            return secret['password']
         else:
             decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
             return decoded_binary_secret
@@ -901,6 +900,9 @@ def update_template_permission(session, template_id, principal):
     qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
+
+    target_account_id = principal.split("/")[0].split(":")[-2]
+    principal = f"arn:aws:iam::{target_account_id}:root"
 
     try:
         response = qs_client.update_template_permissions(
