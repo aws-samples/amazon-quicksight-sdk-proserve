@@ -1,0 +1,182 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {},
+    "Resources": {
+        "QuickSightAdminConsole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "QuickSightAdminConsole",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Policies": [
+                    {
+                        "PolicyName": "QuickSight-AdminConsole",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "iam:*",
+                                        "quicksight:*",
+                                        "lambda:*",
+                                        "ds:*",
+                                        "logs:*",
+                                        "cloudwatch:*",
+                                        "s3:*",
+                                        "cloudfront:*",
+                                        "apigateway:*",
+                                        "sts:AssumeRole"
+                                    ],
+                                    "Resource": "*",
+                                    "Effect": "Allow"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "137f8de2-0d45-4490-a6a7-04356c185c4a"
+                }
+            }
+        },
+        "adminconsole": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "AccessControl": "Private",
+                "BucketName": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "admin-console",
+                            {
+                                "Ref": "AWS::AccountId"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "494a8dba-26e5-4efa-93ea-d49a84c99390"
+                }
+            }
+        },
+        "adminconsoledataprepare": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Description": "admin console dataprepare lambda function",
+                "Environment": {
+                    "Variables": {
+                        "aws_region": {
+                            "Ref": "AWS::Region"
+                        }
+                    }
+                },
+                "Handler": "data_prepare.lambda_handler",
+                "Runtime": "python3.7",
+                "FunctionName": "data_prepare",
+                "MemorySize": 512,
+                "Timeout": 900,
+                "Role": {
+                    "Fn::GetAtt": [
+                        "QuickSightAdminConsole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                    "S3Bucket": "admin-console-cfn-dataprepare-code",
+                    "S3Key": "data_prepare.zip"
+                }
+            },
+            "DependsOn": [
+                "adminconsole"
+            ],
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "c4462e36-ef27-43d6-a0df-01246a77b117"
+                }
+            }
+        },
+        "adminconsolehourlyschedule": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+                "Description": "CloudWatch rule to run lambda every hour",
+                "Name": "admin-console-every-hour",
+                "ScheduleExpression": "cron(0 * * * ? *)",
+                "State": "ENABLED",
+                "Targets": [
+                    {
+                        "Arn": {
+                            "Fn::GetAtt": [
+                                "adminconsoledataprepare",
+                                "Arn"
+                            ]
+                        },
+                        "Id": "Target0"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "2d875ca8-973f-4c0c-8455-1f15eb588bdb"
+                }
+            }
+        },
+        "adminconsolehourlyscheduledataprepare": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "adminconsoledataprepare",
+                        "Arn"
+                    ]
+                },
+                "Principal": "events.amazonaws.com",
+                "SourceArn": {
+                    "Fn::GetAtt": [
+                        "adminconsolehourlyschedule",
+                        "Arn"
+                    ]
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "a59461e8-9fcb-415c-b8a0-0f21f2b4e38b"
+                }
+            }
+        }
+    },
+    "Outputs" : {
+  "groupmembership" : {
+    "Description": "The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack",
+    "Value" : {"Fn::Sub": "s3://admin-console${AWS::AccountId}/monitoring/quicksight/group_membership"}
+  },
+  "objectaccess" : {
+    "Description": "The s3 location of object_access.csv for you to utilize in next Athena tables creation stack",
+    "Value" : {"Fn::Sub": "s3://admin-console${AWS::AccountId}/monitoring/quicksight/object_access"}
+  },
+  "cloudtraillogtablename" : {
+    "Description": "The table name of cloudtrail log for you to utilize in next Athena tables creation stack",
+    "Value" : "cloudtrail_logs"
+  },
+   "cloudtraillog" : {
+    "Description": "The s3 location of cloudtrail log for you to utilize in next Athena tables creation stack",
+    "Value" : {"Fn::Sub": "s3://cloudtrail-awslogs-${AWS::AccountId}-do-not-delete/AWSLogs/${AWS::AccountId}/CloudTrail"}
+  }
+}
+}

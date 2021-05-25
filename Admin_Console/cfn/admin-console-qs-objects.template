@@ -1,0 +1,644 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "adminarn": {
+            "Type": "String",
+            "MinLength": 1,
+            "Description": "Enter arn of your quicksight admin. for exmple: arn:aws:quicksight:us-east-1:accountid:user/default/admin"
+        }
+    },
+    "Resources": {
+        "qsdatasource": {
+            "Type": "AWS::QuickSight::DataSource",
+            "Properties": {
+                "AwsAccountId": {
+                    "Ref": "AWS::AccountId"
+                },
+                "DataSourceId": "athena-admin-console",
+                "Name": "athena-admin-console",
+                "Permissions": [
+                    {
+                        "Actions": [
+                            "quicksight:UpdateDataSourcePermissions",
+                            "quicksight:DescribeDataSource",
+                            "quicksight:DescribeDataSourcePermissions",
+                            "quicksight:PassDataSource",
+                            "quicksight:UpdateDataSource",
+                            "quicksight:DeleteDataSource"
+                        ],
+                        "Principal": {
+                            "Ref": "adminarn"
+                        }
+                    }
+                ],
+                "SslProperties": {
+                    "DisableSsl": false
+                },
+                "DataSourceParameters": {
+                    "AthenaParameters": {
+                        "WorkGroup": "primary"
+                    }
+                },
+                "Type": "ATHENA"
+            },
+            "DeletionPolicy": "Retain",
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "58b157d0-c1d9-43a2-9e91-8025139547e8"
+                }
+            }
+        },
+        "AdminConsoleCFNMain": {
+            "Type": "AWS::QuickSight::DataSet",
+            "DependsOn": [
+                "qsdatasource"
+            ],
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AwsAccountId": {
+                    "Ref": "AWS::AccountId"
+                },
+                "DataSetId": "Admin-Console-CFN-Main",
+                "ImportMode": "SPICE",
+                "LogicalTableMap": {
+                    "Admin-Console-CFN-Main-logic": {
+                        "Alias": "CFN-Main",
+                        "DataTransforms": [
+                            {
+                                "CreateColumnsOperation": {
+                                    "Columns": [
+                                        {
+                                            "ColumnName": "Earliest Login",
+                                            "ColumnId": "earliest-login-admin-console",
+                                            "Expression": "parseDate(left(replace({firstlogin}, 'T', ' '),19), 'YYYY-MM-DD HH:mm:ss')"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "CreateColumnsOperation": {
+                                    "Columns": [
+                                        {
+                                            "ColumnName": "Latest Login",
+                                            "ColumnId": "latest-login-admin-console",
+                                            "Expression": "parseDate(left(replace({lastlogin}, 'T', ' '),19), 'YYYY-MM-DD HH:mm:ss')"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "ProjectOperation": {
+                                    "ProjectedColumns": [
+                                        "accountid",
+                                        "user_name",
+                                        "awsregion",
+                                        "dashboard_name",
+                                        "dashboardid",
+                                        "event_time",
+                                        "latest_event_time",
+                                        "namespace",
+                                        "group",
+                                        "email",
+                                        "role",
+                                        "identity_type",
+                                        "firstlogin",
+                                        "lastlogin",
+                                        "owner_viewer",
+                                        "ownership",
+                                        "Earliest Login",
+                                        "Latest Login"
+                                    ]
+                                }
+                            }
+                        ],
+                        "Source": {
+                            "PhysicalTableId": "Admin-Console-CFN-Main-physical"
+                        }
+                    }
+                },
+                "Name": "Admin-Console-CFN-Main",
+                "Permissions": [
+                    {
+                        "Principal": {
+                            "Ref": "adminarn"
+                        },
+                        "Actions": [
+                            "quicksight:UpdateDataSetPermissions",
+                            "quicksight:DescribeDataSet",
+                            "quicksight:DescribeDataSetPermissions",
+                            "quicksight:PassDataSet",
+                            "quicksight:DescribeIngestion",
+                            "quicksight:ListIngestions",
+                            "quicksight:UpdateDataSet",
+                            "quicksight:DeleteDataSet",
+                            "quicksight:CreateIngestion",
+                            "quicksight:CancelIngestion"
+                        ]
+                    }
+                ],
+                "PhysicalTableMap": {
+                    "Admin-Console-CFN-Main-physical": {
+                        "CustomSql": {
+                            "DataSourceArn": {
+                                "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-admin-console"
+                            },
+                            "Name": "CFN-Main",
+                            "SqlQuery": "SELECT\n     COALESCE(\"d\".\"accountid\", \"l\".\"accountid\") \"accountid\"\n   , COALESCE(\"d\".\"user_name\", \"l\".\"username\", \"g\".\"user\") \"user_name\"\n   , \"d\".\"awsregion\"\n   , \"d\".\"dashboard_name\"\n   , \"d\".\"dashboardid\"\n   , \"d\".\"event_time\"\n   , \"d\".\"latest_event_time\"\n   , \"g\".\"namespace\"\n   , \"g\".\"group\"\n   , \"g\".\"email\"\n   , \"g\".\"role\"\n   , \"g\".\"identity_type\"\n   , \"l\".\"firstlogin\"\n   , \"l\".\"lastlogin\"\n   , COALESCE(\"do1\".\"principal_name\", \"do2\".\"principal_name\") \"owner_viewer\"\n   , COALESCE(\"do1\".\"ownership\", \"do2\".\"ownership\") \"ownership\"\n   FROM\n     (((( (SELECT\n     \"useridentity\".\"accountid\"\n   , \"useridentity\".\"type\"\n   , \"split_part\"(\"useridentity\".\"sessioncontext\".\"sessionissuer\".\"arn\", '/', 2) \"assumed_role\"\n   , COALESCE(\"useridentity\".\"username\", \"concat\"(\"split_part\"(\"useridentity\".\"arn\", '/', 2), '/', \"split_part\"(\"useridentity\".\"arn\", '/', 3))) \"user_name\"\n   , \"awsregion\"\n   , \"split_part\"(\"split_part\"(\"serviceeventdetails\", 'dashboardName\":', 2), ',', 1) \"dashboard_name\"\n   , \"split_part\"(\"split_part\"(\"split_part\"(\"split_part\"(\"serviceeventdetails\", 'dashboardId\":', 2), ',', 1), 'dashboard/', 2), '\"}', 1) \"dashboardId\"\n   , \"date_parse\"(\"eventtime\", '%Y-%m-%dT%H:%i:%sZ') \"event_time\"\n   , \"max\"(\"date_parse\"(\"eventtime\", '%Y-%m-%dT%H:%i:%sZ')) \"latest_event_time\"\n   FROM\n     \"admin-console\".\"cloudtrail_logs\"\n   WHERE (((\"eventsource\" = 'quicksight.amazonaws.com') AND (\"eventname\" = 'GetDashboard')) AND (\"date_trunc\"('day', \"date_parse\"(\"eventtime\", '%Y-%m-%dT%H:%i:%sZ')) > CAST((current_date - INTERVAL  '3' MONTH) AS date)))\n   GROUP BY 1, 2, 3, 4, 5, 6, 7, 8) d\n   FULL JOIN (\n      SELECT\n        \"username\"\n      , \"accountid\"\n      , \"min\"(\"eventtime\") \"firstlogin\"\n      , \"max\"(\"eventtime\") \"lastlogin\"\n      FROM\n      (SELECT\n     \"eventtime\"\n   , \"awsregion\"\n   , \"sourceipaddress\"\n   , \"concat\"(\"split_part\"(\"split_part\"(\"resources\"[1].\"arn\", ':', 6), '/', 2), '/', \"useridentity\".\"username\") \"username\"\n   , \"resources\"[1].\"accountid\" \"accountid\"\n   FROM\n     \"admin-console\".\"cloudtrail_logs\"\n   WHERE (\"eventname\" = 'AssumeRoleWithSAML')\n   GROUP BY 1, 2, 3, 4, 5)  \n      GROUP BY 1, 2\n   )  l ON ((\"d\".\"user_name\" = \"l\".\"username\") AND (\"d\".\"accountid\" = \"l\".\"accountid\")))\n   FULL JOIN \"admin-console\".group_membership g \n   ON (\n     ((\"d\".\"accountid\" = \"g\".\"account_id\") AND (\"d\".\"user_name\" = \"g\".\"user\"))\n     OR\n     ((\"l\".\"accountid\" = \"g\".\"account_id\") AND (\"l\".\"username\" = \"g\".\"user\"))\n     )\n     )\n   LEFT JOIN (\n      SELECT *\n      FROM\n        (SELECT\n  \"account_id\"\n, \"aws_region\"\n, \"object_id\"\n, \"object_name\"\n, \"principal_type\"\n, \"principal_name\"\n, \"namespace\"\n, (CASE WHEN (\"strpos\"(\"permissions\", 'Delete') <> 0) THEN 'Owner' ELSE 'Viewer' END) \"Ownership\"\nFROM\n  \"admin-console\".object_access\nWHERE (\"object_type\" = 'dashboard')\nGROUP BY 1, 2, 3, 4, 5, 6, 7, 8)\n      WHERE (\"principal_type\" = 'group')\n   )  do1 ON (((((\"d\".\"accountid\" = \"do1\".\"account_id\") AND (\"d\".\"awsregion\" = \"do1\".\"aws_region\")) AND (\"d\".\"dashboardid\" = \"do1\".\"object_id\")) AND (\"do1\".\"principal_name\" = \"g\".\"group\")) AND (\"do1\".\"namespace\" = \"g\".\"namespace\")))\n   LEFT JOIN (\n      SELECT *\n      FROM\n        (SELECT\n  \"account_id\"\n, \"aws_region\"\n, \"object_id\"\n, \"object_name\"\n, \"principal_type\"\n, \"principal_name\"\n, \"namespace\"\n, (CASE WHEN (\"strpos\"(\"permissions\", 'Delete') <> 0) THEN 'Owner' ELSE 'Viewer' END) \"Ownership\"\nFROM\n  \"admin-console\".object_access\nWHERE (\"object_type\" = 'dashboard')\nGROUP BY 1, 2, 3, 4, 5, 6, 7, 8)\n      WHERE (\"principal_type\" = 'user')\n   )  do2 ON (((((\"d\".\"accountid\" = \"do2\".\"account_id\") AND (\"d\".\"awsregion\" = \"do2\".\"aws_region\")) AND (\"d\".\"dashboardid\" = \"do2\".\"object_id\")) AND (\"do2\".\"principal_name\" = \"d\".\"user_name\")) AND (\"do2\".\"namespace\" = \"g\".\"namespace\")))\n   GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16",
+                            "Columns": [
+                                {
+                                    "Name": "accountid",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "user_name",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "awsregion",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "dashboard_name",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "dashboardid",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "event_time",
+                                    "Type": "DATETIME"
+                                },
+                                {
+                                    "Name": "latest_event_time",
+                                    "Type": "DATETIME"
+                                },
+                                {
+                                    "Name": "namespace",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "group",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "email",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "role",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "identity_type",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "firstlogin",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "lastlogin",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "owner_viewer",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "ownership",
+                                    "Type": "STRING"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "181feb9f-e4b1-45d3-9ccd-f1d854062b61"
+                }
+            }
+        },
+        "AdminConsoleGroupMembership": {
+            "Type": "AWS::QuickSight::DataSet",
+            "DeletionPolicy": "Retain",
+            "DependsOn": [
+                "qsdatasource"
+            ],
+            "Properties": {
+                "AwsAccountId": {
+                    "Ref": "AWS::AccountId"
+                },
+                "DataSetId": "Admin-Console-Group-Membership",
+                "ImportMode": "SPICE",
+                "LogicalTableMap": {
+                    "Admin-Console-Group-Membership-logic": {
+                        "Alias": "group_membership",
+                        "DataTransforms": [
+                            {
+                                "ProjectOperation": {
+                                    "ProjectedColumns": [
+                                        "account_id",
+                                        "namespace",
+                                        "group",
+                                        "user",
+                                        "email",
+                                        "role",
+                                        "identity_type"
+                                    ]
+                                }
+                            }
+                        ],
+                        "Source": {
+                            "PhysicalTableId": "Admin-Console-Group-Membership-phisical"
+                        }
+                    }
+                },
+                "Name": "Admin-Console-Group-Membership",
+                "Permissions": [
+                    {
+                        "Principal": {
+                            "Ref": "adminarn"
+                        },
+                        "Actions": [
+                            "quicksight:UpdateDataSetPermissions",
+                            "quicksight:DescribeDataSet",
+                            "quicksight:DescribeDataSetPermissions",
+                            "quicksight:PassDataSet",
+                            "quicksight:DescribeIngestion",
+                            "quicksight:ListIngestions",
+                            "quicksight:UpdateDataSet",
+                            "quicksight:DeleteDataSet",
+                            "quicksight:CreateIngestion",
+                            "quicksight:CancelIngestion"
+                        ]
+                    }
+                ],
+                "PhysicalTableMap": {
+                    "Admin-Console-Group-Membership-phisical": {
+                        "CustomSql": {
+                            "DataSourceArn": {
+                                "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-admin-console"
+                            },
+                            "Name": "group_membership",
+                            "SqlQuery": "select * from \"admin-console\".group_membership",
+                            "Columns": [
+                                {
+                                    "Name": "account_id",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "namespace",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "group",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "user",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "email",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "role",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "identity_type",
+                                    "Type": "STRING"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+                }
+            }
+        },
+        "AdminConsoleObjectAccess": {
+            "Type": "AWS::QuickSight::DataSet",
+            "DeletionPolicy": "Retain",
+            "DependsOn": [
+                "qsdatasource"
+            ],
+            "Properties": {
+                "AwsAccountId": {
+                    "Ref": "AWS::AccountId"
+                },
+                "DataSetId": "Admin-Console-Object-Access",
+                "ImportMode": "SPICE",
+                "LogicalTableMap": {
+                    "Admin-Console-Object-Access-logic": {
+                        "Alias": "Admin-Console-Object-Access",
+                        "DataTransforms": [
+                            {
+                                "TagColumnOperation": {
+                                    "ColumnName": "aws_region",
+                                    "Tags": [
+                                        {
+                                            "ColumnGeographicRole": "STATE"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "ProjectOperation": {
+                                    "ProjectedColumns": [
+                                        "account_id",
+                                        "aws_region",
+                                        "object_type",
+                                        "object_name",
+                                        "object_id",
+                                        "principal_type",
+                                        "principal_name",
+                                        "permissions",
+                                        "namespace",
+                                        "user_aws_account_id",
+                                        "group",
+                                        "user",
+                                        "email",
+                                        "role",
+                                        "identity_type"
+                                    ]
+                                }
+                            }
+                        ],
+                        "Source": {
+                            "PhysicalTableId": "Admin-Console-Object-Access-phisical"
+                        }
+                    }
+                },
+                "Name": "Admin-Console-Object-Access",
+                "Permissions": [
+                    {
+                        "Principal": {
+                            "Ref": "adminarn"
+                        },
+                        "Actions": [
+                            "quicksight:UpdateDataSetPermissions",
+                            "quicksight:DescribeDataSet",
+                            "quicksight:DescribeDataSetPermissions",
+                            "quicksight:PassDataSet",
+                            "quicksight:DescribeIngestion",
+                            "quicksight:ListIngestions",
+                            "quicksight:UpdateDataSet",
+                            "quicksight:DeleteDataSet",
+                            "quicksight:CreateIngestion",
+                            "quicksight:CancelIngestion"
+                        ]
+                    }
+                ],
+                "PhysicalTableMap": {
+                    "Admin-Console-Object-Access-phisical": {
+                        "CustomSql": {
+                            "DataSourceArn": {
+                                "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-admin-console"
+                            },
+                            "Name": "Admin-Console-Object-Access",
+                            "SqlQuery": "select o.account_id, o.aws_region, o.object_type, o.object_name, o.object_id, o.principal_type, o.principal_name,\no.permissions, g.namespace, g.account_id as user_aws_account_id,\ng.\"group\", g.\"user\", g.email, g.\"role\", g.identity_type from \"admin-console\".object_access as o \nfull outer join\n\"admin-console\".group_membership as g\non o.account_id=g.account_id AND o.principal_name=g.\"group\" AND o.namespace=g.namespace\nwhere o.principal_type in ('group')\nunion all\nselect o.account_id, o.aws_region, o.object_type, o.object_name, o.object_id, o.principal_type, o.principal_name,\no.permissions, g.namespace, g.account_id as user_aws_account_id,\ng.\"group\", g.\"user\", g.email, g.\"role\", g.identity_type\nfrom \"admin-console\".object_access o\nfull outer join\n\"admin-console\".group_membership g\non o.account_id=g.account_id AND o.principal_name=g.user AND o.namespace=g.namespace\nwhere o.principal_type in ('user')",
+                            "Columns": [
+                                {
+                                    "Name": "account_id",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "aws_region",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "object_type",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "object_name",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "object_id",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "principal_type",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "principal_name",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "permissions",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "namespace",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "user_aws_account_id",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "group",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "user",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "email",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "role",
+                                    "Type": "STRING"
+                                },
+                                {
+                                    "Name": "identity_type",
+                                    "Type": "STRING"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "d7f3eb0a-078d-4144-9031-44946c6b2020"
+                }
+            }
+        },
+        "adminconsoledashboard": {
+            "Type": "AWS::QuickSight::Dashboard",
+            "DependsOn": [
+                "qsdatasource",
+                "AdminConsoleGroupMembership",
+                "AdminConsoleCFNMain",
+                "AdminConsoleObjectAccess"
+            ],
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AwsAccountId": {
+                    "Ref": "AWS::AccountId"
+                },
+                "DashboardId": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "admin-console",
+                            {
+                                "Ref": "AWS::AccountId"
+                            }
+                        ]
+                    ]
+                },
+                "DashboardPublishOptions": {
+                    "AdHocFilteringOption": {
+                        "AvailabilityStatus": "DISABLED"
+                    },
+                    "ExportToCSVOption": {
+                        "AvailabilityStatus": "ENABLED"
+                    }
+                },
+                "Name": "admin-console-dashboard",
+                "Permissions": [
+                    {
+                        "Actions": [
+                            "quicksight:DescribeDashboard",
+                            "quicksight:ListDashboardVersions",
+                            "quicksight:UpdateDashboardPermissions",
+                            "quicksight:QueryDashboard",
+                            "quicksight:UpdateDashboard",
+                            "quicksight:DeleteDashboard",
+                            "quicksight:DescribeDashboardPermissions",
+                            "quicksight:UpdateDashboardPublishedVersion"
+                        ],
+                        "Principal": {
+                            "Ref": "adminarn"
+                        }
+                    }
+                ],
+                "SourceEntity": {
+                    "SourceTemplate": {
+                        "Arn": "arn:aws:quicksight:us-east-1:889399602426:template/admin-console-cfn",
+                        "DataSetReferences": [
+                            {
+                                "DataSetArn": {
+                                    "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/Admin-Console-Group-Membership"
+                                },
+                                "DataSetPlaceholder": "Admin-Console-Group-Membership"
+                            },
+                            {
+                                "DataSetArn": {
+                                    "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/Admin-Console-CFN-Main"
+                                },
+                                "DataSetPlaceholder": "Admin-Console-CFN-Main"
+                            },
+                            {
+                                "DataSetArn": {
+                                    "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/Admin-Console-Object-Access"
+                                },
+                                "DataSetPlaceholder": "Admin-Console-Object-Access"
+                            }
+                        ]
+                    }
+                },
+                "ThemeArn": {
+                    "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:theme/10223da0-343d-4c06-a813-6509eb571043"
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "06becd2c-a300-4b74-9fb1-72e4986339f3"
+                }
+            }
+        }
+    },
+    "Metadata": {
+        "AWS::CloudFormation::Designer": {
+            "58b157d0-c1d9-43a2-9e91-8025139547e8": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 60,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "d7f3eb0a-078d-4144-9031-44946c6b2020": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 180,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": [],
+                "dependson": [
+                    "58b157d0-c1d9-43a2-9e91-8025139547e8"
+                ]
+            },
+            "3d4ff1b6-9705-41f7-8231-6ec511700320": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 60,
+                    "y": 210
+                },
+                "z": 1,
+                "embeds": [],
+                "dependson": [
+                    "58b157d0-c1d9-43a2-9e91-8025139547e8"
+                ]
+            },
+            "181feb9f-e4b1-45d3-9ccd-f1d854062b61": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 180,
+                    "y": 210
+                },
+                "z": 1,
+                "embeds": [],
+                "dependson": [
+                    "58b157d0-c1d9-43a2-9e91-8025139547e8"
+                ]
+            },
+            "06becd2c-a300-4b74-9fb1-72e4986339f3": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 300,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": [],
+                "dependson": [
+                    "58b157d0-c1d9-43a2-9e91-8025139547e8",
+                    "3d4ff1b6-9705-41f7-8231-6ec511700320",
+                    "181feb9f-e4b1-45d3-9ccd-f1d854062b61",
+                    "d7f3eb0a-078d-4144-9031-44946c6b2020"
+                ]
+            }
+        }
+    }
+}

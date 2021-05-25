@@ -1,0 +1,12 @@
+Steps to deploy the CloudFormation Template:
+1. Deploy admin_console_lambda.template
+2. Get the outputs:
+Key             Value                                                                               Description
+cloudtraillog	s3://cloudtrail-awslogs-499080683179-do-not-delete/AWSLogs/499080683179/CloudTrail	The s3 location of cloudtrail log for you to utilize in next Athena tables creation stack	-
+cloudtraillogtablename	cloudtrail_logs	The table name of cloudtrail log for you to utilize in next Athena tables creation stack	-
+groupmembership	s3://admin-console499080683179/monitoring/quicksight/group_membership	The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack	-
+objectaccess	s3://admin-console499080683179/monitoring/quicksight/object_access	The s3 location of object_access.csv for you to utilize in next Athena tables creation stack
+3. Edit admin_console_tables.json: replace the corresponding fields by searching the key and replace the text with the value
+4. Deploy admin_console_tables.json as CFN template
+5. Deploy admin_console_qs-objects.template
+6. Set the SPICE refresh schedule
