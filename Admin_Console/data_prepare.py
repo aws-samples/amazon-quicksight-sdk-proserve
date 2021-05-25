@@ -59,10 +59,10 @@ def lambda_handler(event, context):
         for user in users:
             groups = list_user_groups(user['UserName'], account_id, aws_region, ns)
             if len(groups) == 0:
-                lists.append([ns, None, user['UserName']])
+                lists.append([account_id, ns, None, user['UserName'], user['Email'], user['Role'], user['IdentityType']])
             else:
                 for group in groups:
-                    lists.append([ns, group['GroupName'], user['UserName']])
+                    lists.append([account_id, ns, group['GroupName'], user['UserName'], user['Email'], user['Role'], user['IdentityType']])
 
     print(len(lists))
     print(lists)
@@ -87,11 +87,14 @@ def lambda_handler(event, context):
             principal = principal['Principal'].split("/")
             ptype = principal[0].split(":")
             ptype = ptype[-1]
-            additional_info = principal[-2]
-            principal = principal[-1]
+            additional_info = principal[1]
+            if len(principal)==4:
+                principal = principal[2]+'/'+principal[3]
+            elif len(principal)==3:
+                principal = principal[2]
 
             access.append(
-                [lambda_aws_region, 'dashboard', dashboard['Name'], dashboardid, ptype, principal, additional_info, actions])
+                [account_id, lambda_aws_region, 'dashboard', dashboard['Name'], dashboardid, ptype, principal, additional_info, actions])
 
     datasets = list_datasets(account_id, lambda_aws_region)
 
@@ -108,10 +111,13 @@ def lambda_handler(event, context):
                 ptype = principal[0].split(":")
                 ptype = ptype[-1]
                 additional_info = principal[-2]
-                principal = principal[-1]
+                if len(principal)==4:
+                    principal = principal[2]+'/'+principal[3]
+                elif len(principal)==3:
+                    principal = principal[2]
 
                 access.append(
-                    [lambda_aws_region, 'dataset', dataset['Name'], datasetid, ptype, principal, additional_info, actions])
+                    [account_id, lambda_aws_region, 'dataset', dataset['Name'], datasetid, ptype, principal, additional_info, actions])
 
     datasources = list_datasources(account_id, lambda_aws_region)
 
@@ -133,9 +139,12 @@ def lambda_handler(event, context):
                         ptype = principal[0].split(":")
                         ptype = ptype[-1]
                         additional_info = principal[-2]
-                        principal = principal[-1]
+                        if len(principal)==4:
+                            principal = principal[2]+'/'+principal[3]
+                        elif len(principal)==3:
+                            principal = principal[2]
 
-                        access.append([lambda_aws_region, 'data_source', datasource['Name'], datasourceid, ptype, principal,
+                        access.append([account_id, lambda_aws_region, 'data_source', datasource['Name'], datasourceid, ptype, principal,
                                        additional_info, actions])
                 except Exception as e:
                     pass
@@ -154,10 +163,13 @@ def lambda_handler(event, context):
                 ptype = principal[0].split(":")
                 ptype = ptype[-1]
                 additional_info = principal[-2]
-                principal = principal[-1]
+                if len(principal)==4:
+                    principal = principal[2]+'/'+principal[3]
+                elif len(principal)==3:
+                    principal = principal[2]
 
                 access.append(
-                    [lambda_aws_region, 'analysis', analysis['Name'], analysisid, ptype, principal, additional_info, actions])
+                    [account_id, lambda_aws_region, 'analysis', analysis['Name'], analysisid, ptype, principal, additional_info, actions])
 
     themes = list_themes(account_id, lambda_aws_region)
     for theme in themes:
@@ -171,10 +183,13 @@ def lambda_handler(event, context):
                 ptype = principal[0].split(":")
                 ptype = ptype[-1]
                 additional_info = principal[-2]
-                principal = principal[-1]
+                if len(principal)==4:
+                    principal = principal[2]+'/'+principal[3]
+                elif len(principal)==3:
+                    principal = principal[2]
 
                 access.append(
-                    [lambda_aws_region, 'theme', theme['Name'], themeid, ptype, principal, additional_info,
+                    [account_id, lambda_aws_region, 'theme', theme['Name'], themeid, ptype, principal, additional_info,
                      actions])
 
     print(access)
@@ -363,4 +378,3 @@ def describe_data_source_permissions(account_id, DataSourceId, aws_region):
         DataSourceId=DataSourceId
     )
     return res
-
