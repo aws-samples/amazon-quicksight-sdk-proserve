@@ -613,22 +613,35 @@ def create_data_source(source, session, target):
     account_id = sts_client.get_caller_identity()["Account"]
     credential=None
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/quicksight.html#QuickSight.Client.create_data_source
+    conn_dict = {
+        "aurora": "AuroraParameters",
+        "aurora_postgresql": "AuroraPostgreSqlParameters",
+        "mariadb": "MariaDbParameters",
+        "mysql": "MySqlParameters",
+        "postgresql": "PostgreSqlParameters",
+        "sqlserver": "SqlServerParameters"
+    }
+
     #rds
     if source['Type'].lower() in [
-        'aurora',
-        'aurorapostgresql',
-        'mariadb',
-        'mysql',
-        'postgresql',
-        'sqlserver'] and 'RdsParameters' in source[
-            'DataSourceParameters']:
+        'aurora', 'aurora_postgresql', 'mariadb', 'mysql', 'postgresql',
+        'sqlserver'] and 'RdsParameters' in source['DataSourceParameters']:
         #Update data source instance name
-        instance_id=source['DataSourceParameters']['RdsParameters']
+        instance_id = source['DataSourceParameters']['RdsParameters']
         instance_id['InstanceId'] = target['rds']['rdsinstanceid']
-        credential=target['credential']['rdscredential']
+        credential = target['credential']['rdscredential']
+    elif source['Type'].lower() in [
+        'aurora', 'aurora_postgresql', 'mariadb', 'mysql', 'postgresql',
+        'sqlserver'] and conn_dict.get(source['Type'].lower()) in source['DataSourceParameters']:
+        #Update data source parameters
+        conn_name = conn_dict.get(source['Type'].lower())
+        conn_params = source['DataSourceParameters'][conn_name]
+        conn_params['Host'] = target['rds']['rdsinstanceid']
+        credential = target['credential']['rdscredential']
 
     #redshift
-    if source['Type']=="REDSHIFT":
+    if source['Type'] == "REDSHIFT":
         #Update data source instance name
         Cluster = source['DataSourceParameters']['RedshiftParameters']
         if 'ClusterId' in Cluster:
@@ -636,7 +649,7 @@ def create_data_source(source, session, target):
         Cluster['Host'] = target['redshift']['Host']
         if target['redshift']['Database'] is not None and 'Database' in Cluster:
             Cluster['Database'] = target['redshift']['Database']
-        credential=target['credential']['redshiftcredential']
+        credential = target['credential']['redshiftcredential']
 
     if 'VpcConnectionProperties' in source and target['vpc'] is not None:
         source['VpcConnectionProperties']['VpcConnectionArn'] = target['vpc']
@@ -755,46 +768,82 @@ def copy_template(session, template_id, tname, source_template_arn):
     return response
 
 def create_dashboard(session, dashboard, name,
-    principal, source_entity, version, filter='ENABLED',
+    principal, source_entity, version, theme_arn, filter='ENABLED',
     csv='ENABLED', sheetcontrol='EXPANDED'):
 
     qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
     try:
-        response = qs_client.create_dashboard(
-            AwsAccountId=account_id,
-            DashboardId=dashboard,
-            Name=name,
-            Permissions=[
-                {
-                    'Principal': principal,
-                    'Actions': [
-                        'quicksight:DescribeDashboard',
-                        'quicksight:ListDashboardVersions',
-                        'quicksight:UpdateDashboardPermissions',
-                        'quicksight:QueryDashboard',
-                        'quicksight:UpdateDashboard',
-                        'quicksight:DeleteDashboard',
-                        'quicksight:DescribeDashboardPermissions',
-                        'quicksight:UpdateDashboardPublishedVersion'
-                    ]
-                },
-            ],
-            SourceEntity=source_entity,
-            VersionDescription=version,
-            DashboardPublishOptions={
-                'AdHocFilteringOption': {
-                    'AvailabilityStatus': filter
-                },
-                'ExportToCSVOption': {
-                    'AvailabilityStatus': csv
-                },
-                'SheetControlsOption': {
-                    'VisibilityState': sheetcontrol
+        if theme_arn == '':
+            response = qs_client.create_dashboard(
+                AwsAccountId=account_id,
+                DashboardId=dashboard,
+                Name=name,
+                Permissions=[
+                    {
+                        'Principal': principal,
+                        'Actions': [
+                            'quicksight:DescribeDashboard',
+                            'quicksight:ListDashboardVersions',
+                            'quicksight:UpdateDashboardPermissions',
+                            'quicksight:QueryDashboard',
+                            'quicksight:UpdateDashboard',
+                            'quicksight:DeleteDashboard',
+                            'quicksight:DescribeDashboardPermissions',
+                            'quicksight:UpdateDashboardPublishedVersion'
+                        ]
+                    },
+                ],
+                SourceEntity=source_entity,
+                VersionDescription=version,
+                DashboardPublishOptions={
+                    'AdHocFilteringOption': {
+                        'AvailabilityStatus': filter
+                    },
+                    'ExportToCSVOption': {
+                        'AvailabilityStatus': csv
+                    },
+                    'SheetControlsOption': {
+                        'VisibilityState': sheetcontrol
+                    }
                 }
-            }
-        )
+            )
+        else:
+            response = qs_client.create_dashboard(
+                AwsAccountId=account_id,
+                DashboardId=dashboard,
+                Name=name,
+                Permissions=[
+                    {
+                        'Principal': principal,
+                        'Actions': [
+                            'quicksight:DescribeDashboard',
+                            'quicksight:ListDashboardVersions',
+                            'quicksight:UpdateDashboardPermissions',
+                            'quicksight:QueryDashboard',
+                            'quicksight:UpdateDashboard',
+                            'quicksight:DeleteDashboard',
+                            'quicksight:DescribeDashboardPermissions',
+                            'quicksight:UpdateDashboardPublishedVersion'
+                        ]
+                    },
+                ],
+                SourceEntity=source_entity,
+                VersionDescription=version,
+                DashboardPublishOptions={
+                    'AdHocFilteringOption': {
+                        'AvailabilityStatus': filter
+                    },
+                    'ExportToCSVOption': {
+                        'AvailabilityStatus': csv
+                    },
+                    'SheetControlsOption': {
+                        'VisibilityState': sheetcontrol
+                    }
+                },
+                ThemeArn=theme_arn
+            )
     except ClientError as exc:
         logger.error("Failed to create dashboard %s", dashboard)
         logger.error(exc.response['Error']['Message'])
@@ -1012,7 +1061,7 @@ def update_data_set_permissions(session, datasetid, principal):
         logger.error(exc.response['Error']['Message'])
     return response
 
-def update_analysis(session, analysis_id, name, source_entity):
+def update_analysis(session, analysis_id, name, source_entity, theme_arn):
     qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
@@ -1022,7 +1071,8 @@ def update_analysis(session, analysis_id, name, source_entity):
             AwsAccountId=account_id,
             AnalysisId=analysis_id,
             Name=name,
-            SourceEntity=source_entity
+            SourceEntity=source_entity,
+            ThemeArn=theme_arn
         )
     except ClientError as exc:
         logger.error("Failed to update analysis %s", analysis_id)
