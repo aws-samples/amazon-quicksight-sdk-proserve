@@ -438,7 +438,7 @@ def migrate(
             logger.info("Analysis already exists, updating instead: %s", source_analysis_name)
             try:
                 newanalysis = qs_utils.update_analysis(
-                    targetsession, source_analysis_id, source_analysis_name, source_entity)
+                    targetsession, source_analysis_id, source_analysis_name, source_entity, target_theme_arn)
             except Exception as ex:
                 qs_utils.delete_template(sourcesession, source_analysis_id)
                 analysis_failed.append({"Error Type": "Update Analysis Error",
@@ -493,6 +493,10 @@ def migrate(
         source_dash_id = source_dashboard['Dashboard']['DashboardId']
         source_dash_name = source_dashboard['Dashboard']['Name']
         dataset_arns = source_dashboard['Dashboard']['Version']['DataSetArns']
+        target_theme_arn=''
+        if 'ThemeArn' in source_dashboard['Dashboard']['Version'].keys():
+            target_theme_arn = f'arn:aws:quicksight:{target_region}:{account_id}:theme/'+source_dashboard['Dashboard']['Version']['ThemeArn'].split("/")[1]
+
         sourcedsref = []
 
         for dataset_arn in dataset_arns:
@@ -664,7 +668,7 @@ def migrate(
                 try:
                     newdashboard = qs_utils.create_dashboard(
                         targetsession, source_dash_id, source_dash_name,
-                        targetadmin, source_entity, '1', filter='ENABLED',
+                        targetadmin, source_entity, '1', target_theme_arn, filter='ENABLED',
                         csv='ENABLED', sheetcontrol='COLLAPSED'
                     )
                 except Exception as ex:
@@ -693,7 +697,7 @@ def migrate(
             try:
                 newdashboard = qs_utils.create_dashboard(
                     targetsession, source_dash_id, source_dash_name,
-                    targetadmin, source_entity, '1', filter='ENABLED',
+                    targetadmin, source_entity, '1', target_theme_arn, filter='ENABLED',
                     csv='ENABLED', sheetcontrol='COLLAPSED'
                 )
             except Exception as ex:
@@ -709,13 +713,19 @@ def migrate(
                 continue
 
         else:
-            logger.info("Dashboard already exists, updating instead: %s", source_dash_name)
+            logger.info("Dashboard already exists, recreating instead: %s", source_dash_name)
             try:
-                newdashboard = qs_utils.update_dashboard(
+                res = qs_utils.delete_dashboard(targetsession, source_dash_id)
+                newdashboard = qs_utils.create_dashboard(
                     targetsession, source_dash_id, source_dash_name,
-                    source_entity, target['version'], filter='ENABLED',
-                    csv='ENABLED', sheetcontrol='EXPANDED'
+                    targetadmin, source_entity, '1', target_theme_arn, filter='ENABLED',
+                    csv='ENABLED', sheetcontrol='COLLAPSED'
                 )
+                # newdashboard = qs_utils.update_dashboard(
+                #     targetsession, source_dash_id, source_dash_name,
+                #     source_entity, target['version'], filter='ENABLED',
+                #     csv='ENABLED', sheetcontrol='EXPANDED'
+                # )
             except Exception as ex:
                 qs_utils.delete_template(targetsession, source_dash_id)
                 dashboard_failed.append(
