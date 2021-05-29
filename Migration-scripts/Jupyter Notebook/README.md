@@ -22,6 +22,21 @@ all the assets from the source account to the target account.
 incremental migration – Provides on-demand incremental migration to
 migrate specific assets across accounts
 
+## Prerequisites
+For this solution, you should have the following prerequisites:
+
+Access to the following AWS services:
+o QuickSight
+o SageMaker
+o AWS Identity and Access Management (IAM)
+
+Two different QuickSight accounts, for instance, development and
+production
+
+Basic knowledge of Python
+
+Basic AWS SDK knowledge
+
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
