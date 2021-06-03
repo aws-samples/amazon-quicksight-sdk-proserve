@@ -7,6 +7,8 @@ Author: Ying Wang        Email: wangzyn@amazon.com
 Author: Vamsi Bhadriraju Email: bhadrir@amazon.com
 
 ## Solution overview
+![image](https://user-images.githubusercontent.com/41450724/120677740-66c72400-c465-11eb-8d1b-9d5e9481a70f.png)
+
 We provide the sample Python scripts for migrating across accounts in three
 SageMaker notebooks: 
 
@@ -21,6 +23,9 @@ all the assets from the source account to the target account.
 
 incremental migration – Provides on-demand incremental migration to
 migrate specific assets across accounts
+
+![image](https://user-images.githubusercontent.com/41450724/120677686-58790800-c465-11eb-93e8-da99e01109ad.png)
+
 
 ## Prerequisites
 For this solution, you should have the following prerequisites:
