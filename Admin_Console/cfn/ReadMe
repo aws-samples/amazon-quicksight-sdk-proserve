@@ -8,6 +8,6 @@ groupmembership	s3://admin-console<<aws-account-id>>/monitoring/quicksight/group
 objectaccess	s3://admin-console<<aws-account-id>>/monitoring/quicksight/object_access	The s3 location of object_access.csv for you to utilize in next Athena tables creation stack
 3. Create cloudtrail log: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-a-trail-using-the-console-first-time.html. Note down the S3 bucket name if it is different from the outputs in step 2. 
 4. Edit admin_console_tables.json: replace the corresponding fields by searching the key and replace the text with the value
-5. Deploy admin_console_tables.json as CFN template
+5. Deploy admin_console_athena_tables.json as CFN template
 6. Deploy admin_console_qs-objects.template
 7. Set the SPICE refresh schedule
