@@ -23,10 +23,16 @@
   - Three tables were created in the database, **cloudtrail_logs**, **group_membership**, **object_access**
   - Preview the tables from Athena
   - In QuickSight, go to security permissions, enable bucket access to s3://admin-console<<AWS-account-ID>> and s3://cloudtrail-awslogs-<<aws-account-id>>-do-not-delete
-  - In Quicksight, enable Athena access
+  - In QuickSight, enable Athena access
   - Verify QuickSight can access the tables through Athena
-  
-## 6. Deploy **admin_console_qs-objects.template**
-  -- Check 
 
-## 7. Set the SPICE refresh schedule
+## 6. Get QuickSight admin user's ARN, this is a required parameter for the next step
+  ```
+  aws quicksight describe-user --aws-account-id <<aws-account-id>> --namespace default --user-name <<admin-user-name>>
+  ```
+  
+## 7. Deploy **admin_console_qs-objects.template**, using QuickSight admin user's ARN from last step
+  -- Check if three SPICE datesets created in this step are successfully imported
+  -- If modifying the dashboard is preferred, enable dashboard save-as option, then recreate the analysis, make modification, and publish a new dashboard
+
+## 8. Set preferred SPICE refresh schedule for three SPICE datasets, and share the dashboard in your organization properly
