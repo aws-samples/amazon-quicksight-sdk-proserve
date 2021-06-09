@@ -7,7 +7,7 @@
 
 ## 2. Create [Cloudtrail](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-a-trail-using-the-console-first-time.html) log if it is not done yet. Note down the S3 bucket name.  
   
-## 3. Note the outputs from step 1 and step 2. If the S3 bucket from step 2 is different from the one in Step 1's output, use the S3 bucket from step 2:
+## 3. Note the outputs from step 1 and step 2. If the cloudtraillog S3 bucket from step 2 is different from the one in Step 1's output, use the S3 bucket from step 2:
   
 | Key | Value | Description |
 | -------- | ------------- | ------------- |   
