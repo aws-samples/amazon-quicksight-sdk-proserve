@@ -7,6 +7,7 @@
 
 2. Note the outputs from step 1, and replace corresponding values in **admin-console-athena-tables.json**:
 | Key | Value | Description |
+  
 | cloudtraillog | s3://cloudtrail-awslogs-<<aws-account-id>>-do-not-delete/AWSLogs/<<aws-account-id>>/CloudTrail | The s3 location of cloudtrail log for you to utilize in next Athena tables creation stack |
 | cloudtraillogtablename | cloudtrail_logs | The table name of cloudtrail log for you to utilize in next Athena tables creation stack |
 | groupmembership | s3://admin-console<<aws-account-id>>/monitoring/quicksight/group_membership | The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack |
