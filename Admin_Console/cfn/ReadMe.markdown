@@ -6,11 +6,11 @@
 - Check if /monitoring/quicksight/group_membership and /monitoring/quicksight/object_access folders are created in the S3 bucket above
 
 2. Note the outputs from step 1, and replace corresponding values in **admin-console-athena-tables.json**:
-|Key|Value|Description
-|cloudtraillog|s3://cloudtrail-awslogs-<<aws-account-id>>-do-not-delete/AWSLogs/<<aws-account-id>>/CloudTrail|The s3 location of cloudtrail log for you to utilize in next Athena tables creation stack
-|cloudtraillogtablename|cloudtrail_logs|The table name of cloudtrail log for you to utilize in next Athena tables creation stack
-|groupmembership|s3://admin-console<<aws-account-id>>/monitoring/quicksight/group_membership|The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack
-|objectaccess|s3://admin-console<<aws-account-id>>/monitoring/quicksight/object_access|The s3 location of object_access.csv for you to utilize in next Athena tables creation stack
+| Key | Value | Description |
+| cloudtraillog | s3://cloudtrail-awslogs-<<aws-account-id>>-do-not-delete/AWSLogs/<<aws-account-id>>/CloudTrail | The s3 location of cloudtrail log for you to utilize in next Athena tables creation stack |
+| cloudtraillogtablename | cloudtrail_logs | The table name of cloudtrail log for you to utilize in next Athena tables creation stack |
+| groupmembership | s3://admin-console<<aws-account-id>>/monitoring/quicksight/group_membership | The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack |
+| objectaccess | s3://admin-console<<aws-account-id>>/monitoring/quicksight/object_access | The s3 location of object_access.csv for you to utilize in next Athena tables creation stack |
 
 Key             Value                                                                               Description
 cloudtraillog	s3://cloudtrail-awslogs-<<aws-account-id>>-do-not-delete/AWSLogs/<<aws-account-id>>/CloudTrail	The s3 location of cloudtrail log for you to utilize in next Athena tables creation stack	-
