@@ -1,5 +1,5 @@
 # Steps to deploy the CloudFormation Templates:
-## 1. Deploy **admin_console_lambda.template**, and verify:
+## 1. Deploy *admin_console_lambda.template*, and verify:
   - Check if a lambda function data_prepare is created
   - Check if a S3 bucket: admin-console<<AWS-account-ID>> is created
   - Check if the lambda function can run flawlessly
@@ -16,9 +16,9 @@
 | groupmembership | s3://admin-console<<aws-account-id>>/monitoring/quicksight/group_membership | The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack |
 | objectaccess | s3://admin-console<<aws-account-id>>/monitoring/quicksight/object_access | The s3 location of object_access.csv for you to utilize in next Athena tables creation stack |
 
-## 4. Edit **admin_console_tables.json**: replace the corresponding fields by searching the key and replace the text with the value
+## 4. Edit *admin_console_tables.json*: replace the corresponding fields by searching the key and replace the text with the value
   
-## 5. Deploy **admin_console_athena_tables.json** as CFN template, and verify:
+## 5. Deploy *admin_console_athena_tables.json* as CFN template, and verify:
   - In Athena, check if a database with the name of **admin-console** is created in AwsDataCatalog
   - Three tables were created in the database, **cloudtrail_logs**, **group_membership**, **object_access**
   - Preview the tables from Athena
@@ -31,8 +31,8 @@
   aws quicksight describe-user --aws-account-id <<aws-account-id>> --namespace default --user-name <<admin-user-name>>
   ```
   
-## 7. Deploy **admin_console_qs-objects.template**, using QuickSight admin user's ARN from last step
-  -- Check if three SPICE datesets created in this step are successfully imported
-  -- If modifying the dashboard is preferred, enable dashboard save-as option, then recreate the analysis, make modification, and publish a new dashboard
+## 7. Deploy *admin_console_qs-objects.template*, using QuickSight admin user's ARN from last step
+  - Check if three SPICE datesets created in this step are successfully imported
+  - If modifying the dashboard is preferred, enable dashboard save-as option, then recreate the analysis, make modification, and publish a new dashboard
 
 ## 8. Set preferred SPICE refresh schedule for three SPICE datasets, and share the dashboard in your organization properly
