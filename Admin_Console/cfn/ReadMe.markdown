@@ -1,4 +1,4 @@
-Steps to deploy the CloudFormation Template:
+# Steps to deploy the CloudFormation Template:
 1. Deploy admin_console_lambda.template
 2. Get the outputs:
 Key             Value                                                                               Description
