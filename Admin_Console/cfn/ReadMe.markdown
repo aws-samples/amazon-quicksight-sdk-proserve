@@ -1,7 +1,7 @@
 # Steps to deploy the CloudFormation Templates:
 ## 1. Deploy *admin_console_lambda.template*, and verify:
   - Check if a lambda function data_prepare is created
-  - Check if a S3 bucket: admin-console<<AWS-account-ID>> is created
+  - Check if a S3 bucket: admin-console[AWS-account-ID] is created
   - Check if the lambda function can run flawlessly
   - Check if /monitoring/quicksight/group_membership and /monitoring/quicksight/object_access folders are created in the S3 bucket above
 
