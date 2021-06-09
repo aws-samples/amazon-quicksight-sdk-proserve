@@ -11,10 +11,10 @@
   
 | Key | Value | Description |
 | -------- | ------------- | ------------- |   
-| cloudtraillog | s3://cloudtrail-awslogs-<<aws-account-id>>-do-not-delete/AWSLogs/<<aws-account-id>>/CloudTrail | The s3 location of cloudtrail log for you to utilize in next Athena tables creation stack |
+| cloudtraillog | s3://cloudtrail-awslogs-[aws-account-id]-do-not-delete/AWSLogs/[aws-account-id]/CloudTrail | The s3 location of cloudtrail log for you to utilize in next Athena tables creation stack |
 | cloudtraillogtablename | cloudtrail_logs | The table name of cloudtrail log for you to utilize in next Athena tables creation stack |
-| groupmembership | s3://admin-console<<aws-account-id>>/monitoring/quicksight/group_membership | The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack |
-| objectaccess | s3://admin-console<<aws-account-id>>/monitoring/quicksight/object_access | The s3 location of object_access.csv for you to utilize in next Athena tables creation stack |
+| groupmembership | s3://admin-console[aws-account-id]/monitoring/quicksight/group_membership | The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack |
+| objectaccess | s3://admin-console[aws-account-id]/monitoring/quicksight/object_access | The s3 location of object_access.csv for you to utilize in next Athena tables creation stack |
 
 ## 4. Edit *admin_console_tables.json*: replace the corresponding fields by searching the key and replace the text with the value
   
@@ -22,13 +22,13 @@
   - In Athena, check if a database with the name of **admin-console** is created in AwsDataCatalog
   - Three tables were created in the database, **cloudtrail_logs**, **group_membership**, **object_access**
   - Preview the tables from Athena
-  - In QuickSight, go to security permissions, enable bucket access to s3://admin-console<<AWS-account-ID>> and s3://cloudtrail-awslogs-<<aws-account-id>>-do-not-delete
+  - In QuickSight, go to security permissions, enable bucket access to s3://admin-console[AWS-account-ID] and s3://cloudtrail-awslogs-[aws-account-id]-do-not-delete
   - In QuickSight, enable Athena access
   - Verify QuickSight can access the tables through Athena
 
 ## 6. Get QuickSight admin user's ARN, this is a required parameter for the next step
   ```
-  aws quicksight describe-user --aws-account-id <<aws-account-id>> --namespace default --user-name <<admin-user-name>>
+  aws quicksight describe-user --aws-account-id [aws-account-id] --namespace default --user-name [admin-user-name]
   ```
   
 ## 7. Deploy *admin_console_qs-objects.template*, using QuickSight admin user's ARN from last step
