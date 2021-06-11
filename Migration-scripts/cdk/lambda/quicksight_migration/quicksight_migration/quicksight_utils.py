@@ -853,8 +853,29 @@ def create_analysis(session, analysis_id, name, principal, source_entity, theme_
     qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    if theme_arn:
-        try:
+    try:
+        if theme_arn == '':
+            response = qs_client.create_analysis(
+            AwsAccountId=account_id,
+            AnalysisId=analysis_id,
+            Name=name,
+            Permissions=[
+                {
+                    'Principal': principal,
+                    'Actions': [
+                        'quicksight:RestoreAnalysis',
+                        'quicksight:UpdateAnalysisPermissions',
+                        'quicksight:DeleteAnalysis',
+                        'quicksight:QueryAnalysis',
+                        'quicksight:DescribeAnalysisPermissions',
+                        'quicksight:DescribeAnalysis',
+                        'quicksight:UpdateAnalysis'
+                    ]
+                }
+            ],
+            SourceEntity=source_entity
+            )
+        else:
             response = qs_client.create_analysis(
             AwsAccountId=account_id,
             AnalysisId=analysis_id,
@@ -876,34 +897,9 @@ def create_analysis(session, analysis_id, name, principal, source_entity, theme_
             SourceEntity=source_entity,
             ThemeArn=theme_arn
             )
-        except ClientError as exc:
-            logger.error("Failed to create analysis %s", analysis_id)
-            logger.error(exc.response['Error']['Message'])
-    else:
-        try:
-            response = qs_client.create_analysis(
-            AwsAccountId=account_id,
-            AnalysisId=analysis_id,
-            Name=name,
-            Permissions=[
-                {
-                    'Principal': principal,
-                    'Actions': [
-                        'quicksight:RestoreAnalysis',
-                        'quicksight:UpdateAnalysisPermissions',
-                        'quicksight:DeleteAnalysis',
-                        'quicksight:QueryAnalysis',
-                        'quicksight:DescribeAnalysisPermissions',
-                        'quicksight:DescribeAnalysis',
-                        'quicksight:UpdateAnalysis'
-                    ]
-                }
-            ],
-            SourceEntity=source_entity
-            )
-        except ClientError as exc:
-            logger.error("Failed to create analysis %s", analysis_id)
-            logger.error(exc.response['Error']['Message'])
+    except ClientError as exc:
+        logger.error("Failed to create analysis %s", analysis_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 def create_theme(session, theme_id, name, base_theme_id, configuration):
@@ -1065,7 +1061,6 @@ def update_analysis(session, analysis_id, name, source_entity, theme_arn):
     qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-
     try:
         if theme_arn == '':
             response = qs_client.update_analysis(
