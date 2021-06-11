@@ -57,7 +57,8 @@ class QuicksightEmbedStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "quicksight:*",
+                                "quicksight:GetDashboardEmbedUrl",
+                                "quicksight:GetAuthCode"
                             ],
                             resources=["*"]
                         )
@@ -212,7 +213,12 @@ class QuicksightEmbedStack(core.Stack):
             )
         )
 
-        core.CfnOutput(self, "embed-dist-url",
+        core.CfnOutput(self, "EmbedAPIGatewayURL",
+            value=self.apigw_lambda.api_gateway.url+"embedurl?",
+            description="Embed API GW URL"
+        )
+
+        core.CfnOutput(self, "EmbedCloudFrontURL",
             value="https://"+self.embed_auth_dist.distribution_domain_name,
             description="CloudFront Distribution URL"
         )
