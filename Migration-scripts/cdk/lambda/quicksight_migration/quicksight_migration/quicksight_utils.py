@@ -1067,13 +1067,21 @@ def update_analysis(session, analysis_id, name, source_entity, theme_arn):
     account_id = sts_client.get_caller_identity()["Account"]
 
     try:
-        response = qs_client.update_analysis(
-            AwsAccountId=account_id,
-            AnalysisId=analysis_id,
-            Name=name,
-            SourceEntity=source_entity,
-            ThemeArn=theme_arn
-        )
+        if theme_arn == '':
+            response = qs_client.update_analysis(
+                AwsAccountId=account_id,
+                AnalysisId=analysis_id,
+                Name=name,
+                SourceEntity=source_entity
+            )
+        else:
+            response = qs_client.update_analysis(
+                AwsAccountId=account_id,
+                AnalysisId=analysis_id,
+                Name=name,
+                SourceEntity=source_entity,
+                ThemeArn=theme_arn
+            )
     except ClientError as exc:
         logger.error("Failed to update analysis %s", analysis_id)
         logger.error(exc.response['Error']['Message'])

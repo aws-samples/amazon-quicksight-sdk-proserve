@@ -57,7 +57,8 @@ class QuicksightEmbedStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "quicksight:*",
+                                "quicksight:GetDashboardEmbedUrl",
+                                "quicksight:GetAuthCode"
                             ],
                             resources=["*"]
                         )

@@ -77,7 +77,12 @@ class QuicksightMigrationStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "quicksight:*",
+                                "quicksight:Create*",
+                                "quicksight:Delete*",
+                                "quicksight:Describe*",
+                                "quicksight:List*",
+                                "quicksight:Search*",
+                                "quicksight:Update*"
                             ],
                             resources=["*"]
                         )
@@ -98,7 +103,12 @@ class QuicksightMigrationStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "quicksight:*",
+                                "quicksight:Create*",
+                                "quicksight:Delete*",
+                                "quicksight:Describe*",
+                                "quicksight:List*",
+                                "quicksight:Search*",
+                                "quicksight:Update*"
                             ],
                             resources=["*"]
                         ),
