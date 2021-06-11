@@ -184,3 +184,8 @@ class QuicksightMigrationStack(core.Stack):
                 queue=self.apigw_sqs.sqs_queue,
             )
         )
+
+        core.CfnOutput(self, "MigrationAPIGatewayURL",
+            value=self.apigw_sqs.api_gateway.url,
+            description="Migration API GW URL"
+        )

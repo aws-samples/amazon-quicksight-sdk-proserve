@@ -35,36 +35,40 @@
         }
 
         function pocBtnClick() {
-            const apiGatewayUrl = 'https://APIID.execute-api.us-east-1.amazonaws.com/prod';
+            const apiGatewayUrl = '<quicksight-migration-stack.MigrationAPIGatewayURL>';
 
-            var source_account_id = $("#source_account_id").val(),
-                source_region = $("#source_region").val(),
-                target_account_id = $("#target_account_id").val(),
-                target_region = $("#target_region").val(),
-                migration_type = $("#migration_type").val(),
-                migration_resource = $("#migration_resource").val(),
-                migration_items = $("#migration_items").val();
+            if (confirm('Submit migration?')) {
+                var source_account_id = $("#source_account_id").val(),
+                    source_region = $("#source_region").val(),
+                    target_account_id = $("#target_account_id").val(),
+                    target_region = $("#target_region").val(),
+                    migration_type = $("#migration_type").val(),
+                    migration_resource = $("#migration_resource").val(),
+                    migration_items = $("#migration_items").val();
 
-            $.ajax({
-                method: 'POST',
-                url: apiGatewayUrl,
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    'source_account_id': source_account_id,
-                    'source_region': source_region,
-                    'target_account_id': target_account_id,
-                    'target_region': target_region,
-                    'migration_type': migration_type,
-                    'migration_resource': migration_resource,
-                    'migration_items': migration_items
-                }),
-                success: function (res) {
-                    $('#form-response').html('<div class="alert alert-info" role="alert">Migration request submitted</div>');
-                },
-                error: function () {
-                    $('#form-response').html('<div class="alert alert-info" role="alert">Migration request failed</div>');
-                }
-            });
+                $.ajax({
+                    method: 'POST',
+                    url: apiGatewayUrl,
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        'source_account_id': source_account_id,
+                        'source_region': source_region,
+                        'target_account_id': target_account_id,
+                        'target_region': target_region,
+                        'migration_type': migration_type,
+                        'migration_resource': migration_resource,
+                        'migration_items': migration_items
+                    }),
+                    success: function (res) {
+                        $('#form-response').html('<div class="alert alert-info" role="alert">Migration request submitted</div>');
+                    },
+                    error: function () {
+                        $('#form-response').html('<div class="alert alert-info" role="alert">Migration request failed</div>');
+                    }
+                });
+            } else {
+                return false;
+            }
         }
 
         function selectChanged() {
@@ -78,7 +82,7 @@
 
             var awsData = {
                 dashboardName: dashboardNameParam,
-                apiGatewayUrl: 'https://APIID.execute-api.us-east-1.amazonaws.com/prod/embedurl?'
+                apiGatewayUrl: '<quicksight-embed-stack.EmbedAPIGatewayURL>'
             }
             embedDashboardQuickSightAuthenticated(awsData);
 
