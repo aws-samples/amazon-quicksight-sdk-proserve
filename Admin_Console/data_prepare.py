@@ -57,15 +57,21 @@ def lambda_handler(event, context):
         users = list_users(account_id, aws_region, ns)
 
         for user in users:
-            groups = list_user_groups(user['UserName'], account_id, aws_region, ns)
-            if len(groups) == 0:
-                lists.append([account_id, ns, None, user['UserName'], user['Email'], user['Role'], user['IdentityType']])
-            else:
-                for group in groups:
-                    lists.append([account_id, ns, group['GroupName'], user['UserName'], user['Email'], user['Role'], user['IdentityType']])
+            if user['UserName'] == 'N/A':
+                continue
+            try:
+                groups = list_user_groups(user['UserName'], account_id, aws_region, ns)
+                if len(groups) == 0:
+                    lists.append([account_id, ns, None, user['UserName'], user['Email'], user['Role'], user['IdentityType']])
+                else:
+                    for group in groups:
+                        lists.append([account_id, ns, group['GroupName'], user['UserName'], user['Email'], user['Role'], user['IdentityType']])
+            except:
+                #print('Exception when try to pull group info for user: ', user['UserName'])
+                continue
 
     print(len(lists))
-    print(lists)
+    #print(lists)
 
     with open(path, 'w', newline='') as outfile:
         writer = csv.writer(outfile)
@@ -122,17 +128,17 @@ def lambda_handler(event, context):
     datasources = list_datasources(account_id, lambda_aws_region)
 
     for datasource in datasources:
-        print(datasource)
+        #print(datasource)
         if datasource['Name'] not in ['Business Review', 'People Overview', 'Sales Pipeline',
                                       'Web and Social Media Analytics']:
             datasourceid = datasource['DataSourceId']
             if 'DataSourceParameters' in datasource:
-                print(datasourceid)
+                #print(datasourceid)
                 try:
                     response = describe_data_source_permissions(account_id, datasourceid, lambda_aws_region)
-                    print(response)
+                    #print(response)
                     permissions = response['Permissions']
-                    print(permissions)
+                    #print(permissions)
                     for principal in permissions:
                         actions = '|'.join(principal['Actions'])
                         principal = principal['Principal'].split("/")
