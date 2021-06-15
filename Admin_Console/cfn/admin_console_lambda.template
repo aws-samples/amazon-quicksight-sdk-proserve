@@ -32,7 +32,9 @@
                                         "quicksight:*",
                                         "lambda:*",
                                         "s3:*",
-                                        "sts:AssumeRole"
+                                        "sts:AssumeRole",
+                                        "cloudwatch:*",
+                                        "logs:*"
                                     ],
                                     "Resource": "*",
                                     "Effect": "Allow"
