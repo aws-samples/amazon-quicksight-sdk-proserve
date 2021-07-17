@@ -48,6 +48,7 @@ Create your resources in source account by completing the following steps:
 1.	Download the notebooks from the GitHub repository.
 2.	Create a notebook instance.
 3.	Edit the IAM role of this instance to add an inline policy called qs-admin-source:
+```bash
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -79,6 +80,7 @@ Create your resources in source account by completing the following steps:
         }
     ]
 }
+```
 
 4.	On the notebook instance page, on the Actions menu, choose Open JupyterLab.
 5.	Upload the three notebooks into the notebook instance.
@@ -91,6 +93,7 @@ Assume Role solution:
 3.	Choose the Another AWS account role type.
 4.	For Account ID, type the source (development) account ID.
 5.	Create an IAM policy called qs-admin-target:
+```
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -107,6 +110,7 @@ Assume Role solution:
         }
     ]
 }
+```
 
 6.	Grant the IAM role the qs-admin-target IAM policy.
 
