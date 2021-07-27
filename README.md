@@ -4,9 +4,10 @@
 2. Migration Scripts
 3. Administrative Dashboard
 4. Admin Console of Usage Metrics
+  Updates: CFN support added
 
 Author: AWS Pro-Serve
-Email: wangzyn@amazon.com
+Email: aws-proserve-quicksight@amazon.com
 
 ## License
 
