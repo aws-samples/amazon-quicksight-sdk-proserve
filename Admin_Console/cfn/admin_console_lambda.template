@@ -31,12 +31,7 @@
                                         "iam:*",
                                         "quicksight:*",
                                         "lambda:*",
-                                        "ds:*",
-                                        "logs:*",
-                                        "cloudwatch:*",
                                         "s3:*",
-                                        "cloudfront:*",
-                                        "apigateway:*",
                                         "sts:AssumeRole"
                                     ],
                                     "Resource": "*",
@@ -57,6 +52,12 @@
             "Type": "AWS::S3::Bucket",
             "Properties": {
                 "AccessControl": "Private",
+                "PublicAccessBlockConfiguration": {
+                    "BlockPublicAcls" : true,
+                    "BlockPublicPolicy" : true,
+                    "IgnorePublicAcls" : true,
+                    "RestrictPublicBuckets" : true
+                  },
                 "BucketName": {
                     "Fn::Join": [
                         "",

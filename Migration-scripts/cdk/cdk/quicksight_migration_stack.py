@@ -77,7 +77,12 @@ class QuicksightMigrationStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "quicksight:*",
+                                "quicksight:Create*",
+                                "quicksight:Delete*",
+                                "quicksight:Describe*",
+                                "quicksight:List*",
+                                "quicksight:Search*",
+                                "quicksight:Update*"
                             ],
                             resources=["*"]
                         )
@@ -98,7 +103,12 @@ class QuicksightMigrationStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "quicksight:*",
+                                "quicksight:Create*",
+                                "quicksight:Delete*",
+                                "quicksight:Describe*",
+                                "quicksight:List*",
+                                "quicksight:Search*",
+                                "quicksight:Update*"
                             ],
                             resources=["*"]
                         ),
@@ -183,4 +193,9 @@ class QuicksightMigrationStack(core.Stack):
                 enabled=True,
                 queue=self.apigw_sqs.sqs_queue,
             )
+        )
+
+        core.CfnOutput(self, "MigrationAPIGatewayURL",
+            value=self.apigw_sqs.api_gateway.url,
+            description="Migration API GW URL"
         )

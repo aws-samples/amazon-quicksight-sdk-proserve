@@ -53,7 +53,10 @@ class QuicksightStatusStack(core.Stack):
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "quicksight:*",
+                                "quicksight:Describe*",
+                                "quicksight:Get*",
+                                "quicksight:List*",
+                                "quicksight:Search*"
                             ],
                             resources=["*"]
                         )

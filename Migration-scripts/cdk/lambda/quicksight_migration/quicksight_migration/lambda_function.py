@@ -65,32 +65,50 @@ def lambda_handler(event, context):
                                             target_region)
     target_admin = qs_utils.get_user_arn(target_session, 'quicksight-migration-user')
     infra_details = qs_utils.get_ssm_parameters(target_session, infra_config_param_name)
-    redshift_password = qs_utils.get_secret(target_session, infra_details['redshiftPassword'])
-    rds_password = qs_utils.get_secret(target_session, infra_details['rdsPassword'])
 
     # QuickSight VPC connection will use VPC ID as name
-    vpc = infra_details['vpcId']
+    vpc = None
+    if infra_details.get('vpcId') is not None:
+        vpc = infra_details['vpcId']
 
-    rds = infra_details['rdsClusterId']
-    rdscredential = {
-        'CredentialPair': {
-            'Username': infra_details['rdsUsername'],
-            'Password': rds_password
+    # RDS
+    rds = None
+    rdscredential = None
+    if infra_details.get('rdsClusterId') is not None:
+        rds = ['rdsClusterId']
+        rds_password = qs_utils.get_secret(target_session, infra_details['rdsPassword'])
+        rdscredential = {
+            'CredentialPair': {
+                'Username': infra_details['rdsUsername'],
+                'Password': rds_password
+            }
         }
-    }
-    redshift = {
-        "ClusterId": infra_details['redshiftClusterId'],
-        "Host": infra_details['redshiftHost'],
-        "Database": infra_details['redshiftDB']
-    }
-    redshiftcredential = {
-        'CredentialPair': {
-            'Username': infra_details['redshiftUsername'],
-            'Password': redshift_password
+
+    # Redshift
+    redshift = None
+    redshiftcredential = None
+    if infra_details.get('redshiftClusterId') is not None:
+        redshift_password = qs_utils.get_secret(target_session, infra_details['redshiftPassword'])
+        redshift = {
+            "ClusterId": infra_details['redshiftClusterId'],
+            "Host": infra_details['redshiftHost'],
+            "Database": infra_details['redshiftDB']
         }
-    }
-    namespace = infra_details['namespace']
-    version = infra_details['version']
+        redshiftcredential = {
+            'CredentialPair': {
+                'Username': infra_details['redshiftUsername'],
+                'Password': redshift_password
+            }
+        }
+
+    namespace = 'default'
+    if infra_details.get('namespace') is not None:
+        namespace = infra_details['namespace']
+
+    version = '1'
+    if infra_details.get('version') is not None:
+        version = infra_details['version']
+
     tag = [
             {
                 'Key': 'testmigration',
