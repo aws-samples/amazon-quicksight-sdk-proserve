@@ -476,6 +476,144 @@
                 }
             }
         },
+        "dataset_info": {
+            "Type": "AWS::QuickSight::DataSet",
+            "DeletionPolicy": "Retain",
+            "DependsOn": [
+                "qsdatasource"
+            ],
+            "Properties": {
+                "AwsAccountId": {
+                    "Ref": "AWS::AccountId"
+                },
+                "DataSetId": "Admin-Console-dataset-info",
+                "ImportMode": "SPICE",
+                "LogicalTableMap": {
+                    "Admin-Console-dataset-info-logic": {
+                        "Alias": "Admin-Console-dataset-info",
+                        "DataTransforms": [
+                            {
+                        "TagColumnOperation": {
+                            "ColumnName": "aws_region",
+                            "Tags": [
+                                {
+                                    "ColumnGeographicRole": "STATE"
+                                }
+                            ]
+                        }
+                    },
+                            {
+                        "ProjectOperation": {
+                            "ProjectedColumns": [
+                                "aws_region",
+                                "dashboard_name",
+                                "dashboardid",
+                                "analysis",
+                                "analysis_id",
+                                "dataset_name",
+                                "dataset_id",
+                                "lastupdatedtime",
+                                "data_source_name",
+                                "data_source_id",
+                                "catalog",
+                                "sqlname/schema",
+                                "sqlquery/table_name"
+                            ]
+                        }
+                    }
+                        ],
+                        "Source": {
+                            "PhysicalTableId": "Admin-Console-dataset-info-phisical"
+                        }
+                    }
+                },
+                "Name": "Admin-Console-dataset-info",
+                "Permissions": [
+                    {
+                        "Principal": {
+                            "Ref": "adminarn"
+                        },
+                        "Actions": [
+                            "quicksight:UpdateDataSetPermissions",
+                            "quicksight:DescribeDataSet",
+                            "quicksight:DescribeDataSetPermissions",
+                            "quicksight:PassDataSet",
+                            "quicksight:DescribeIngestion",
+                            "quicksight:ListIngestions",
+                            "quicksight:UpdateDataSet",
+                            "quicksight:DeleteDataSet",
+                            "quicksight:CreateIngestion",
+                            "quicksight:CancelIngestion"
+                        ]
+                    }
+                ],
+                "PhysicalTableMap": {
+                    "Admin-Console-dataset-info-phisical": {
+                        "CustomSql": {
+                            "DataSourceArn": {
+                                "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-admin-console"
+                            },
+                            "Name": "Admin-Console-dataset-info",
+                            "SqlQuery": "SELECT * FROM sampledb.datsets_info",
+                            "Columns": [
+                                {
+                            "Name": "aws_region",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "dashboard_name",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "dashboardid",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "analysis",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "analysis_id",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "dataset_name",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "dataset_id",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "lastupdatedtime",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "data_source_name",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "data_source_id",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "catalog",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "sqlname/schema",
+                            "Type": "STRING"
+                        },
+                        {
+                            "Name": "sqlquery/table_name",
+                            "Type": "STRING"
+                        }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "adminconsoledashboard": {
             "Type": "AWS::QuickSight::Dashboard",
             "DependsOn": [
