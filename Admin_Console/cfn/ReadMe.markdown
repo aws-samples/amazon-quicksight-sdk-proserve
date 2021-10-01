@@ -74,7 +74,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  's3://administrative-dashboard624969228231/monitoring/quicksight/data_dictionary/'
+  's3://<<bucket-name>>/monitoring/quicksight/data_dictionary/'
 TBLPROPERTIES (
   'areColumnsQuoted'='false',
   'classification'='csv',
