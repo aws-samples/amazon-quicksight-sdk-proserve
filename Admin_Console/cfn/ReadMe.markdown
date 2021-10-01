@@ -61,7 +61,7 @@ TBLPROPERTIES (
   - Run this DDL to create dataset_dict table: 
   
 ```sql
-CREATE EXTERNAL TABLE `admin_console.data_dict`(
+CREATE EXTERNAL TABLE `admin-console.data_dict`(
 `datasetname` string,
 `datasetid` string,
 `columnname` string,
