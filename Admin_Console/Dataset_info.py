@@ -28,16 +28,23 @@ def lambda_handler(event, context):
 
     key = 'monitoring/quicksight/datsets_info/datsets_info.csv'
     key2 = 'monitoring/quicksight/datsets_ingestion/datsets_ingestion.csv'
+    key3 = 'monitoring/quicksight/data_dictionary/data_dictionary.csv'
     tmpdir = tempfile.mkdtemp()
     local_file_name = 'datsets_info.csv'
     local_file_name2 = 'datsets_ingestion.csv'
+    local_file_name3 = 'data_dictionary.csv'
     path = os.path.join(tmpdir, local_file_name)
     # print(path)
 
     path2 = os.path.join(tmpdir, local_file_name2)
     # print(path2)
 
+    path3 = os.path.join(tmpdir, local_file_name3)
+    # print(path3)
+
     access = []
+
+    data_dictionary = []
 
     dashboards = list_dashboards(account_id, lambda_aws_region)
 
@@ -108,21 +115,57 @@ def lambda_handler(event, context):
                             [lambda_aws_region, Name, dashboardid, SourceName, Sourceid, dsname, dsid, LastUpdatedTime,
                              datasourcename, DataSourceid, 'N/A', sqlName, SqlQuery])
                     print(access)
+
             except Exception as e:
                 if str(e).find('flat file'):
                     pass
                 else:
                     raise e
 
+
+
     print(access)
     with open(path, 'w', newline='') as outfile:
         writer = csv.writer(outfile, delimiter='|')
         for line in access:
             writer.writerow(line)
-
+    outfile.close()
     # upload file from tmp to s3 key
 
     bucket.upload_file(path, key)
+
+    datasets = list_datasets(account_id, lambda_aws_region)
+    for item in datasets:
+        try:
+            dsid = item['DataSetId']
+            datasetname = item['Name']
+            dataset_details = describe_data_set(account_id, dsid, lambda_aws_region)
+            OutputColumns = dataset_details['DataSet']['OutputColumns']
+            for column in OutputColumns:
+                columnname = column['Name']
+                columntype = column['Type']
+                if 'Description' in column.keys():
+                    columndesc = column['Description']
+                else:
+                    columndesc = None
+                data_dictionary.append(
+                    [datasetname, dsid, columnname, columntype, columndesc]
+                )
+        except Exception as e:
+            if str(e).find('data set type is not supported'):
+                pass
+            else:
+                raise e
+
+    print(data_dictionary)
+    with open(path3, 'w', newline='') as outfile:
+        writer = csv.writer(outfile, delimiter=',')
+        for line in data_dictionary:
+            writer.writerow(line)
+    outfile.close()
+    # upload file from tmp to s3 key
+    bucket.upload_file(path3, key3)
+
 
 
 def _list(

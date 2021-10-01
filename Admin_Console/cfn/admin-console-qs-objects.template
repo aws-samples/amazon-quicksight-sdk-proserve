@@ -251,7 +251,7 @@
                             }
                         ],
                         "Source": {
-                            "PhysicalTableId": "Admin-Console-Group-Membership-phisical"
+                            "PhysicalTableId": "Admin-Console-Group-Membership-physical"
                         }
                     }
                 },
@@ -276,7 +276,7 @@
                     }
                 ],
                 "PhysicalTableMap": {
-                    "Admin-Console-Group-Membership-phisical": {
+                    "Admin-Console-Group-Membership-physical": {
                         "CustomSql": {
                             "DataSourceArn": {
                                 "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-admin-console"
@@ -372,7 +372,7 @@
                             }
                         ],
                         "Source": {
-                            "PhysicalTableId": "Admin-Console-Object-Access-phisical"
+                            "PhysicalTableId": "Admin-Console-Object-Access-physical"
                         }
                     }
                 },
@@ -397,7 +397,7 @@
                     }
                 ],
                 "PhysicalTableMap": {
-                    "Admin-Console-Object-Access-phisical": {
+                    "Admin-Console-Object-Access-physical": {
                         "CustomSql": {
                             "DataSourceArn": {
                                 "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-admin-console"
@@ -476,7 +476,7 @@
                 }
             }
         },
-        "dataset_info": {
+        "AdminConsoleDatasetInfo": {
             "Type": "AWS::QuickSight::DataSet",
             "DeletionPolicy": "Retain",
             "DependsOn": [
@@ -492,7 +492,7 @@
                     "Admin-Console-dataset-info-logic": {
                         "Alias": "Admin-Console-dataset-info",
                         "DataTransforms": [
-                            {
+                    {
                         "TagColumnOperation": {
                             "ColumnName": "aws_region",
                             "Tags": [
@@ -502,7 +502,7 @@
                             ]
                         }
                     },
-                            {
+                    {
                         "ProjectOperation": {
                             "ProjectedColumns": [
                                 "aws_region",
@@ -517,13 +517,18 @@
                                 "data_source_id",
                                 "catalog",
                                 "sqlname/schema",
-                                "sqlquery/table_name"
+                                "sqlquery/table_name",
+                                "datasetname",
+                                "datasetid",
+                                "columnname",
+                                "columntype",
+                                "columndesc"
                             ]
                         }
                     }
-                        ],
+                ],
                         "Source": {
-                            "PhysicalTableId": "Admin-Console-dataset-info-phisical"
+                            "PhysicalTableId": "Admin-Console-dataset-info-physical"
                         }
                     }
                 },
@@ -548,69 +553,94 @@
                     }
                 ],
                 "PhysicalTableMap": {
-                    "Admin-Console-dataset-info-phisical": {
+                    "Admin-Console-dataset-info-physical": {
                         "CustomSql": {
                             "DataSourceArn": {
                                 "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-admin-console"
                             },
                             "Name": "Admin-Console-dataset-info",
-                            "SqlQuery": "SELECT * FROM sampledb.datsets_info",
+                            "SqlQuery": "SELECT * \nFROM \"admin-console\".datasets_info i \njoin \"admin-console\".data_dict d\non i.dataset_id = d.datasetid",
                             "Columns": [
-                                {
-                            "Name": "aws_region",
-                            "Type": "STRING"
+                        {
+                            "Type": "STRING",
+                            "Name": "aws_region"
                         },
                         {
-                            "Name": "dashboard_name",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "dashboard_name"
                         },
                         {
-                            "Name": "dashboardid",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "dashboardid"
                         },
                         {
-                            "Name": "analysis",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "analysis"
                         },
                         {
-                            "Name": "analysis_id",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "analysis_id"
                         },
                         {
-                            "Name": "dataset_name",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "dataset_name"
                         },
                         {
-                            "Name": "dataset_id",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "dataset_id"
                         },
                         {
-                            "Name": "lastupdatedtime",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "lastupdatedtime"
                         },
                         {
-                            "Name": "data_source_name",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "data_source_name"
                         },
                         {
-                            "Name": "data_source_id",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "data_source_id"
                         },
                         {
-                            "Name": "catalog",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "catalog"
                         },
                         {
-                            "Name": "sqlname/schema",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "sqlname/schema"
                         },
                         {
-                            "Name": "sqlquery/table_name",
-                            "Type": "STRING"
+                            "Type": "STRING",
+                            "Name": "sqlquery/table_name"
+                        },
+                        {
+                            "Type": "STRING",
+                            "Name": "datasetname"
+                        },
+                        {
+                            "Type": "STRING",
+                            "Name": "datasetid"
+                        },
+                        {
+                            "Type": "STRING",
+                            "Name": "columnname"
+                        },
+                        {
+                            "Type": "STRING",
+                            "Name": "columntype"
+                        },
+                        {
+                            "Type": "STRING",
+                            "Name": "columndesc"
                         }
-                            ]
+                    ]
                         }
                     }
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "5400e75f-ee47-4192-999a-d6e12719da0b"
                 }
             }
         },
@@ -620,7 +650,8 @@
                 "qsdatasource",
                 "AdminConsoleGroupMembership",
                 "AdminConsoleCFNMain",
-                "AdminConsoleObjectAccess"
+                "AdminConsoleObjectAccess",
+                "AdminConsoleDatasetInfo"
             ],
             "DeletionPolicy": "Retain",
             "Properties": {
@@ -666,7 +697,7 @@
                 ],
                 "SourceEntity": {
                     "SourceTemplate": {
-                        "Arn": "arn:aws:quicksight:us-east-1:889399602426:template/admin-console-cfn",
+                        "Arn": "arn:aws:quicksight:us-east-1:624969228231:template/Admin-Console-Public-CFN-Template",
                         "DataSetReferences": [
                             {
                                 "DataSetArn": {
@@ -685,6 +716,12 @@
                                     "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/Admin-Console-Object-Access"
                                 },
                                 "DataSetPlaceholder": "Admin-Console-Object-Access"
+                            },
+                            {
+                                "DataSetArn": {
+                                    "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/Admin-Console-dataset-info"
+                                },
+                                "DataSetPlaceholder": "Admin-Console-dataset-info"
                             }
                         ]
                     }
@@ -708,8 +745,8 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 60,
-                    "y": 90
+                    "x": 190,
+                    "y": 340
                 },
                 "z": 1,
                 "embeds": []
@@ -720,8 +757,8 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 180,
-                    "y": 90
+                    "x": 260,
+                    "y": 210
                 },
                 "z": 1,
                 "embeds": [],
@@ -735,7 +772,7 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 60,
+                    "x": -80,
                     "y": 210
                 },
                 "z": 1,
@@ -765,8 +802,8 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 300,
-                    "y": 90
+                    "x": 30,
+                    "y": 70
                 },
                 "z": 1,
                 "embeds": [],
@@ -774,7 +811,23 @@
                     "58b157d0-c1d9-43a2-9e91-8025139547e8",
                     "3d4ff1b6-9705-41f7-8231-6ec511700320",
                     "181feb9f-e4b1-45d3-9ccd-f1d854062b61",
-                    "d7f3eb0a-078d-4144-9031-44946c6b2020"
+                    "d7f3eb0a-078d-4144-9031-44946c6b2020",
+                    "5400e75f-ee47-4192-999a-d6e12719da0b"
+                ]
+            },
+            "5400e75f-ee47-4192-999a-d6e12719da0b": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 230,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": [],
+                "dependson": [
+                    "58b157d0-c1d9-43a2-9e91-8025139547e8"
                 ]
             }
         }
