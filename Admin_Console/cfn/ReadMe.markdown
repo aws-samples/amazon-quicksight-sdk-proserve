@@ -16,6 +16,7 @@
 | groupmembership | s3://admin-console[aws-account-id]/monitoring/quicksight/group_membership | The s3 location of group_membership.csv for you to utilize in next Athena tables creation stack |
 | objectaccess | s3://admin-console[aws-account-id]/monitoring/quicksight/object_access | The s3 location of object_access.csv for you to utilize in next Athena tables creation stack |
 | dataset_info | s3://admin-console[aws-account-id]/monitoring/quicksight/datsets_info | The s3 location of datsets_info.csv for you to utilize in next Athena tables creation stack |
+| data_dictionary | s3://admin-console[aws-account-id]/monitoring/quicksight/data_dictionary | The s3 location of data_dictionary.csv for you to utilize in next Athena tables creation stack |
 
 ## 4. Edit *admin_console_tables.json*: replace the corresponding fields by searching the key and replace the text with the value
   

@@ -135,7 +135,7 @@
                     ]
                 },
                 "Code": {
-                    "S3Bucket": "admin-console-cfn-dataprepare-code-dataset-info",
+                    "S3Bucket": "admin-console-cfn-dataprepare-code",
                     "S3Key": "Dataset_info.zip"
                 }
             },
