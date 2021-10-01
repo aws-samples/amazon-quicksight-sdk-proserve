@@ -50,8 +50,6 @@ OUTPUTFORMAT
 LOCATION
   's3://<<bucket-name>>/monitoring/quicksight/datsets_info'
 TBLPROPERTIES (
-  'CrawlerSchemaDeserializerVersion'='1.0', 
-  'CrawlerSchemaSerializerVersion'='1.0', 
   'columnsOrdered'='true', 
   'compressionType'='none', 
   'delimiter'='|', 
