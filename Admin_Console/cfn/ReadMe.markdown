@@ -24,7 +24,9 @@
   - Three tables were created in the database, **cloudtrail_logs**, **group_membership**, **object_access**
   - Preview the tables from Athena
   - Run this DDL to create dataset_info table: 
-    CREATE EXTERNAL TABLE `datsets_info`(
+  
+```sql
+    CREATE EXTERNAL TABLE `admin-console.datasets_info`(
   `aws_region` string COMMENT 'from deserializer', 
   `dashboard_name` string COMMENT 'from deserializer', 
   `dashboardid` string COMMENT 'from deserializer', 
@@ -54,6 +56,32 @@ TBLPROPERTIES (
   'delimiter'='|', 
   'transient_lastDdlTime'='1619204644', 
   'typeOfData'='file')
+ ``` 
+  - Run this DDL to create dataset_dict table: 
+  
+```sql
+CREATE EXTERNAL TABLE `admin_console.data_dict`(
+`datasetname` string,
+`datasetid` string,
+`columnname` string,
+`columntype` string,
+`columndesc` string)
+ROW FORMAT DELIMITED
+  FIELDS TERMINATED BY ','
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.TextInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  's3://administrative-dashboard624969228231/monitoring/quicksight/data_dictionary/'
+TBLPROPERTIES (
+  'areColumnsQuoted'='false',
+  'classification'='csv',
+  'columnsOrdered'='true',
+  'compressionType'='none',
+  'delimiter'=',',
+  'typeOfData'='file')
+```
   - In QuickSight, go to security permissions, enable bucket access to s3://admin-console[AWS-account-ID] and s3://cloudtrail-awslogs-[aws-account-id]-do-not-delete
   - In QuickSight, enable Athena access
   - Verify QuickSight can access the tables through Athena
