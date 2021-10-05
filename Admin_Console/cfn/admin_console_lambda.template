@@ -125,7 +125,7 @@
                         }
                     }
                 },
-                "Handler": "data_prepare.lambda_handler",
+                "Handler": "Dataset_info.lambda_handler",
                 "Runtime": "python3.7",
                 "FunctionName": "dataset_info",
                 "MemorySize": 512,
@@ -207,6 +207,30 @@
                     "id": "a59461e8-9fcb-415c-b8a0-0f21f2b4e38b"
                 }
             }
+        },
+        "adminconsolehourlyscheduledatasetinfo": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "adminconsoledatasetinfo",
+                        "Arn"
+                    ]
+                },
+                "Principal": "events.amazonaws.com",
+                "SourceArn": {
+                    "Fn::GetAtt": [
+                        "adminconsolehourlyschedule",
+                        "Arn"
+                    ]
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "50816f94-5ba8-4b3b-91da-84afa96bd9e7"
+                }
+            }
         }
     },
     "Outputs": {
@@ -241,8 +265,8 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 60,
-                    "y": 90
+                    "x": -130,
+                    "y": 230
                 },
                 "z": 1,
                 "embeds": []
@@ -253,8 +277,8 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 180,
-                    "y": 90
+                    "x": 20,
+                    "y": 240
                 },
                 "z": 1,
                 "embeds": []
@@ -265,8 +289,8 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 60,
-                    "y": 210
+                    "x": 10,
+                    "y": 70
                 },
                 "z": 1,
                 "embeds": [],
@@ -292,8 +316,8 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 300,
-                    "y": 90
+                    "x": 400,
+                    "y": 100
                 },
                 "z": 1,
                 "embeds": [],
@@ -307,13 +331,28 @@
                     "height": 60
                 },
                 "position": {
-                    "x": 270,
-                    "y": 180
+                    "x": 20,
+                    "y": 400
                 },
                 "z": 1,
                 "embeds": [],
                 "dependson": [
                     "494a8dba-26e5-4efa-93ea-d49a84c99390"
+                ]
+            },
+            "50816f94-5ba8-4b3b-91da-84afa96bd9e7": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 410,
+                    "y": 360
+                },
+                "z": 1,
+                "embeds": [],
+                "isassociatedwith": [
+                    "f2b566cb-22e3-41b5-a520-ec2c86a63929"
                 ]
             }
         }
