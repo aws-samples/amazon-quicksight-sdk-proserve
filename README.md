@@ -7,6 +7,7 @@
   Updates: CFN support added
 5. Granular access control added
 6. Data dictionary added
+
 Author: AWS Pro-Serve
 Email: aws-proserve-quicksight@amazon.com
 
