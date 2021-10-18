@@ -1,0 +1,8 @@
+aws --p cl quicksight list-data-sets --aws-account-id 697246135905 --region us-east-2 > ~/Downloads/ds.json
+
+aws --p cl quicksight list-ingestions --aws-account-id 697246135905 --data-set-id <DATASET ID> --region us-east-2 > ~/Downloads/ingestions.json
+
+aws --p cl quicksight cancel-ingestion --aws-account-id 697246135905 --data-set-id <DATASET ID> --ingestion-id <INGESTION ID> --region us-east-2
+
+
+

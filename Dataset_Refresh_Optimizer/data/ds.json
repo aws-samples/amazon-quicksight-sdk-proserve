@@ -1,0 +1,654 @@
+{
+    "Status": 200,
+    "DataSetSummaries": [
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/06f6c1a3-0977-4c40-8ff8-4a36f9ecc034",
+            "DataSetId": "06f6c1a3-0977-4c40-8ff8-4a36f9ecc034",
+            "Name": "People Overview",
+            "CreatedTime": 1606763944.897,
+            "LastUpdatedTime": 1606763945.195,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/0882ec28-5e07-455f-ae73-36fe55afa768",
+            "DataSetId": "0882ec28-5e07-455f-ae73-36fe55afa768",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1606684177.922,
+            "LastUpdatedTime": 1606684178.09,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/09fa9ff5-cbca-4e69-a42c-08c199e45413",
+            "DataSetId": "09fa9ff5-cbca-4e69-a42c-08c199e45413",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1615459719.701,
+            "LastUpdatedTime": 1615459719.964,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/0c231176-75bc-498e-90d4-6a1db047671d",
+            "DataSetId": "0c231176-75bc-498e-90d4-6a1db047671d",
+            "Name": "curated_detailed_product_margin_gl",
+            "CreatedTime": 1611721419.549,
+            "LastUpdatedTime": 1615658936.964,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/0c45fbeb-6822-469c-a605-26d76c22e778",
+            "DataSetId": "0c45fbeb-6822-469c-a605-26d76c22e778",
+            "Name": "People Overview",
+            "CreatedTime": 1610150385.953,
+            "LastUpdatedTime": 1610150386.095,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/0d65998d-dc47-4fcd-83ed-fae979b908ea",
+            "DataSetId": "0d65998d-dc47-4fcd-83ed-fae979b908ea",
+            "Name": "gl_is_transaction_summary",
+            "CreatedTime": 1613683288.897,
+            "LastUpdatedTime": 1613683288.897,
+            "ImportMode": "DIRECT_QUERY",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/0f18d919-c098-459c-8916-34258f072155",
+            "DataSetId": "0f18d919-c098-459c-8916-34258f072155",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1615375287.803,
+            "LastUpdatedTime": 1615375288.023,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/168bf623-0fce-4c08-a02e-5e949257f44e",
+            "DataSetId": "168bf623-0fce-4c08-a02e-5e949257f44e",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1611862712.391,
+            "LastUpdatedTime": 1611862712.676,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/185898b0-6dcc-4722-a63b-b40fcef5e908",
+            "DataSetId": "185898b0-6dcc-4722-a63b-b40fcef5e908",
+            "Name": "People Overview",
+            "CreatedTime": 1590715569.941,
+            "LastUpdatedTime": 1590715570.027,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/191d961a-a115-453b-96f4-bc78ccfaf3e4",
+            "DataSetId": "191d961a-a115-453b-96f4-bc78ccfaf3e4",
+            "Name": "People Overview",
+            "CreatedTime": 1615375287.82,
+            "LastUpdatedTime": 1615375288.014,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/21f9cadc-a5f1-4d50-adeb-b4495a1f3f1f",
+            "DataSetId": "21f9cadc-a5f1-4d50-adeb-b4495a1f3f1f",
+            "Name": "nrt_total_aov_aggregated",
+            "CreatedTime": 1605841504.957,
+            "LastUpdatedTime": 1615723376.82,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/22455e22-f62a-4799-9e7c-d271162c7d83",
+            "DataSetId": "22455e22-f62a-4799-9e7c-d271162c7d83",
+            "Name": "fct_actual_rev",
+            "CreatedTime": 1612559406.76,
+            "LastUpdatedTime": 1615725111.968,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/22ef1728-c010-4f4f-908e-1886bb0a3beb",
+            "DataSetId": "22ef1728-c010-4f4f-908e-1886bb0a3beb",
+            "Name": "Business Review",
+            "CreatedTime": 1590715569.819,
+            "LastUpdatedTime": 1590715569.935,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/25a91f76-c560-40b9-a2d0-e277c8a8212c",
+            "DataSetId": "25a91f76-c560-40b9-a2d0-e277c8a8212c",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1590715570.049,
+            "LastUpdatedTime": 1590715570.22,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/2a5847a1-6585-4965-a890-e1bac99f92e8",
+            "DataSetId": "2a5847a1-6585-4965-a890-e1bac99f92e8",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1608050606.993,
+            "LastUpdatedTime": 1608050607.198,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/2c2e2a32-8e7e-4c6c-9175-1003ea2dcc8f",
+            "DataSetId": "2c2e2a32-8e7e-4c6c-9175-1003ea2dcc8f",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1613070652.336,
+            "LastUpdatedTime": 1613070652.511,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/38ddab03-8ff1-4f73-bc37-533586567d73",
+            "DataSetId": "38ddab03-8ff1-4f73-bc37-533586567d73",
+            "Name": "nrt_demand_product_revenue",
+            "CreatedTime": 1607385085.069,
+            "LastUpdatedTime": 1615723367.435,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/3c3586b2-d6ab-4fdb-9e8f-a44f4101f4ec",
+            "DataSetId": "3c3586b2-d6ab-4fdb-9e8f-a44f4101f4ec",
+            "Name": "Business Review",
+            "CreatedTime": 1615459719.658,
+            "LastUpdatedTime": 1615459719.901,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/4130feea-c2c0-4dd5-9ed5-fcc522931383",
+            "DataSetId": "4130feea-c2c0-4dd5-9ed5-fcc522931383",
+            "Name": "pbi_product_margin_cl",
+            "CreatedTime": 1607636288.317,
+            "LastUpdatedTime": 1607636662.049,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/429106d4-6abe-4fb1-b6f6-733fa60a54ec",
+            "DataSetId": "429106d4-6abe-4fb1-b6f6-733fa60a54ec",
+            "Name": "Business Review",
+            "CreatedTime": 1608050606.877,
+            "LastUpdatedTime": 1608050607.034,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/42f89fb8-e999-4b37-8885-9c2538f14615",
+            "DataSetId": "42f89fb8-e999-4b37-8885-9c2538f14615",
+            "Name": "v_forecast",
+            "CreatedTime": 1607546105.523,
+            "LastUpdatedTime": 1607546105.74,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/461f309a-4342-46d3-ae62-453b0e82fcff",
+            "DataSetId": "461f309a-4342-46d3-ae62-453b0e82fcff",
+            "Name": "Business Review",
+            "CreatedTime": 1613070652.322,
+            "LastUpdatedTime": 1613070652.475,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/4af29e25-439a-40b8-b81d-da4e41f91fd0",
+            "DataSetId": "4af29e25-439a-40b8-b81d-da4e41f91fd0",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1610150385.269,
+            "LastUpdatedTime": 1610150385.421,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/4bdee75a-ab4e-42f7-bd19-d79a31a203f1",
+            "DataSetId": "4bdee75a-ab4e-42f7-bd19-d79a31a203f1",
+            "Name": "curated_customer_service_hourly",
+            "CreatedTime": 1606509321.905,
+            "LastUpdatedTime": 1615723296.626,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/4c0964a6-9fda-4f0a-bb25-2bb22c1266a7",
+            "DataSetId": "4c0964a6-9fda-4f0a-bb25-2bb22c1266a7",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1613072451.964,
+            "LastUpdatedTime": 1613072452.142,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/4d51ef79-19f7-4a80-bcf3-40a9a57be0b5",
+            "DataSetId": "4d51ef79-19f7-4a80-bcf3-40a9a57be0b5",
+            "Name": "Business Review",
+            "CreatedTime": 1611862712.236,
+            "LastUpdatedTime": 1611862712.436,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/541bb190-b5e7-4739-b34c-ac21c5f56ec2",
+            "DataSetId": "541bb190-b5e7-4739-b34c-ac21c5f56ec2",
+            "Name": "curated_detailed_manufacturer_monthly_sales_by_province",
+            "CreatedTime": 1614384446.358,
+            "LastUpdatedTime": 1615708879.746,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/561fddde-ec84-4320-993d-e21e760d753c",
+            "DataSetId": "561fddde-ec84-4320-993d-e21e760d753c",
+            "Name": "curated_detailed_product_attribute",
+            "CreatedTime": 1615451216.785,
+            "LastUpdatedTime": 1615713362.598,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/5642b18b-ad68-4c17-8d90-539ec9148035",
+            "DataSetId": "5642b18b-ad68-4c17-8d90-539ec9148035",
+            "Name": "ax_ims_inventory",
+            "CreatedTime": 1615277472.271,
+            "LastUpdatedTime": 1615723666.126,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/572cf250-736a-45b2-9ed0-54f1c951c714",
+            "DataSetId": "572cf250-736a-45b2-9ed0-54f1c951c714",
+            "Name": "dev_nrt_aov_aggregated",
+            "CreatedTime": 1615496300.745,
+            "LastUpdatedTime": 1615598768.041,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/589e0a11-2330-4764-b9e0-dd11b1bb593d",
+            "DataSetId": "589e0a11-2330-4764-b9e0-dd11b1bb593d",
+            "Name": "curated_detailed_retail_store_impact",
+            "CreatedTime": 1611180439.566,
+            "LastUpdatedTime": 1615658624.723,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/59b19b3d-43ca-4fc5-92a8-1ef7287f9a3e",
+            "DataSetId": "59b19b3d-43ca-4fc5-92a8-1ef7287f9a3e",
+            "Name": "Business Review",
+            "CreatedTime": 1613072452.038,
+            "LastUpdatedTime": 1613072452.205,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/5dc4bd12-f42b-41ba-aea7-fc46ca885868",
+            "DataSetId": "5dc4bd12-f42b-41ba-aea7-fc46ca885868",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1606684177.724,
+            "LastUpdatedTime": 1606684177.916,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/6308e949-3c8d-48df-9218-59f4a4b3691f",
+            "DataSetId": "6308e949-3c8d-48df-9218-59f4a4b3691f",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1606763944.569,
+            "LastUpdatedTime": 1606763944.755,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/636bc483-9e8e-4e0c-89c1-511a231d0678",
+            "DataSetId": "636bc483-9e8e-4e0c-89c1-511a231d0678",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1613072452.078,
+            "LastUpdatedTime": 1613072452.279,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/665e78ac-f6ad-48dd-84e4-db05f4fa651f",
+            "DataSetId": "665e78ac-f6ad-48dd-84e4-db05f4fa651f",
+            "Name": "curated_detailed_shipped_sale",
+            "CreatedTime": 1614462467.16,
+            "LastUpdatedTime": 1615716095.538,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/688c75f4-8968-41c9-83cd-293b1dd543f0",
+            "DataSetId": "688c75f4-8968-41c9-83cd-293b1dd543f0",
+            "Name": "Business Review",
+            "CreatedTime": 1606684177.761,
+            "LastUpdatedTime": 1606684177.947,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/6d114241-f667-43d4-ab49-93b57485b511",
+            "DataSetId": "6d114241-f667-43d4-ab49-93b57485b511",
+            "Name": "v_forecast",
+            "CreatedTime": 1607541498.916,
+            "LastUpdatedTime": 1609960913.326,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/7098a8e3-dc44-4659-9cba-3bb1bea1b763",
+            "DataSetId": "7098a8e3-dc44-4659-9cba-3bb1bea1b763",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1608050607.156,
+            "LastUpdatedTime": 1608050607.368,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/72d4bae5-0546-434e-b18e-b33c543e209d",
+            "DataSetId": "72d4bae5-0546-434e-b18e-b33c543e209d",
+            "Name": "People Overview",
+            "CreatedTime": 1602862293.46,
+            "LastUpdatedTime": 1602862293.674,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/75f79091-4b7e-45dc-9549-f8fc274de729",
+            "DataSetId": "75f79091-4b7e-45dc-9549-f8fc274de729",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1590715570.379,
+            "LastUpdatedTime": 1590715570.453,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/75f9b18f-1685-46ca-870c-d3b266d83799",
+            "DataSetId": "75f9b18f-1685-46ca-870c-d3b266d83799",
+            "Name": "People Overview",
+            "CreatedTime": 1613070652.31,
+            "LastUpdatedTime": 1613070652.489,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/7e6c49f9-dac3-4565-8e50-dade80ccd867",
+            "DataSetId": "7e6c49f9-dac3-4565-8e50-dade80ccd867",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1602862293.439,
+            "LastUpdatedTime": 1602862293.614,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/8462de91-03d5-48f0-9a2e-5ac469817e50",
+            "DataSetId": "8462de91-03d5-48f0-9a2e-5ac469817e50",
+            "Name": "Marketing Sample",
+            "CreatedTime": 1615386517.869,
+            "LastUpdatedTime": 1615386518.103,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/85b155a2-1a25-4565-9a83-8fe2e30773fe",
+            "DataSetId": "85b155a2-1a25-4565-9a83-8fe2e30773fe",
+            "Name": "nrt_aov_aggregated",
+            "CreatedTime": 1605807706.795,
+            "LastUpdatedTime": 1615723077.447,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/93ba4e39-1f39-49ac-987f-b109c5c648ff",
+            "DataSetId": "93ba4e39-1f39-49ac-987f-b109c5c648ff",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1611862711.925,
+            "LastUpdatedTime": 1611862712.152,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/96015880-f336-4d4e-9272-0e624a9f0707",
+            "DataSetId": "96015880-f336-4d4e-9272-0e624a9f0707",
+            "Name": "quicksight_users",
+            "CreatedTime": 1604716112.777,
+            "LastUpdatedTime": 1615712444.809,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/9655d1ce-ac99-4add-9c35-04a15fc09c6b",
+            "DataSetId": "9655d1ce-ac99-4add-9c35-04a15fc09c6b",
+            "Name": "People Overview",
+            "CreatedTime": 1615459719.727,
+            "LastUpdatedTime": 1615459719.94,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/a9d394fe-1bd8-4029-ab2a-462683774d97",
+            "DataSetId": "a9d394fe-1bd8-4029-ab2a-462683774d97",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1613070652.419,
+            "LastUpdatedTime": 1613070652.596,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/aab35b37-4e5d-456a-9e27-63905630ebcb",
+            "DataSetId": "aab35b37-4e5d-456a-9e27-63905630ebcb",
+            "Name": "curated_detailed_returned_sale",
+            "CreatedTime": 1615450847.703,
+            "LastUpdatedTime": 1615630677.446,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/af35b5d5-d2cb-4869-88d6-6d620a84a4d9",
+            "DataSetId": "af35b5d5-d2cb-4869-88d6-6d620a84a4d9",
+            "Name": "People Overview",
+            "CreatedTime": 1606684177.867,
+            "LastUpdatedTime": 1606684178.043,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/b15cb0ad-b40f-4b9a-866b-3fd8af3174c3",
+            "DataSetId": "b15cb0ad-b40f-4b9a-866b-3fd8af3174c3",
+            "Name": "dev_nrt_total_aov_aggregated",
+            "CreatedTime": 1615496263.359,
+            "LastUpdatedTime": 1615598727.578,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/bd84957c-56e8-4eed-a497-5cb152e115ca",
+            "DataSetId": "bd84957c-56e8-4eed-a497-5cb152e115ca",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1615459719.807,
+            "LastUpdatedTime": 1615459719.999,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/c321ee03-77d1-40d1-a2d1-3e1693cc1492",
+            "DataSetId": "c321ee03-77d1-40d1-a2d1-3e1693cc1492",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1615375287.836,
+            "LastUpdatedTime": 1615375288.0,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/c45567da-5a73-4ac4-abeb-05a5fcdfd56c",
+            "DataSetId": "c45567da-5a73-4ac4-abeb-05a5fcdfd56c",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1602862293.119,
+            "LastUpdatedTime": 1602862293.308,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/cda45ec9-5e3c-4097-baf7-79ebdbc22059",
+            "DataSetId": "cda45ec9-5e3c-4097-baf7-79ebdbc22059",
+            "Name": "curated_detailed_demand_sale",
+            "CreatedTime": 1614462223.03,
+            "LastUpdatedTime": 1615712618.552,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/d3e91ee1-e1d2-4a9a-aed0-88543952fd42",
+            "DataSetId": "d3e91ee1-e1d2-4a9a-aed0-88543952fd42",
+            "Name": "Business Review",
+            "CreatedTime": 1606763944.54,
+            "LastUpdatedTime": 1606763944.769,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/da981d90-85e3-4f70-980d-8be8b22944a8",
+            "DataSetId": "da981d90-85e3-4f70-980d-8be8b22944a8",
+            "Name": "core_ims_inventory",
+            "CreatedTime": 1615277574.592,
+            "LastUpdatedTime": 1615723632.427,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/db8dfbc4-8cae-41af-a6f8-0f27510716f5",
+            "DataSetId": "db8dfbc4-8cae-41af-a6f8-0f27510716f5",
+            "Name": "People Overview",
+            "CreatedTime": 1613072452.034,
+            "LastUpdatedTime": 1613072452.194,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/e06421de-267b-495e-a86a-dd39354f3eb2",
+            "DataSetId": "e06421de-267b-495e-a86a-dd39354f3eb2",
+            "Name": "shipped_sale",
+            "CreatedTime": 1614816868.232,
+            "LastUpdatedTime": 1614816868.446,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/e1950d2a-9d7f-4be8-a6c6-c406f0526df5",
+            "DataSetId": "e1950d2a-9d7f-4be8-a6c6-c406f0526df5",
+            "Name": "People Overview",
+            "CreatedTime": 1611862712.625,
+            "LastUpdatedTime": 1611862712.876,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/e6642f48-8008-46df-979f-f6747b22621e",
+            "DataSetId": "e6642f48-8008-46df-979f-f6747b22621e",
+            "Name": "pbi_integrapay_payment",
+            "CreatedTime": 1614195886.073,
+            "LastUpdatedTime": 1615653069.251,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/e9018a98-cfc7-42de-92a4-802eca62600c",
+            "DataSetId": "e9018a98-cfc7-42de-92a4-802eca62600c",
+            "Name": "curated_detailed_product_margin_cl",
+            "CreatedTime": 1614464616.09,
+            "LastUpdatedTime": 1615629899.532,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/e9400b05-a34f-45f5-bc92-72ce4fd461ad",
+            "DataSetId": "e9400b05-a34f-45f5-bc92-72ce4fd461ad",
+            "Name": "Web and Social Media Analytics",
+            "CreatedTime": 1610150385.531,
+            "LastUpdatedTime": 1610150385.667,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/ebc45f59-c03f-4042-b1da-1c703ec457cb",
+            "DataSetId": "ebc45f59-c03f-4042-b1da-1c703ec457cb",
+            "Name": "curated_email_engagement_revenue",
+            "CreatedTime": 1615506446.121,
+            "LastUpdatedTime": 1615597491.523,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/ececac19-297a-4338-8303-e520a944c07b",
+            "DataSetId": "ececac19-297a-4338-8303-e520a944c07b",
+            "Name": "Business Review",
+            "CreatedTime": 1615375287.83,
+            "LastUpdatedTime": 1615375287.982,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/f45ad93c-3191-4fa5-a527-7cc2e58518db",
+            "DataSetId": "f45ad93c-3191-4fa5-a527-7cc2e58518db",
+            "Name": "Order_Sub_Country",
+            "CreatedTime": 1614298214.833,
+            "LastUpdatedTime": 1614298214.989,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/f9600327-e5da-4cd4-8691-f5366f9057ca",
+            "DataSetId": "f9600327-e5da-4cd4-8691-f5366f9057ca",
+            "Name": "Sales Pipeline",
+            "CreatedTime": 1606763944.589,
+            "LastUpdatedTime": 1606763944.744,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/faa9acd6-8192-4324-8d87-4217155b23dc",
+            "DataSetId": "faa9acd6-8192-4324-8d87-4217155b23dc",
+            "Name": "dev_nrt_demand_product_revenue",
+            "CreatedTime": 1615501883.492,
+            "LastUpdatedTime": 1615598764.319,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/fb94370c-2a52-4d68-be45-26cdfbe34dfa",
+            "DataSetId": "fb94370c-2a52-4d68-be45-26cdfbe34dfa",
+            "Name": "Business Review",
+            "CreatedTime": 1602862293.131,
+            "LastUpdatedTime": 1602862293.32,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/fd1e5908-2844-4721-b512-dfdce6d02d53",
+            "DataSetId": "fd1e5908-2844-4721-b512-dfdce6d02d53",
+            "Name": "People Overview",
+            "CreatedTime": 1608050607.016,
+            "LastUpdatedTime": 1608050607.2,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        },
+        {
+            "Arn": "arn:aws:quicksight:us-east-2:697246135905:dataset/fdc62e38-1b82-4358-b5bd-165b3b10b7cd",
+            "DataSetId": "fdc62e38-1b82-4358-b5bd-165b3b10b7cd",
+            "Name": "Business Review",
+            "CreatedTime": 1610150385.339,
+            "LastUpdatedTime": 1610150385.514,
+            "ImportMode": "SPICE",
+            "ColumnLevelPermissionRulesApplied": false
+        }
+    ],
+    "RequestId": "cb6e1a1c-0637-4142-8325-d3d92030d76f"
+}
