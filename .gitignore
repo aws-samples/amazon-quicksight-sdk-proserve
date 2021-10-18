@@ -9,3 +9,5 @@ __pycache__
 .cdk.staging
 cdk.out
 .DS_Store
+/.venv/
+.idea/
