@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: qs-ds-refresh-optimizer | Stack to support automatic refresh of SPICE datasets for QS dashboards # CHANGE
+
+
+Parameters:
+
+  StackName:
+    Type: String
+    Default: AWS::NoValue
+
+Resources:
+
+  QSTopicSNSEmail:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      Subscription:
+        - Endpoint: "sabtahiz@amazon.com"
+          Protocol: "email"
+
+  LambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: LambdaFunctionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - ssm:PutParameter
+                  - ssm:DeleteParameter
+                  - ssm:GetParameterHistory
+                  - ssm:GetParametersByPath
+                  - ssm:GetParameters
+                  - ssm:GetParameter
+                  - ssm:DeleteParameters
+                  - ssm:DescribeParameters
+                  - sts:*
+                  - quicksight:*
+                  - sns:*
+                Resource: '*'
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: qs-ds-refresh-optimizer | Lambda function to trigger SPICE dataset refresh.
+      FunctionName: qs-ds-refresh-optimizer
+      Runtime: python3.8
+      Timeout: 75
+      MemorySize: 512
+      Handler: index.handler
+      Role: !GetAtt LambdaFunctionRole.Arn
+      Code:
+        S3Bucket: qs-ds-refresh-optimizer
+        S3Key: lambda_source/dashboard-ds-auto-refresh.zip
