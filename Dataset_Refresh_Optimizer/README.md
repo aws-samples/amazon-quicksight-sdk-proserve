@@ -80,19 +80,13 @@ Prior to launch, you need to define your datasets and other parameters in `confi
 {
   "deployment": "../deployment/",
   "stackname": "qs-ds-refresh-optimizer",
-  // search pattern to include specific datasets
   "search": "",
-  // AWS account ID
   "account": "",
-  // optional
   "aws_profile": "default",
-  // optional
   "aws_region": "us-east-1",
-  // Datasets to be contained
   "datasets": {
     "proserve-qs-sdk-test": 30
   },
-  // Datasets to be ignored
   "ignore": [
     "EG Sales by Brand",
     "Business Review",
@@ -204,23 +198,6 @@ No changes
 
 ** DO NOT modify AWS resources directly in console. Always use CloudFormation templates to apply changes.
 
-## Contributing
-
-Please follow these steps if you are willing to modify or change:
-
-1. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-2. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-3. Push to the Branch (`git push origin feature/AmazingFeature`)
-4. Open a Pull Request
-
 ## License
 
-Copy Right @ All Rights Reserved for Amazon Web Services (AWS)
-
-## Contact
-
-Please contact before cloning this project:
-
-- E-mail: **sabtahiz[at]amazon[dot]com**
-
-- Slack: **sabtahiz**
+This library is licensed under the MIT-0 License. See the LICENSE file.
