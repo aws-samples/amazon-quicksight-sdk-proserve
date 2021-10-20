@@ -80,19 +80,13 @@ Prior to launch, you need to define your datasets and other parameters in `confi
 {
   "deployment": "../deployment/",
   "stackname": "qs-ds-refresh-optimizer",
-  // search pattern to include specific datasets
   "search": "",
-  // AWS account ID
   "account": "",
-  // optional
   "aws_profile": "default",
-  // optional
   "aws_region": "us-east-1",
-  // Datasets to be contained
   "datasets": {
     "proserve-qs-sdk-test": 30
   },
-  // Datasets to be ignored
   "ignore": [
     "EG Sales by Brand",
     "Business Review",
@@ -203,7 +197,6 @@ No changes
 ```
 
 ** DO NOT modify AWS resources directly in console. Always use CloudFormation templates to apply changes.
-
 
 ## License
 
