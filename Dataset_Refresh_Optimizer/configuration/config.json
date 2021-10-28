@@ -1,0 +1,19 @@
+{
+  "deployment": "../deployment/",
+  "stackname": "qs-ds-refresh-optimizer",
+  "search": "",
+  "account": "",
+  "aws_profile": "default",
+  "aws_region": "us-east-1",
+  "datasets": {
+    "proserve-qs-sdk-test": 30,
+    "nothing": 10
+  },
+  "ignore": [
+    "EG Sales by Brand",
+    "Business Review",
+    "Marketing Sample",
+    "People Overview",
+    "Web and Social Media Analytics"
+  ]
+}
