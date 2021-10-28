@@ -1,0 +1,23 @@
+
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "ScheduledRule - _TARGET"
+      Name: "qs-ds-refresh-optimizer-_TARGET"
+      ScheduleExpression: "_RATE"
+      State: "DISABLED"
+      Targets:
+        - Arn: !GetAtt LambdaFunction.Arn
+          Id: "TargetFunctionV1"
+          Input: !Sub '{"TARGET_DATASET": "_TARGET"}'
+
+  PermissionInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn:
+        Fn::GetAtt:
+          - "ScheduledRule"
+          - "Arn"
