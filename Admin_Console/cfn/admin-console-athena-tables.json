@@ -14,8 +14,7 @@
               }
           }
   },
-        "groupmembership":
-        {"Type": "AWS::Glue::Table",
+      "groupmembership": {"Type": "AWS::Glue::Table",
       "Properties": {
         "CatalogId": {
           "Ref": "AWS::AccountId"
@@ -86,8 +85,7 @@
         }
       }
     },
-    "objectaccess":
-    {"Type": "AWS::Glue::Table",
+      "objectaccess": {"Type": "AWS::Glue::Table",
   "Properties": {
     "CatalogId": {
       "Ref": "AWS::AccountId"
@@ -168,8 +166,7 @@
     }
   }
 },
-"cloudtraillog":
-{"Type": "AWS::Glue::Table",
+      "cloudtraillog": {"Type": "AWS::Glue::Table",
 "Properties": {
 "CatalogId": {
   "Ref": "AWS::AccountId"

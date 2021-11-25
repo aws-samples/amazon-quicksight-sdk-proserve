@@ -89,6 +89,7 @@
                         }
                     }
                 },
+
                 "Handler": "data_prepare.lambda_handler",
                 "Runtime": "python3.7",
                 "FunctionName": "data_prepare",
