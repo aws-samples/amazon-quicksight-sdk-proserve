@@ -10,3 +10,4 @@ __pycache__
 cdk.context.json
 cdk.out
 .DS_Store
+.venv

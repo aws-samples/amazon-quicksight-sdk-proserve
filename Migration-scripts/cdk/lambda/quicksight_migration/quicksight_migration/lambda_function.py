@@ -131,6 +131,17 @@ def lambda_handler(event, context):
                 target,
                 target_admin
             )
+            return {
+                'statusCode': 200,
+                'headers': {
+                    "Access-Control-Allow-Headers" : "Content-Type",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+                    "Content-Type": "application/json"
+                },
+                'body': "Batch migration initiated!",
+                'isBase64Encoded': bool('false')
+            }
         except:
             raise Exception('Failed batch migration')
     elif request_dict['migration_type'] == "INCREMENTAL" and request_dict['migration_resource']:
@@ -155,13 +166,34 @@ def lambda_handler(event, context):
                 request_dict['migration_resource'],
                 request_dict['migration_items'].split(",")
             )
+            return {
+                'statusCode': 200,
+                'headers': {
+                    "Access-Control-Allow-Headers" : "Content-Type",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+                    "Content-Type": "application/json"
+                },
+                'body': "Incremental migration initiated!",
+                'isBase64Encoded': bool('false')
+            }
         except:
             raise Exception('Failed incremental migration')
     else:
-        logger.error(
+        logger.exception(
             "The migration_type %s is not allowed or missing migration_resource\
                 for 'INCREMENTAL' migration", request_dict['migration_type'])
-        raise ValueError("Required parameters were not given")
+        return {
+            'statusCode': 401,
+            'headers': {
+                "Access-Control-Allow-Headers" : "Content-Type",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+                "Content-Type": "application/json"
+            },
+            'body': "Required parameters were not given!",
+            'isBase64Encoded': bool('false')
+        }
 
     # Delete message from SQS queue if migration was successful
     delete_sqs_message(sqs_url, sqs_region, sqs_receipt_handle)
