@@ -1,4 +1,6 @@
 import os
+import boto3
+from botocore.exceptions import ClientError
 from aws_cdk import (
     aws_apigateway as apigw,
     aws_lambda as _lambda,
@@ -133,41 +135,69 @@ class QuicksightMigrationStack(core.Stack):
         )
 
         # API Gateway to SQS
-        self.apigw_sqs = ApiGatewayToSqs(
-            self, "ApiGatewayToSQSqsMigration",
-            allow_create_operation=True,
-            allow_read_operation=False,
-            allow_delete_operation=False,
-            api_gateway_props=apigw.RestApiProps(
-                rest_api_name="quicksight-migration-sqs",
-                deploy=True,
-                default_method_options=apigw.MethodOptions(
-                    authorization_type=apigw.AuthorizationType.NONE
-                ),
-                default_cors_preflight_options=apigw.CorsOptions(
-                    allow_origins = apigw.Cors.ALL_ORIGINS,
-                    allow_methods = apigw.Cors.ALL_METHODS,
-                    allow_headers=['Access-Control-Allow-Origin','Access-Control-Allow-Headers','Content-Type']
-                ),
-                policy=iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            actions=[
-                                'execute-api:Invoke'
-                            ],
-                            resources=["execute-api:/prod/*"],
-                            principals=[
-                                iam.ArnPrincipal("*")
-                            ]
-                        )
-                    ]
-                )
-            ),
-            queue_props=sqs.QueueProps(
-                queue_name="quicksight-migration-sqs",
-                visibility_timeout=core.Duration.minutes(15)
+        self.rest_api_role = iam.Role(self, "RestAPIRole",
+            assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
+            ]
+        )
+
+        self.queue = sqs.Queue(self, "quicksight-migration-sqs-queue",
+            queue_name="quicksight-migration-sqs",
+            visibility_timeout=core.Duration.minutes(15)
+        )
+
+        self.integration_response = apigw.IntegrationResponse(
+            status_code="200",
+            response_templates={"application/json": ""},
+            response_parameters={
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+            }
+        )
+
+        self.api_integration_options = apigw.IntegrationOptions(
+            credentials_role=self.rest_api_role,
+            integration_responses=[self.integration_response],
+            request_templates={
+                "application/json": 'Action=SendMessage&MessageBody=$util.urlEncode("$input.body")'
+            },
+            passthrough_behavior=apigw.PassthroughBehavior.NEVER,
+            request_parameters={
+                "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'"
+            }
+        )
+
+        self.api_resource_sqs_integration = apigw.AwsIntegration(
+            service="sqs",
+            integration_http_method="POST",
+            path="{}/{}".format(core.Aws.ACCOUNT_ID, self.queue.queue_name),
+            options=self.api_integration_options
+        )
+
+        self.base_api = apigw.RestApi(self, 'quicksight-migration-sqs',
+            rest_api_name='quicksight-migration-sqs',
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_origins=apigw.Cors.ALL_ORIGINS,
+                allow_methods=["POST","OPTIONS"],
+                allow_headers=[
+                    'Access-Control-Allow-Origin',
+                    'Access-Control-Allow-Headers',
+                    'Content-Type'
+                ]
             )
+        )
+
+        self.base_api.root.add_method("POST", self.api_resource_sqs_integration,
+            method_responses=[{
+                'statusCode': '200',
+                'responseParameters': {
+                    'method.response.header.Access-Control-Allow-Headers': True,
+                    'method.response.header.Access-Control-Allow-Methods': True,
+                    'method.response.header.Access-Control-Allow-Origin': True
+                }
+            }]
         )
 
         self.quicksight_migration_lambda = _lambda.Function(
@@ -184,18 +214,15 @@ class QuicksightMigrationStack(core.Stack):
                 'BUCKET_NAME': self.bucket.bucket_name,
                 'S3_KEY': 'None',
                 'INFRA_CONFIG_PARAM': '/infra/config',
-                'SQS_URL': self.apigw_sqs.sqs_queue.queue_url
+                'SQS_URL': self.queue.queue_url
             }
         )
 
-        self.quicksight_migration_lambda.add_event_source(
-            event_sources.SqsEventSource(
-                enabled=True,
-                queue=self.apigw_sqs.sqs_queue,
-            )
-        )
+        self.sqs_event_source = event_sources.SqsEventSource(self.queue)
+
+        self.quicksight_migration_lambda.add_event_source(self.sqs_event_source)
 
         core.CfnOutput(self, "MigrationAPIGatewayURL",
-            value=self.apigw_sqs.api_gateway.url,
+            value=self.base_api.url,
             description="Migration API GW URL"
         )
