@@ -4,11 +4,11 @@
 2. Migration Scripts
 3. Administrative Dashboard
 4. Admin Console of Usage Metrics
-  Updates: CFN support added
+  Updates: CFN support added, Data dictionary added
 5. Granular access control added
-6. Data dictionary added
+6. Dataset_Refresh_Optimizer added
 
-Author: AWS Pro-Serve
+Author: AWS ProServe
 Email: aws-proserve-quicksight@amazon.com
 
 ## License
