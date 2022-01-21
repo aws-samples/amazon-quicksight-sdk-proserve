@@ -1,0 +1,13 @@
+{
+      "most_recent": {
+          "DataSetIdentifier": "ds_assets_as_code",
+          "Name": "most_recent",
+          "Expression": "max({date_time})"
+        }
+    ,
+      "Calculated TimeFrame": {
+          "DataSetIdentifier": "ds_assets_as_code",
+          "Name": "Calculated TimeFrame",
+          "Expression": "datediff(${StartDate},${Enddate},'DD')"
+      }
+}

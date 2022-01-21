@@ -1,0 +1,8 @@
+{"aws_account_number" : "889399602426",
+"role_name" : "admin",
+"aws_region" : "us-east-1",
+"assets_owner": "arn:aws:quicksight:us-east-1:889399602426:user/default/Administrator/wangzyn-Isengard",
+"dev_folder": "3b5e65b1-18f8-416d-87c5-261fba5b8776",
+"qa_folder": "8211cfba-c51a-455f-94e3-187eed900380",
+"prod_folder": "77093258-4987-451d-b083-2d2b0ddab7c1"
+}

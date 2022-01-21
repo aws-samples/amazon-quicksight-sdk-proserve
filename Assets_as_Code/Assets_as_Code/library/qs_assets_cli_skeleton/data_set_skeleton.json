@@ -1,0 +1,182 @@
+{
+    "AwsAccountId": "",
+    "DataSetId": "",
+    "Name": "",
+    "PhysicalTableMap": {
+        "KeyName": {
+            "RelationalTable": {
+                "DataSourceArn": "",
+                "Catalog": "",
+                "Schema": "",
+                "Name": "",
+                "InputColumns": [
+                    {
+                        "Name": "",
+                        "Type": "INTEGER"
+                    }
+                ]
+            },
+            "CustomSql": {
+                "DataSourceArn": "",
+                "Name": "",
+                "SqlQuery": "",
+                "Columns": [
+                    {
+                        "Name": "",
+                        "Type": "INTEGER"
+                    }
+                ]
+            },
+            "S3Source": {
+                "DataSourceArn": "",
+                "UploadSettings": {
+                    "Format": "TSV",
+                    "StartFromRow": 0,
+                    "ContainsHeader": true,
+                    "TextQualifier": "SINGLE_QUOTE",
+                    "Delimiter": ""
+                },
+                "InputColumns": [
+                    {
+                        "Name": "",
+                        "Type": "BIT"
+                    }
+                ]
+            }
+        }
+    },
+    "LogicalTableMap": {
+        "KeyName": {
+            "Alias": "",
+            "DataTransforms": [
+                {
+                    "ProjectOperation": {
+                        "ProjectedColumns": [
+                            ""
+                        ]
+                    },
+                    "FilterOperation": {
+                        "ConditionExpression": ""
+                    },
+                    "CreateColumnsOperation": {
+                        "Columns": [
+                            {
+                                "ColumnName": "",
+                                "ColumnId": "",
+                                "Expression": ""
+                            }
+                        ]
+                    },
+                    "RenameColumnOperation": {
+                        "ColumnName": "",
+                        "NewColumnName": ""
+                    },
+                    "CastColumnTypeOperation": {
+                        "ColumnName": "",
+                        "NewColumnType": "DECIMAL",
+                        "Format": ""
+                    },
+                    "TagColumnOperation": {
+                        "ColumnName": "",
+                        "Tags": [
+                            {
+                                "ColumnGeographicRole": "CITY",
+                                "ColumnDescription": {
+                                    "Text": ""
+                                }
+                            }
+                        ]
+                    },
+                    "UntagColumnOperation": {
+                        "ColumnName": "",
+                        "TagNames": [
+                            "COLUMN_DESCRIPTION"
+                        ]
+                    }
+                }
+            ],
+            "Source": {
+                "JoinInstruction": {
+                    "LeftOperand": "",
+                    "RightOperand": "",
+                    "LeftJoinKeyProperties": {
+                        "UniqueKey": true
+                    },
+                    "RightJoinKeyProperties": {
+                        "UniqueKey": true
+                    },
+                    "Type": "OUTER",
+                    "OnClause": ""
+                },
+                "PhysicalTableId": "",
+                "DataSetArn": ""
+            }
+        }
+    },
+    "ImportMode": "DIRECT_QUERY",
+    "ColumnGroups": [
+        {
+            "GeoSpatialColumnGroup": {
+                "Name": "",
+                "CountryCode": "US",
+                "Columns": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "FieldFolders": {
+        "KeyName": {
+            "description": "",
+            "columns": [
+                ""
+            ]
+        }
+    },
+    "Permissions": [
+        {
+            "Principal": "",
+            "Actions": [
+                ""
+            ]
+        }
+    ],
+    "RowLevelPermissionDataSet": {
+        "Namespace": "",
+        "Arn": "",
+        "PermissionPolicy": "DENY_ACCESS",
+        "FormatVersion": "VERSION_1",
+        "Status": "DISABLED"
+    },
+    "RowLevelPermissionTagConfiguration": {
+        "Status": "DISABLED",
+        "TagRules": [
+            {
+                "TagKey": "",
+                "ColumnName": "",
+                "TagMultiValueDelimiter": "",
+                "MatchAllValue": ""
+            }
+        ]
+    },
+    "ColumnLevelPermissionRules": [
+        {
+            "Principals": [
+                ""
+            ],
+            "ColumnNames": [
+                ""
+            ]
+        }
+    ],
+    "Tags": [
+        {
+            "Key": "",
+            "Value": ""
+        }
+    ],
+    "DataSetUsageConfiguration": {
+        "DisableUseAsDirectQuerySource": true,
+        "DisableUseAsImportedSource": true
+    }
+}

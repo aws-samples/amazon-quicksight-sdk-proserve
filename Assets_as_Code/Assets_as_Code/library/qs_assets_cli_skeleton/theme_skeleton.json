@@ -1,0 +1,72 @@
+{
+    "AwsAccountId": "",
+    "ThemeId": "",
+    "Name": "",
+    "BaseThemeId": "",
+    "VersionDescription": "",
+    "Configuration": {
+        "DataColorPalette": {
+            "Colors": [
+                ""
+            ],
+            "MinMaxGradient": [
+                ""
+            ],
+            "EmptyFillColor": ""
+        },
+        "UIColorPalette": {
+            "PrimaryForeground": "",
+            "PrimaryBackground": "",
+            "SecondaryForeground": "",
+            "SecondaryBackground": "",
+            "Accent": "",
+            "AccentForeground": "",
+            "Danger": "",
+            "DangerForeground": "",
+            "Warning": "",
+            "WarningForeground": "",
+            "Success": "",
+            "SuccessForeground": "",
+            "Dimension": "",
+            "DimensionForeground": "",
+            "Measure": "",
+            "MeasureForeground": ""
+        },
+        "Sheet": {
+            "Tile": {
+                "Border": {
+                    "Show": true
+                }
+            },
+            "TileLayout": {
+                "Gutter": {
+                    "Show": true
+                },
+                "Margin": {
+                    "Show": true
+                }
+            }
+        },
+        "Typography": {
+            "FontFamilies": [
+                {
+                    "FontFamily": ""
+                }
+            ]
+        }
+    },
+    "Permissions": [
+        {
+            "Principal": "",
+            "Actions": [
+                ""
+            ]
+        }
+    ],
+    "Tags": [
+        {
+            "Key": "",
+            "Value": ""
+        }
+    ]
+}
