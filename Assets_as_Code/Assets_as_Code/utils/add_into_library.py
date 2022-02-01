@@ -49,8 +49,10 @@ input_type = 'analysis' #datasource, dataset, analysis, dashboard, theme
 # what we would like to add into library
 #output_type = 'parameter' # 2nd class object: parameter, cf, sheet, ds_folder, filter; 1st class obj: analysis, dashboard, theme, data_set, data_source, folder
 #name = 'Country'
-output_type = 'analysis'
-name = 'template_1'
+#output_type = 'analysis'
+#name = 'template_1'
+output_type = 'sheet'
+name = 'Pie'
 
 # add this asset into library
 res = func.add_asset_in_library(qs_session, id, input_type, name, output_type)

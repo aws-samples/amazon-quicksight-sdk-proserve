@@ -7,7 +7,7 @@ import logging
 import csv
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from Migration_scripts.Assets_as_Code.src import supportive_functions as s_func
+from Assets_as_Code.Assets_as_Code.src import supportive_functions as s_func
 
 
 
