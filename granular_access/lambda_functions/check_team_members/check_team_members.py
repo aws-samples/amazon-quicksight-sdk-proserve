@@ -5,18 +5,36 @@ import csv
 import io
 import os
 import tempfile
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
-sts_client = boto3.client("sts")
+import botocore
+
+
+def default_botocore_config() -> botocore.config.Config:
+    """Botocore configuration."""
+    retries_config: Dict[str, Union[str, int]] = {
+        "max_attempts": int(os.getenv("AWS_MAX_ATTEMPTS", "5")),
+    }
+    mode: Optional[str] = os.getenv("AWS_RETRY_MODE")
+    if mode:
+        retries_config["mode"] = mode
+    return botocore.config.Config(
+        retries=retries_config,
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"qs_sdk_granular_access",
+    )
+
+sts_client = boto3.client("sts", config=default_botocore_config())
 account_id = sts_client.get_caller_identity()["Account"]
 aws_region = 'us-east-1'
 lambda_aws_region = os.environ['AWS_REGION']
-qs_client = boto3.client('quicksight')
-qs_local_client = boto3.client('quicksight', region_name=lambda_aws_region)
+qs_client = boto3.client('quicksight', config=default_botocore_config())
+qs_local_client = boto3.client('quicksight', region_name=lambda_aws_region, config=default_botocore_config())
 
 print(lambda_aws_region)
 
-ssm = boto3.client('ssm', region_name=lambda_aws_region)
+ssm = boto3.client('ssm', region_name=lambda_aws_region, config=default_botocore_config())
 
 
 def get_ssm_parameters(ssm_string):
@@ -33,7 +51,7 @@ def get_s3_info(account_id, lambda_aws_region):
 
 
 def lambda_handler(event, context):
-    sts_client = boto3.client("sts", region_name=aws_region)
+    sts_client = boto3.client("sts", region_name=aws_region, config=default_botocore_config())
     account_id = sts_client.get_caller_identity()["Account"]
 
     # call s3 bucket
@@ -220,7 +238,7 @@ def _list(
         account_id: str,
         aws_region: str,
         **kwargs, ) -> List[Dict[str, Any]]:
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     func: Callable = getattr(qs_client, func_name)
     response = func(AwsAccountId=account_id, **kwargs)
     next_token: str = response.get("NextToken", None)
@@ -300,7 +318,7 @@ def list_themes(
     )
 
 def describe_dashboard_permissions(account_id, dashboardid, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_dashboard_permissions(
         AwsAccountId=account_id,
         DashboardId=dashboardid
@@ -308,7 +326,7 @@ def describe_dashboard_permissions(account_id, dashboardid, aws_region):
     return res
 
 def describe_analysis_permissions(account_id, aid, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qqs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_analysis_permissions(
         AwsAccountId=account_id,
         AnalysisId=aid
@@ -316,7 +334,7 @@ def describe_analysis_permissions(account_id, aid, aws_region):
     return res
 
 def describe_theme_permissions(account_id, aid, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_theme_permissions(
         AwsAccountId=account_id,
         ThemeId=aid
@@ -348,7 +366,7 @@ def list_datasources(
 
 
 def describe_data_set_permissions(account_id, datasetid, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_data_set_permissions(
         AwsAccountId=account_id,
         DataSetId=datasetid
@@ -357,7 +375,7 @@ def describe_data_set_permissions(account_id, datasetid, aws_region):
 
 
 def describe_data_source_permissions(account_id, DataSourceId, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_data_source_permissions(
         AwsAccountId=account_id,
         DataSourceId=DataSourceId

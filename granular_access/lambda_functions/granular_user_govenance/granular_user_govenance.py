@@ -6,12 +6,28 @@ import io
 import os
 import tempfile
 from datetime import datetime
+import botocore.config
 # import awswrangler as wr
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
+
+def default_botocore_config() -> botocore.config.Config:
+    """Botocore configuration."""
+    retries_config: Dict[str, Union[str, int]] = {
+        "max_attempts": int(os.getenv("AWS_MAX_ATTEMPTS", "5")),
+    }
+    mode: Optional[str] = os.getenv("AWS_RETRY_MODE")
+    if mode:
+        retries_config["mode"] = mode
+    return botocore.config.Config(
+        retries=retries_config,
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"qs_sdk_granular_access",
+    )
 
 lambda_aws_region = os.environ['AWS_REGION']
 aws_region = 'us-east-1'
-ssm = boto3.client("ssm", region_name=lambda_aws_region)
+ssm = boto3.client("ssm", region_name=lambda_aws_region, config=default_botocore_config())
 
 
 def get_ssm_parameters(ssm_string):
@@ -22,7 +38,7 @@ def get_ssm_parameters(ssm_string):
 
 
 def describe_user(username, account_id, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_user(
         UserName=username,
         AwsAccountId=account_id,
@@ -31,7 +47,7 @@ def describe_user(username, account_id, aws_region):
     return res
 
 def describe_namespace(Namespace, account_id, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_namespace(
         AwsAccountId=account_id,
         Namespace=Namespace
@@ -39,7 +55,7 @@ def describe_namespace(Namespace, account_id, aws_region):
     return res
 
 def register_user(aws_region, Identity, Email, User, AccountId, Arn=None, Session=None, NS='default', Role='READER'):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     if Identity == 'QUICKSIGHT':
         response = qs_client.register_user(
             IdentityType='QUICKSIGHT',
@@ -70,7 +86,7 @@ def register_user(aws_region, Identity, Email, User, AccountId, Arn=None, Sessio
 
 
 def delete_user(username, account_id, aws_region, ns):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.delete_user(
         UserName=username,
         AwsAccountId=account_id,
@@ -80,7 +96,7 @@ def delete_user(username, account_id, aws_region, ns):
 
 
 def create_group(userrole, account_id, aws_region, ns):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.create_group(
         GroupName=userrole,
         AwsAccountId=account_id,
@@ -90,7 +106,7 @@ def create_group(userrole, account_id, aws_region, ns):
 
 
 def create_group_membership(username, userrole, account_id, aws_region, ns):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.create_group_membership(
         MemberName=username,
         GroupName=userrole,
@@ -100,7 +116,7 @@ def create_group_membership(username, userrole, account_id, aws_region, ns):
     return res
 
 def create_namespace(account_id, aws_region, ns, IdentityStore):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.create_namespace(
         AwsAccountId=account_id,
         Namespace=ns,
@@ -109,7 +125,7 @@ def create_namespace(account_id, aws_region, ns, IdentityStore):
     return res
 
 def delete_group_membership(username, userrole, account_id, aws_region, ns):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.delete_group_membership(
         MemberName=username,
         GroupName=userrole,
@@ -133,7 +149,7 @@ def _list(
         account_id: str,
         aws_region: str,
         **kwargs, ) -> List[Dict[str, Any]]:
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     func: Callable = getattr(qs_client, func_name)
     response = func(AwsAccountId=account_id, **kwargs)
     next_token: str = response.get("NextToken", None)
@@ -262,7 +278,7 @@ def list_data_sources(
 
 
 def describe_data_set_permissions(account_id, datasetid, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_data_set_permissions(
         AwsAccountId=account_id,
         DataSetId=datasetid
@@ -589,3 +605,4 @@ def lambda_handler(event, context):
                     currentmembership[group['GroupName']].append(user['UserName'])
     print("here it is current users mapping:")
     print(currentmembership)"""
+

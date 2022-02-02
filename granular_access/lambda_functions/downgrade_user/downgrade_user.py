@@ -5,11 +5,29 @@ import csv
 import io
 import os
 import tempfile
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
+
+import botocore
+
+
+def default_botocore_config() -> botocore.config.Config:
+    """Botocore configuration."""
+    retries_config: Dict[str, Union[str, int]] = {
+        "max_attempts": int(os.getenv("AWS_MAX_ATTEMPTS", "5")),
+    }
+    mode: Optional[str] = os.getenv("AWS_RETRY_MODE")
+    if mode:
+        retries_config["mode"] = mode
+    return botocore.config.Config(
+        retries=retries_config,
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"qs_sdk_granular_access",
+    )
 
 lambda_aws_region = os.environ['AWS_REGION']
 aws_region = 'us-east-1'
-ssm = boto3.client("ssm", region_name=lambda_aws_region)
+ssm = boto3.client("ssm", region_name=lambda_aws_region, config=default_botocore_config())
 
 
 def get_ssm_parameters(ssm_string):
@@ -26,7 +44,7 @@ def get_s3_info():
 
 
 def delete_user(username, account_id, aws_region, ns):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.delete_user(
         UserName=username,
         AwsAccountId=account_id,
@@ -41,7 +59,7 @@ def _list(
         account_id: str,
         aws_region: str,
         **kwargs, ) -> List[Dict[str, Any]]:
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     func: Callable = getattr(qs_client, func_name)
     response = func(AwsAccountId=account_id, **kwargs)
     next_token: str = response.get("NextToken", None)

@@ -5,11 +5,28 @@ import csv
 import io
 import os
 import tempfile
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
+import botocore
+
+
+def default_botocore_config() -> botocore.config.Config:
+    """Botocore configuration."""
+    retries_config: Dict[str, Union[str, int]] = {
+        "max_attempts": int(os.getenv("AWS_MAX_ATTEMPTS", "5")),
+    }
+    mode: Optional[str] = os.getenv("AWS_RETRY_MODE")
+    if mode:
+        retries_config["mode"] = mode
+    return botocore.config.Config(
+        retries=retries_config,
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"qs_sdk_granular_access",
+    )
 
 def get_s3_info(account_id, aws_region):
-    ssm_client = boto3.client('ssm', region_name=aws_region)
+    ssm_client = boto3.client('ssm', region_name=aws_region, config=default_botocore_config())
     bucket_parameter = ssm_client.get_parameter(Name="/qs/config/groups", WithDecryption=True)
     bucket_name = bucket_parameter['Parameter']['Value']
     bucket_name = json.loads(bucket_name)  # bucket_name.split("\"")
@@ -18,7 +35,7 @@ def get_s3_info(account_id, aws_region):
 
 
 def describe_user(username, account_id, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_user(
         UserName=username,
         AwsAccountId=account_id,
@@ -28,7 +45,7 @@ def describe_user(username, account_id, aws_region):
 
 
 def delete_user(username, account_id, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.delete_user(
         UserName=username,
         AwsAccountId=account_id,
@@ -38,7 +55,7 @@ def delete_user(username, account_id, aws_region):
 
 
 def create_group(userrole, account_id, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.create_group(
         GroupName=userrole,
         AwsAccountId=account_id,
@@ -48,7 +65,7 @@ def create_group(userrole, account_id, aws_region):
 
 
 def create_group_membership(username, userrole, account_id, aws_region):
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.create_group_membership(
         MemberName=username,
         GroupName=userrole,
@@ -96,7 +113,7 @@ def _list(
         account_id: str,
         aws_region: str,
         **kwargs, ) -> List[Dict[str, Any]]:
-    qs_client = boto3.client('quicksight', region_name=aws_region)
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     func: Callable = getattr(qs_client, func_name)
     response = func(AwsAccountId=account_id, **kwargs)
     next_token: str = response.get("NextToken", None)
