@@ -1,0 +1,35 @@
+CREATE EXTERNAL TABLE `olympics`(
+  `id` string COMMENT 'from deserializer', 
+  `name` string COMMENT 'from deserializer', 
+  `sex` string COMMENT 'from deserializer', 
+  `age` string COMMENT 'from deserializer', 
+  `height` string COMMENT 'from deserializer', 
+  `weight` string COMMENT 'from deserializer', 
+  `team` string COMMENT 'from deserializer', 
+  `noc` string COMMENT 'from deserializer', 
+  `games` string COMMENT 'from deserializer', 
+  `year` string COMMENT 'from deserializer', 
+  `season` string COMMENT 'from deserializer', 
+  `city` string COMMENT 'from deserializer', 
+  `sport` string COMMENT 'from deserializer', 
+  `event` string COMMENT 'from deserializer', 
+  `medal` string COMMENT 'from deserializer')
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.serde2.OpenCSVSerde' 
+WITH SERDEPROPERTIES ( 
+  'quoteChar'='\"', 
+  'separatorChar'=',') 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.mapred.TextInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  's3://adhocdatabucket/olympics'
+TBLPROPERTIES (
+  'classification'='csv', 
+  'columnsOrdered'='true', 
+  'compressionType'='none', 
+  'delimiter'=',', 
+  'skip.header.line.count'='1', 
+  'transient_lastDdlTime'='1630096722', 
+  'typeOfData'='file')
