@@ -1,0 +1,29 @@
+CREATE EXTERNAL TABLE `tech_official_2021`(
+  `name` string COMMENT 'from deserializer', 
+  `short_name` string COMMENT 'from deserializer', 
+  `gender` string COMMENT 'from deserializer', 
+  `birth_date` string COMMENT 'from deserializer', 
+  `country` string COMMENT 'from deserializer', 
+  `discipline` string COMMENT 'from deserializer', 
+  `function` string COMMENT 'from deserializer', 
+  `url` string COMMENT 'from deserializer')
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.serde2.OpenCSVSerde' 
+WITH SERDEPROPERTIES ( 
+  'quoteChar'='\"', 
+  'separatorChar'=',') 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.mapred.TextInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  's3://adhocdatabucket/olympics2021/tech_official'
+TBLPROPERTIES (
+  'areColumnsQuoted'='true', 
+  'classification'='csv', 
+  'columnsOrdered'='true', 
+  'compressionType'='none', 
+  'delimiter'=',', 
+  'skip.header.line.count'='1', 
+  'transient_lastDdlTime'='1630970331', 
+  'typeOfData'='file')

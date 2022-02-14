@@ -1,0 +1,20 @@
+CREATE EXTERNAL TABLE `women_in_olympic_movement`(
+  `year` string, 
+  `olympics` string, 
+  `percentageofwomenparticipants` decimal(10,0), 
+  `percentageofwomensevents` decimal(10,0), 
+  `sports` string, 
+  `totalevents` bigint, 
+  `womenparticipants` bigint, 
+  `womensevents` int)
+ROW FORMAT DELIMITED 
+  FIELDS TERMINATED BY ',' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.mapred.TextInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  's3://adhocdatabucket/womeninolympics/Women-in-the-Olympic-Movement'
+TBLPROPERTIES (
+  'has_encrypted_data'='false', 
+  'transient_lastDdlTime'='1644524192')

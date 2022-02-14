@@ -1,0 +1,33 @@
+CREATE EXTERNAL TABLE `medals_athletes_2021`(
+  `medal_type` string COMMENT 'from deserializer', 
+  `medal_code` string COMMENT 'from deserializer', 
+  `medal_date` string COMMENT 'from deserializer', 
+  `athlete_short_name` string COMMENT 'from deserializer', 
+  `athlete_name` string COMMENT 'from deserializer', 
+  `athlete_sex` string COMMENT 'from deserializer', 
+  `athlete_link` string COMMENT 'from deserializer', 
+  `country_code` string COMMENT 'from deserializer', 
+  `discipline_code` string COMMENT 'from deserializer', 
+  `event` string COMMENT 'from deserializer', 
+  `country` string COMMENT 'from deserializer', 
+  `discipline` string COMMENT 'from deserializer')
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.serde2.OpenCSVSerde' 
+WITH SERDEPROPERTIES ( 
+  'quoteChar'='\"', 
+  'separatorChar'=',') 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.mapred.TextInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  's3://adhocdatabucket/olympics2021/athelets_medals'
+TBLPROPERTIES (
+  'areColumnsQuoted'='true', 
+  'classification'='csv', 
+  'columnsOrdered'='true', 
+  'compressionType'='none', 
+  'delimiter'=',', 
+  'skip.header.line.count'='1', 
+  'transient_lastDdlTime'='1630969850', 
+  'typeOfData'='file')
