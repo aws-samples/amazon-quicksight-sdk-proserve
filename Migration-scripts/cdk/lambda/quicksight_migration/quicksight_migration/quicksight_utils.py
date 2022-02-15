@@ -3,14 +3,33 @@ import json
 import logging
 import base64
 from botocore.exceptions import ClientError
-from typing import Any, Dict, List, Optional
+import os
+from typing import Any, Dict, List, Optional, Union
+import botocore
+
+
+def default_botocore_config() -> botocore.config.Config:
+    """Botocore configuration."""
+    retries_config: Dict[str, Union[str, int]] = {
+        "max_attempts": int(os.getenv("AWS_MAX_ATTEMPTS", "5")),
+    }
+    mode: Optional[str] = os.getenv("AWS_RETRY_MODE")
+    if mode:
+        retries_config["mode"] = mode
+    return botocore.config.Config(
+        retries=retries_config,
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"qs_sdk_BIOps",
+    )
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 def assume_role(aws_account_number, role_name, aws_region):
     sts_client = boto3.client('sts', region_name=aws_region,
-                          endpoint_url=f'https://sts.{aws_region}.amazonaws.com')
+                          endpoint_url=f'https://sts.{aws_region}.amazonaws.com', config=default_botocore_config())
     response = sts_client.assume_role(
         RoleArn=f'arn:aws:iam::{aws_account_number}:role/{role_name}',
         RoleSessionName='quicksight'
