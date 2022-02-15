@@ -5,9 +5,29 @@ import os
 import logging
 import boto3
 from botocore.exceptions import ClientError
+from typing import Dict, Optional, Union
+import botocore
+
+
+def default_botocore_config() -> botocore.config.Config:
+    """Botocore configuration."""
+    retries_config: Dict[str, Union[str, int]] = {
+        "max_attempts": int(os.getenv("AWS_MAX_ATTEMPTS", "5")),
+    }
+    mode: Optional[str] = os.getenv("AWS_RETRY_MODE")
+    if mode:
+        retries_config["mode"] = mode
+    return botocore.config.Config(
+        retries=retries_config,
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"qs_sdk_BIOps",
+    )
+
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
+
 
 class QuickSight:
     """QuickSight"""
@@ -16,8 +36,8 @@ class QuickSight:
         self.logger.info(self.__class__.__name__)
         self.region = os.environ.get('AWS_REGION')
         # AWS clients
-        self.client_quicksight = boto3.client("quicksight")
-        self.client_sts = boto3.client("sts")
+        self.client_quicksight = boto3.client("quicksight", config=default_botocore_config())
+        self.client_sts = boto3.client("sts", config=default_botocore_config())
 
 
     @property
@@ -56,7 +76,6 @@ class QuickSight:
                 break
 
         return dash_ids
-
 
     def describe_dashboard(self, dash_id) -> dict:
         """
@@ -102,6 +121,7 @@ class QuickSight:
 
         return dataset['DataSet']['Name']
 
+
 class Dynamo:
     def __init__(self):
         self.logger = LOGGER
@@ -115,7 +135,6 @@ class Dynamo:
             service_name='dynamodb',
             region_name=self.region
         )
-
 
     def get_item(self, dashboard_id) -> dict:
         """Gets an item from a DDB table given an dashboard_id"""
@@ -161,7 +180,6 @@ class Dynamo:
             raise ex
 
         return data
-
 
     def put_item(self, dashboard) -> dict:
         """Inserts or updates an dashboard into a DDB table"""
@@ -223,7 +241,6 @@ class Dynamo:
         except ClientError as ex:
             self.logger.exception('Unable to insert or update dashboard_id %s.', dashboard['DashboardId'])
             raise ex
-
 
     def delete_item(self, dashboard_id) -> dict:
         """Deletes an item dashboard_id"""
