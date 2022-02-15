@@ -1,0 +1,21 @@
+{
+    "source_region": "us-east-1",
+    "source_account_id": "111111111111",
+    "source_role_name": "quicksight-migration-lambda-role",    
+    "target_region": "us-east-1",
+    "target_account_id": "111111111111",
+    "target_role_name": "quicksight-migration-target-assume-role",
+    "target_admin_users": ["test-user"],
+    "target_admin_groups": ["test-group"],
+    "migration_items": {
+      "dashboards": [
+        "test-dashboard"
+      ],
+      "analyses": [
+        "test-analysis"
+      ],
+      "themes": [
+        "test-theme"
+      ]
+    }
+  }
