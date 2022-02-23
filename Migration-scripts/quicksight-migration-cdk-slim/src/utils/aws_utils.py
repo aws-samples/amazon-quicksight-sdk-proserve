@@ -2,11 +2,12 @@ import os
 import json
 import base64
 import boto3
-import botocore
 import logging
+from common.constants import custom_config
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 from botocore.exceptions import ClientError
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -37,7 +38,7 @@ class aws_boto3:
 
     def __sts_role_credentials(self):
         endpoint = "https://sts.{0}.amazonaws.com".format(self.sts_region)
-        sts = boto3.client("sts", endpoint_url=endpoint)
+        sts = boto3.client("sts", endpoint_url=endpoint, config=custom_config)        
         role = sts.assume_role(
             RoleArn=f"arn:aws:iam::{self.aws_account_number}:role/{self.role_name}",
             RoleSessionName="quicksight",
@@ -52,7 +53,7 @@ class aws_boto3:
         return creds
 
     def get_ssm_parameters(session, ssm_string):        
-        ssm_client = session.client("ssm")               
+        ssm_client = session.client("ssm", config=custom_config)               
         config_str = ssm_client.get_parameter(
             Name=ssm_string)["Parameter"]["Value"]      
         return json.loads(config_str)
@@ -61,7 +62,7 @@ class aws_boto3:
         """Get the object from Secrets Manager"""
 
         # Create a Secrets Manager client
-        client = session.client(service_name="secretsmanager")
+        client = session.client(service_name="secretsmanager", config=custom_config)
 
         try:
             get_secret_value_response = client.get_secret_value(

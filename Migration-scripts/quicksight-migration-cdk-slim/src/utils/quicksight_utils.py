@@ -1,4 +1,5 @@
 from botocore.exceptions import ClientError
+from common.constants import custom_config
 import logging
 import abc
 import time
@@ -14,7 +15,7 @@ class QuickSightAPI:
     def execute(self, api_method):
         self.api_method = api_method
         self.session = api_method.session
-        self.qs_client = self.session.client("quicksight")
+        self.qs_client = self.session.client("quicksight", config=custom_config)
         self.params = api_method.get_params()
         self.describe_action = self.__get_describe_action()
         self.describe_params = self.__get_describe_params()
@@ -714,9 +715,9 @@ class UpdateAnalysisApiMethod(QuickSightAPI_BaseMethod):
 
 class QuickSightAccount(object):
     def __init__(self, session, region):
-        self.session = session
-        self.qs_client = session.client("quicksight")
-        self.accountid = session.client("sts").get_caller_identity()["Account"]
+        self.session = session        
+        self.qs_client = session.client("quicksight", config=custom_config)
+        self.accountid = session.client("sts", config=custom_config).get_caller_identity()["Account"]
         setattr(self.session, "accountid", self.accountid)
         self.name = self.DescribeAccount()["AccountSettings"]["AccountName"]
         self.default_namespace = self.DescribeAccount()["AccountSettings"][
@@ -731,7 +732,8 @@ class QuickSightAccount(object):
         self.migrate_datasources = {}
         self.migrate_themes = {}
         self.migrate_admin_users = {}
-        self.migrate_admin_groups = {}
+        self.migrate_admin_groups = {}        
+    
 
     def ListDashboards(self):
         api_method = ListDashboardsApiMethod(self.session)
