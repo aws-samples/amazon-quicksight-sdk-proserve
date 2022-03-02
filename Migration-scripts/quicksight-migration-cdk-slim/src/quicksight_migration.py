@@ -84,6 +84,9 @@ def MigrateAssets(
     )
 
     # Target Config
+    # TODO: Need validation checks. Check what types of datasources are being
+    # used and make sure that needed parameters have been stored
+    # in parameter store.
     # ssm parameters
     logger.info(
         "{} [{}:{}]: Retrieving account parameters".format(
@@ -112,26 +115,30 @@ def MigrateAssets(
             target_acct_name, target_region, target_account_id
         )
     )
-    if infra_details["redshiftPassword"]:
+
+    if infra_details.get("redshiftSecretId"):
         target_acct.config_parameters.add_parameter(
             "redshiftPassword",
             aws_utils.aws_boto3.get_secret(
-                target_session, infra_details["redshiftPassword"]
+                target_session, infra_details.get("redshiftSecretId")
             ),
         )
     # rds/other password
-    if infra_details["rdsPassword"]:
+    if infra_details.get("rdsSecretId"):
         target_acct.config_parameters.add_parameter(
             "rdsPassword",
             aws_utils.aws_boto3.get_secret(
-                target_session, infra_details["rdsPassword"]
+                target_session, infra_details.get("rdsSecretId")
             ),
         )
     logger.info("Retrieve Migration Assets".center(80, "="))
 
     logger.info(
         "{} [{}:{}]: Retrieving admin users(s) {}".format(
-            target_acct_name, target_region, target_account_id, target_admin_users
+            target_acct_name,
+            target_region,
+            target_account_id,
+            target_admin_users,
         )
     )
 
@@ -142,11 +149,14 @@ def MigrateAssets(
     # target_acct.add_admin_users(["quicksight-migration-user"])
 
     # Store the target admin groups in a class
-    if target_admin_groups:
+    if any(x.strip() for x in target_admin_groups):
         target_acct.add_admin_groups(target_admin_groups)
         logger.info(
             "{} [{}:{}]: Retrieving admin group(s) {}".format(
-                target_acct_name, target_region, target_account_id, target_admin_groups
+                target_acct_name,
+                target_region,
+                target_account_id,
+                target_admin_groups,
             )
         )
 
@@ -159,7 +169,7 @@ def MigrateAssets(
             migration_items["dashboards"],
         )
     )
-    migrate_dashboard_ids = source_acct.get_dashboard_ids(migration_items["dashboards"])
+    migrate_dashboard_ids = source_acct.get_dashboard_ids(migration_items["dashboards"])    
     source_acct.add_dashboards(migrate_dashboard_ids)
 
     # Retrieve source analyses and store in a class
@@ -187,16 +197,6 @@ def MigrateAssets(
     source_acct.add_themes(migrate_theme_ids)
 
     # MIGRATE DATASOURCES
-
-    # Already migrated data source IDs
-    already_migrated = []
-    already_migrated = [
-        DataSource["DataSourceId"] for DataSource in target_acct.ListDataSources()
-    ]
-
-    # Create data source
-
-    datasource_failed = []
     logger.info("Migrating DataSources".center(80, "="))
 
     for key in source_acct.migrate_datasources:
@@ -206,6 +206,23 @@ def MigrateAssets(
         data_source_exists = target_acct.DescribeDataSource(
             source_datasource["DataSourceId"]
         )
+
+        # if the datasource is in deleted or creation_failed status delete it. this is usually due to API operations
+        if data_source_exists and data_source_exists.get("Status") in (
+            "CREATION_FAILED",
+            "DELETED",
+        ):
+            target_acct.DeleteDataSource(data_source_exists["DataSourceId"])
+            logger.info(
+                "{} [{}:{}]: DataSource {} is in {} status. Deleting.".format(
+                    target_acct_name,
+                    target_region,
+                    target_account_id,
+                    source_datasource["Name"],
+                    data_source_exists.get("Status"),
+                )
+            )
+            data_source_exists = None
 
         if data_source_exists:
             logger.info(
@@ -231,7 +248,7 @@ def MigrateAssets(
         else:
             # If the datasource doesn't exist create a new datasource in destination account
             try:
-                new_datasource = target_acct.create_data_source(source_datasource)
+                new_datasource = target_acct.CreateDataSource(source_datasource)
                 logger.info(
                     "{} [{}:{}]: Created Datasource {}. ExecTime: {}sec".format(
                         target_acct_name,
@@ -252,48 +269,37 @@ def MigrateAssets(
                         ex,
                     )
                 )
+                source_acct.migrate_datasources[key].status = "failed"
                 continue
-
+  
     # MIGRATE DATASETS
-
-    # Already migrated datasets IDs
-
-    already_migrated = [DataSet["DataSetId"] for DataSet in target_acct.ListDataSets()]
-
-    dataset_success = []
-    dataset_failed = []
     logger.info("Migrating DataSets".center(80, "="))
 
     for key in source_acct.migrate_datasets:
 
         source_dataset = source_acct.migrate_datasets[key].response
-        if source_dataset["DataSet"]["DataSetId"] not in already_migrated:
-            try:
-                new_dataset = target_acct.create_dataset(source_dataset)
-                logger.info(
-                    "{} [{}:{}]: Created DataSet {}. ExecTime: {}sec".format(
-                        target_acct_name,
-                        target_region,
-                        target_account_id,
-                        source_dataset["DataSet"]["Name"],
-                        round(new_dataset["timetocreate"], 2),
-                    )
-                )
-                source_acct.migrate_datasets[key].status = "migrated"
-            except Exception as ex:
-                logger.info(
-                    "{} [{}:{}]: Failed to create DataSet {} {}".format(
-                        target_acct_name,
-                        target_region,
-                        target_account_id,
-                        source_dataset["DataSet"]["Name"],
-                        ex,
-                    )
-                )
-                source_acct.migrate_datasets[key].status = "failed"
-                continue
 
-        if source_dataset["DataSet"]["DataSetId"] in already_migrated:
+        # check if dataset already exists
+        data_set_exists = target_acct.DescribeDataSet(source_dataset["DataSetId"])
+
+        # if the dataset is in deleted or creation_failed status delete it. this is usually due to API operations
+        if data_set_exists and data_set_exists.get("Status") in (
+            "CREATION_FAILED",
+            "DELETED",
+        ):
+            target_acct.DeleteDataSet(data_set_exists["DataSetId"])
+            logger.info(
+                "{} [{}:{}]: DataSet {} is in {} status. Deleting.".format(
+                    target_acct_name,
+                    target_region,
+                    target_account_id,
+                    source_dataset["Name"],
+                    data_set_exists.get("Status"),
+                )
+            )
+            data_set_exists = None
+
+        if data_set_exists:
             try:
                 new_dataset = target_acct.UpdateDataSet(source_dataset)
                 logger.info(
@@ -301,7 +307,7 @@ def MigrateAssets(
                         target_acct_name,
                         target_region,
                         target_account_id,
-                        source_dataset["DataSet"]["Name"],
+                        source_dataset["Name"],
                         round(new_dataset["timetocreate"], 2),
                     )
                 )
@@ -312,44 +318,112 @@ def MigrateAssets(
                         target_acct_name,
                         target_region,
                         target_account_id,
-                        source_dataset["DataSet"]["Name"],
+                        source_dataset["Name"],
                         ex,
                     )
                 )
                 continue
+        else:
+            try:
+                new_dataset = target_acct.CreateDataSet(source_dataset)
+                logger.info(
+                    "{} [{}:{}]: Created DataSet {}. ExecTime: {}sec".format(
+                        target_acct_name,
+                        target_region,
+                        target_account_id,
+                        source_dataset["Name"],
+                        round(new_dataset["timetocreate"], 2),
+                    )
+                )
+                source_acct.migrate_datasets[key].status = "migrated"
+            except Exception as ex:
+                logger.info(
+                    "{} [{}:{}]: Failed to create DataSet {} {}".format(
+                        target_acct_name,
+                        target_region,
+                        target_account_id,
+                        source_dataset["Name"],
+                        ex,
+                    )
+                )
+                source_acct.migrate_datasets[key].status = "failed"
+                continue
 
     # MIGRATE THEMES
-
-    # Target Quicksight themes
-    # Already migrated theme ID's
-    already_migrated = [Theme["ThemeId"] for Theme in target_acct.ListThemes()]
-
-    themes_new = []
-    themes_failed = []
     logger.info("Migrating Themes".center(80, "="))
 
     for key in source_acct.migrate_themes:
         source_theme = source_acct.migrate_themes[key].response
-        if source_theme["Theme"]["ThemeId"] not in already_migrated:
-            try:
-                newtheme = target_acct.CreateTheme(source_theme)
-                themes_new.append(newtheme)
-            except Exception:
-                themes_failed.append(source_theme["Theme"]["Name"])
-                continue
-            try:
-                target_acct.UpdateThemePermissions(source_theme["Theme"]["ThemeId"])
-            except Exception:
-                themes_failed.append(source_theme["Theme"]["Name"])
-                continue
+        # check if datasource already exists
+        theme_exists = target_acct.DescribeTheme(source_theme["ThemeId"])
 
-    themes_success = []
-    for news in themes_new:
-        theme = target_acct.DescribeTheme(news["ThemeId"])
-        themes_success.append(theme["Theme"]["Name"])
+        # if the datasource is in deleted or creation_failed status delete it. this is usually due to API operations
+        if theme_exists and theme_exists.get("Status") in (
+            "CREATION_FAILED",
+            "DELETED",
+        ):
+            target_acct.DeleteTheme(theme_exists["ThemeId"])
+            logger.info(
+                "{} [{}:{}]: Theme {} is in {} status. Deleting.".format(
+                    target_acct_name,
+                    target_region,
+                    target_account_id,
+                    source_theme["Name"],
+                    theme_exists.get("Status"),
+                )
+            )
+            theme_exists = None
+
+        if theme_exists:
+            logger.info(
+                "{} [{}:{}]: Theme {} already exists. Using existing.".format(
+                    target_acct_name,
+                    target_region,
+                    target_account_id,
+                    source_theme["Name"],
+                )
+            )
+        else:
+            try:
+                new_theme = target_acct.CreateTheme(source_theme)
+                logger.info(
+                    "{} [{}:{}]: Created Theme {}. ExecTime: {}sec".format(
+                        target_acct_name,
+                        target_region,
+                        target_account_id,
+                        source_theme["Name"],
+                        round(new_theme["timetocreate"], 2),
+                    )
+                )
+                source_acct.migrate_themes[key].status = "migrated"
+            except Exception:
+                source_acct.migrate_themes[key].status = "failed"
+                continue
+            try:
+                target_acct.UpdateThemePermissions(source_theme["ThemeId"])
+                logger.info(
+                    "{} [{}:{}]: Updating theme permissions in target account {}".format(
+                        target_acct_name,
+                        target_region,
+                        target_account_id,
+                        target_acct.accountid,
+                    )
+                )
+            except Exception as ex:
+                logger.info(
+                    "{} [{}:{}]: Failed to update theme permissions. Deleting theme {} {}".format(
+                        target_acct_name,
+                        target_region,
+                        target_account_id,
+                        source_theme["Name"],
+                        ex,
+                    )
+                )
+                target_acct.DeleteTheme(source_theme["ThemeId"])
+                source_acct.migrate_themes[key].status = "failed"
+                continue
 
     # MIGRATE ANALYSES
-
     logger.info("Migrating Analyses".center(80, "="))
     for key in source_acct.migrate_analyses:
         source_analysis = source_acct.migrate_analyses[key].response
@@ -421,6 +495,22 @@ def MigrateAssets(
         # Check if analysis already exists in target. Update if exists.
         analysis_exists = target_acct.DescribeAnalysis(source_analysis["AnalysisId"])
 
+        if analysis_exists and analysis_exists.get("Status") in (
+            "CREATION_FAILED",
+            "DELETED",
+        ):
+            target_acct.DeleteAnalysis(analysis_exists["AnalysisId"])
+            logger.info(
+                "{} [{}:{}]: Analysis {} is in {} status. Deleting.".format(
+                    target_acct_name,
+                    target_region,
+                    target_account_id,
+                    source_analysis["Name"],
+                    analysis_exists.get("Status"),
+                )
+            )
+            analysis_exists = None
+
         if analysis_exists:
             try:
                 new_analysis = target_acct.UpdateAnalysis(
@@ -477,13 +567,12 @@ def MigrateAssets(
                 source_acct.DeleteTemplate(source_analysis_id)
                 continue
 
-    # MIGRATE DASHBOARDS    
+    # MIGRATE DASHBOARDS
     logger.info("Migrating Dashboards".center(80, "="))
 
     for key in source_acct.migrate_dashboards:
         source_dashboard = source_acct.migrate_dashboards[key].response
 
-        source_dash_name = source_dashboard["Name"]
         source_dashboard_analysis = source_acct.DescribeAnalysis(
             source_dashboard["Version"]["SourceEntityArn"]
         )
@@ -578,57 +667,81 @@ def MigrateAssets(
             new_template_response["TemplateId"]
         )
 
-        # check if dashboard already exists. If exists then delete.
+        # check if dashboard already exists.
         dashboard_exists = target_acct.DescribeDashboard(
             source_dashboard["DashboardId"]
         )
 
+        # if the dashboard is in deleted or creation_failed status delete it. this is usually due to API operations
         if dashboard_exists:
-
+            if dashboard_exists and dashboard_exists.get("Status") in (
+                "CREATION_FAILED",
+                "DELETED",
+            ):
+                target_acct.DeleteDashboard(dashboard_exists["DashboardId"])
+                logger.info(
+                    "{} [{}:{}]: Dashboard {} is in {} status. Deleting.".format(
+                        target_acct_name,
+                        target_region,
+                        target_account_id,
+                        source_dashboard["Name"],
+                        dashboard_exists.get("Status"),
+                    )
+                )
+                dashboard_exists = None
             try:
-
+                new_dashboard = target_acct.UpdateDashboard(
+                    target_template,
+                    source_dashboard,
+                    source_acct.migrate_datasets,
+                )
+                target_acct.UpdateDashboardVersion(new_dashboard)
                 logger.info(
-                    "{} [{}:{}]: Dashboard {} already exists deleting".format(
+                    "{} [{}:{}]: Dashboard {} already exists updating. New Version Number: {} ExecTime: {}sec".format(
                         target_acct_name,
                         target_region,
                         target_account_id,
-                        source_dash_name,
                         source_dashboard["Name"],
+                        new_dashboard["VersionArn"].split("version/")[1],
+                        round(new_dashboard["timetocreate"], 2),
                     )
                 )
-                target_acct.DeleteDashboard(source_dashboard["DashboardId"])
+                source_acct.migrate_dashboards[key].status = "migrated"
 
-            except Exception:
+            except Exception as ex:
                 logger.info(
-                    "{} [{}:{}]: Failed to delete dashboard {}".format(
+                    "{} [{}:{}]: Failed to update dashboard {} {}".format(
                         target_acct_name,
                         target_region,
                         target_account_id,
-                        source_dash_name,
                         source_dashboard["Name"],
+                        ex,
+                    )
+                )
+        else:
+            # Create Dashboard on target
+            try:
+                target_acct.CreateDashboard(
+                    target_template,
+                    source_dashboard,
+                    source_acct.migrate_datasets,
+                )
+                logger.info(
+                    "{} [{}:{}]: Created new dashboard {}. ExecTime: {}sec".format(
+                        target_acct_name,
+                        target_region,
+                        target_account_id,
+                        source_dashboard["Name"],
+                        round(new_analysis["timetocreate"], 2),
                     )
                 )
 
-        # Create Dashboard on target
-        try:
-            target_acct.CreateDashboard(
-                target_template, source_dashboard, source_acct.migrate_datasets
-            )
-            logger.info(
-                "{} [{}:{}]: Created new dashboard {}. ExecTime: {}sec".format(
-                    target_acct_name,
-                    target_region,
-                    target_account_id,
-                    source_dash_name,
-                    round(new_analysis["timetocreate"], 2),
-                )
-            )
-
-            source_acct.migrate_dashboards[key].status = "migrated"
-        except Exception as ex:
-            source_acct.DeleteTemplate(source_analysis_id)
-            logger.error("create new dashboard error {}".format(ex))
-            continue
+                source_acct.migrate_dashboards[key].status = "migrated"
+            except Exception as ex:
+                source_acct.DeleteTemplate(source_analysis_id)
+                logger.error("create new dashboard error {}".format(ex))
+                source_acct.migrate_dashboards[key].status = "failed"
+                continue
 
     logger.info("Migration Summary".center(80, "="))
 
@@ -653,17 +766,28 @@ def MigrateAssets(
     analyses_failed = list(
         x.name for x in source_acct.migrate_analyses.values() if x.status == "failed"
     )
+    theme_success = list(
+        x.name for x in source_acct.migrate_themes.values() if x.status == "migrated"
+    )
+    theme_failed = list(
+        x.name for x in source_acct.migrate_themes.values() if x.status == "failed"
+    )
     datasource_success = list(
         x.name
         for x in source_acct.migrate_datasources.values()
         if x.status in ("skipped", "migrated")
     )
+    datasource_failed = list(
+        x.name
+        for x in source_acct.migrate_datasources.values()
+        if x.status in ("failed")
+    )
     migration_stop_time = time.time()
     migration_time = migration_stop_time - migration_start_time
     # Log Results
     logger.info("Total Migration Time: {}sec".format(round(migration_time, 2)))
-    logger.info("Themes(s) Created: {}".format(themes_success))
-    logger.info("Themes(s) Failed: {}".format(themes_failed))
+    logger.info("Themes(s) Created: {}".format(theme_success))
+    logger.info("Themes(s) Failed: {}".format(theme_failed))
     logger.info("Dashboard(s) Created: {}".format(dashboard_success))
     logger.info("Dashboard(s) Failed: {}".format(dashboard_failed))
     logger.info("Analyses Created: {}".format(analyses_success))

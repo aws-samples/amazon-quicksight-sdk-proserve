@@ -52,6 +52,20 @@ create_datasource_template = {
     "SslProperties": None,
     "Tags": None,
 }
+update_dataset_template = {
+    "AwsAccountId": None,
+    "DataSetId": None,
+    "Name": None,
+    "PhysicalTableMap": None,
+    "LogicalTableMap": None,
+    "ImportMode": None,
+    "ColumnGroups": None,
+    "FieldFolders": None,
+    "RowLevelPermissionDataSet": None,
+    "RowLevelPermissionTagConfiguration": None,
+    "ColumnLevelPermissionRules": None,
+    "DataSetUsageConfiguration": None,
+}
 create_analysis_template = {
     "AwsAccountId": None,
     "AnalysisId": None,
@@ -74,10 +88,16 @@ create_dashboard_template = {
     "AwsAccountId": None,
     "DashboardId": None,
     "Name": None,
-    "Parameters": None,
     "Permissions": None,
     "SourceEntity": None,
-    "Tags": None,
+    "DashboardPublishOptions": None
+}
+update_dashboard_template = {
+    "AwsAccountId": None,
+    "DashboardId": None,    
+    "Name": None,
+    "SourceEntity": None,
+    "Parameters": None,
     "VersionDescription": None,
     "DashboardPublishOptions": None,
     "ThemeArn": None,
