@@ -1,4 +1,4 @@
-# BIOps: QuickSight Migration CDK Slim
+# BIOps: QuickSight Assets Porting Across Accounts CDK Slim
 
 Please refer to the AWS blogpost BIOps: QuickSight Objects Migration and Version Control for a complete walk-through.
 
