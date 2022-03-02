@@ -1,3 +1,19 @@
+import os
+from botocore.config import Config
+
+# https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
+# https://github.com/boto/boto3/blob/develop/boto3/session.py
+custom_config = Config(
+    # set retries config to AWS CLI parameters
+    retries = {
+        'max_attempts': int(os.getenv('AWS_MAX_ATTEMPTS', '5')),
+        'mode': os.getenv('AWS_RETRY_MODE','standard')
+    },
+    connect_timeout=10,
+    max_pool_connections=10,
+    # custom user agent extra
+    user_agent_extra='qs_sdk_migration_cdkslim')
+
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/quicksight.html#QuickSight.Client.create_data_source
 conn_dict = {
     "aurora": "AuroraParameters",
@@ -36,6 +52,20 @@ create_datasource_template = {
     "SslProperties": None,
     "Tags": None,
 }
+update_dataset_template = {
+    "AwsAccountId": None,
+    "DataSetId": None,
+    "Name": None,
+    "PhysicalTableMap": None,
+    "LogicalTableMap": None,
+    "ImportMode": None,
+    "ColumnGroups": None,
+    "FieldFolders": None,
+    "RowLevelPermissionDataSet": None,
+    "RowLevelPermissionTagConfiguration": None,
+    "ColumnLevelPermissionRules": None,
+    "DataSetUsageConfiguration": None,
+}
 create_analysis_template = {
     "AwsAccountId": None,
     "AnalysisId": None,
@@ -58,10 +88,16 @@ create_dashboard_template = {
     "AwsAccountId": None,
     "DashboardId": None,
     "Name": None,
-    "Parameters": None,
     "Permissions": None,
     "SourceEntity": None,
-    "Tags": None,
+    "DashboardPublishOptions": None
+}
+update_dashboard_template = {
+    "AwsAccountId": None,
+    "DashboardId": None,    
+    "Name": None,
+    "SourceEntity": None,
+    "Parameters": None,
     "VersionDescription": None,
     "DashboardPublishOptions": None,
     "ThemeArn": None,

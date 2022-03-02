@@ -1,4 +1,5 @@
 from botocore.exceptions import ClientError
+from common.constants import custom_config
 import logging
 import abc
 import time
@@ -14,7 +15,7 @@ class QuickSightAPI:
     def execute(self, api_method):
         self.api_method = api_method
         self.session = api_method.session
-        self.qs_client = self.session.client("quicksight")
+        self.qs_client = self.session.client("quicksight", config=custom_config)
         self.params = api_method.get_params()
         self.describe_action = self.__get_describe_action()
         self.describe_params = self.__get_describe_params()
@@ -27,14 +28,20 @@ class QuickSightAPI:
             describe_object = response.get("Template")
             describe_version = describe_object.get("Version")
             describe_status = describe_version.get("Status")
-        elif self.api_method.action in ("create_dashboard", "update_dashboard"):
+        elif self.api_method.action in (
+            "create_dashboard",
+            "update_dashboard",
+        ):
             describe_object = response.get("Dashboard")
             describe_version = describe_object.get("Version")
             describe_status = describe_version.get("Status")
         elif self.api_method.action in ("create_analysis", "update_analysis"):
             describe_object = response.get("Analysis")
             describe_status = describe_object.get("Status")
-        elif self.api_method.action in ("create_data_source", "update_data_source"):
+        elif self.api_method.action in (
+            "create_data_source",
+            "update_data_source",
+        ):
             describe_object = response.get("DataSource")
             describe_status = describe_object.get("Status")
         elif self.api_method.action in ("create_data_set", "update_data_set"):
@@ -79,7 +86,8 @@ class QuickSightAPI:
             # check if action is create or update
             if any(action in self.api_method.action for action in ["create", "update"]):
                 if not any(
-                    action in self.api_method.action for action in ["permissions"]
+                    action in self.api_method.action
+                    for action in ["permissions", "version"]
                 ):
                     response = getattr(self.qs_client, self.describe_action)(
                         **self.describe_params
@@ -113,7 +121,7 @@ class QuickSightAPI:
                     results["timetocreate"] = timetocreate
 
             return results
-
+        # TODO: Need better error handling/logging
         except ClientError as err:
             logger.debug(str(err))
 
@@ -235,7 +243,7 @@ class DescribeDataSetApiMethod(QuickSightAPI_BaseMethod):
     def parse_response(self, response):
         if response:
             if response["Status"] == 200:
-                return response
+                return response["DataSet"]
 
 
 class DescribeAnalysisApiMethod(QuickSightAPI_BaseMethod):
@@ -283,7 +291,7 @@ class DescribeThemeApiMethod(QuickSightAPI_BaseMethod):
     def parse_response(self, response):
         if response:
             if response["Status"] == 200:
-                return response
+                return response["Theme"]
 
 
 class DescribeTemplateApiMethod(QuickSightAPI_BaseMethod):
@@ -647,6 +655,39 @@ class CreateDashboardApiMethod(QuickSightAPI_BaseMethod):
         return response
 
 
+class UpdateDashboardApiMethod(QuickSightAPI_BaseMethod):
+    def __init__(self, session, params):
+        self.action = "update_dashboard"
+        self.session = session
+        self.params = params
+
+    def get_params(self):
+        return self.params
+
+    def parse_response(self, response):
+        return response
+
+
+class UpdateDashboardVersionApiMethod(QuickSightAPI_BaseMethod):
+    def __init__(self, session, created_dashboard):
+        self.action = "update_dashboard_published_version"
+        self.session = session
+        self.accountid = session.accountid
+        self.created_dashboard = created_dashboard
+
+    def get_params(self):
+        return {
+            "AwsAccountId": self.accountid,
+            "DashboardId": self.created_dashboard["DashboardId"],
+            "VersionNumber": int(
+                self.created_dashboard["VersionArn"].split("version/")[1]
+            ),
+        }
+
+    def parse_response(self, response):
+        return response
+
+
 class CreateAnalysisApiMethod(QuickSightAPI_BaseMethod):
     def __init__(self, session, params):
         self.action = "create_analysis"
@@ -715,8 +756,10 @@ class UpdateAnalysisApiMethod(QuickSightAPI_BaseMethod):
 class QuickSightAccount(object):
     def __init__(self, session, region):
         self.session = session
-        self.qs_client = session.client("quicksight")
-        self.accountid = session.client("sts").get_caller_identity()["Account"]
+        self.qs_client = session.client("quicksight", config=custom_config)
+        self.accountid = session.client(
+            "sts", config=custom_config
+        ).get_caller_identity()["Account"]
         setattr(self.session, "accountid", self.accountid)
         self.name = self.DescribeAccount()["AccountSettings"]["AccountName"]
         self.default_namespace = self.DescribeAccount()["AccountSettings"][
@@ -856,10 +899,10 @@ class QuickSightAccount(object):
     def CreateTheme(self, source_theme):
         api_method = CreateThemeApiMethod(
             self.session,
-            source_theme["Theme"]["ThemeId"],
-            source_theme["Theme"]["Name"],
-            source_theme["Theme"]["Version"]["BaseThemeId"],
-            source_theme["Theme"]["Version"]["Configuration"],
+            source_theme["ThemeId"],
+            source_theme["Name"],
+            source_theme["Version"]["BaseThemeId"],
+            source_theme["Version"]["Configuration"],
         )
         response = QuickSightAPI().execute(api_method)
         return response
@@ -918,12 +961,12 @@ class QuickSightAccount(object):
 
     def UpdateAnalysisPermissions(self, id):
         permissions_users = [
-            self.migrate_admin_users[key].permissions_dashboard
+            self.migrate_admin_users[key].permissions_analysis
             for key in self.migrate_admin_users
         ]
 
         permissions_group = [
-            self.migrate_admin_groups[key].permissions_dashboard
+            self.migrate_admin_groups[key].permissions_analysis
             for key in self.migrate_admin_groups
         ]
 
@@ -952,12 +995,12 @@ class QuickSightAccount(object):
 
     def UpdateDataSetPermissions(self, id):
         permissions_users = [
-            self.migrate_admin_users[key].permissions_dashboard
+            self.migrate_admin_users[key].permissions_dataset
             for key in self.migrate_admin_users
         ]
 
         permissions_group = [
-            self.migrate_admin_groups[key].permissions_dashboard
+            self.migrate_admin_groups[key].permissions_dataset
             for key in self.migrate_admin_groups
         ]
 
@@ -969,12 +1012,12 @@ class QuickSightAccount(object):
 
     def UpdateDataSourcePermissions(self, id):
         permissions_users = [
-            self.migrate_admin_users[key].permissions_dashboard
+            self.migrate_admin_users[key].permissions_datasource
             for key in self.migrate_admin_users
         ]
 
         permissions_group = [
-            self.migrate_admin_groups[key].permissions_dashboard
+            self.migrate_admin_groups[key].permissions_datasource
             for key in self.migrate_admin_groups
         ]
 
@@ -986,12 +1029,12 @@ class QuickSightAccount(object):
 
     def UpdateThemePermissions(self, id):
         permissions_users = [
-            self.migrate_admin_users[key].permissions_dashboard
+            self.migrate_admin_users[key].permissions_theme
             for key in self.migrate_admin_users
         ]
 
         permissions_group = [
-            self.migrate_admin_groups[key].permissions_dashboard
+            self.migrate_admin_groups[key].permissions_theme
             for key in self.migrate_admin_groups
         ]
 
@@ -1069,12 +1112,12 @@ class QuickSightAccount(object):
         utils.update_nested_dict(bp, "Name", source_analysis.get("Name"))
 
         permissions_users = [
-            self.migrate_admin_users[key].permissions_dashboard
+            self.migrate_admin_users[key].permissions_analysis
             for key in self.migrate_admin_users
         ]
 
         permissions_group = [
-            self.migrate_admin_groups[key].permissions_dashboard
+            self.migrate_admin_groups[key].permissions_analysis
             for key in self.migrate_admin_groups
         ]
 
@@ -1202,7 +1245,7 @@ class QuickSightAccount(object):
     def add_dashboards(self, dashboard_ids):
         for dashboard_id in dashboard_ids:
             if dashboard_id not in self.migrate_dashboards:
-                Response = self.DescribeDashboard(dashboard_id)
+                Response = self.DescribeDashboard(dashboard_id)                
                 Dashboard = QuickSightDashboard(Response)
 
                 self.migrate_dashboards[Dashboard.id] = Dashboard
@@ -1217,19 +1260,25 @@ class QuickSightAccount(object):
                 self.add_datasets(Analysis.datasets)
 
     def add_datasets(self, dataset_ids):
+     
         for dataset_id in dataset_ids:
+          
+           
             if dataset_id not in self.migrate_datasets:
-                Response = self.DescribeDataSet(dataset_id)
+                Response = self.DescribeDataSet(dataset_id)                          
                 DataSet = QuickSightDataSet(Response)
-                self.migrate_datasets[DataSet.id] = DataSet
-                self.add_datasources(DataSet.datasources)
+                
+                self.migrate_datasets[DataSet.id] = DataSet                         
+                self.add_datasources(DataSet.datasources)   
+                            
 
     def add_datasources(self, datasource_ids):
         for datasource_id in datasource_ids:
             if datasource_id not in self.migrate_datasources:
                 Response = self.DescribeDataSource(datasource_id)
-                DataSource = QuickSightDataSource(Response)
+                DataSource = QuickSightDataSource(Response)                
                 self.migrate_datasources[DataSource.id] = DataSource
+                
 
     def add_themes(self, theme_ids):
         for theme_id in theme_ids:
@@ -1252,17 +1301,17 @@ class QuickSightAccount(object):
                 Group = QuickSightGroup(Response)
                 self.migrate_admin_groups[Group.name] = Group
 
-    def create_dataset(self, source_dataset):
-        self.source_dataset = source_dataset
+    def CreateDataSet(self, source_dataset):
+
         bp = const.create_dataset_template
 
         utils.update_nested_dict(
             bp,
             "LogicalTableMap",
-            source_dataset.get("DataSet").get("LogicalTableMap"),
+            source_dataset.get("LogicalTableMap"),
         )
 
-        physical_table = source_dataset["DataSet"]["PhysicalTableMap"]
+        physical_table = source_dataset["PhysicalTableMap"]
         for key, value in physical_table.items():
             for i, j in value.items():
                 dsid = j["DataSourceArn"].split("/")[1]
@@ -1275,41 +1324,37 @@ class QuickSightAccount(object):
         utils.update_nested_dict(
             bp,
             "DataSetId",
-            self.source_dataset.get("DataSet").get("DataSetId"),
+            source_dataset.get("DataSetId"),
         )
 
-        utils.update_nested_dict(
-            bp, "Name", self.source_dataset.get("DataSet").get("Name")
-        )
+        utils.update_nested_dict(bp, "Name", source_dataset.get("Name"))
         utils.update_nested_dict(bp, "PhysicalTableMap", physical_table)
 
         utils.update_nested_dict(
             bp,
             "LogicalTableMap",
-            source_dataset.get("DataSet").get("LogicalTableMap"),
+            source_dataset.get("LogicalTableMap"),
         )
         utils.update_nested_dict(
             bp,
             "ColumnGroups",
-            source_dataset.get("DataSet").get("ColumnGroups"),
+            source_dataset.get("ColumnGroups"),
         )
 
-        utils.update_nested_dict(
-            bp, "ImportMode", source_dataset.get("DataSet").get("ImportMode")
-        )
+        utils.update_nested_dict(bp, "ImportMode", source_dataset.get("ImportMode"))
         utils.update_nested_dict(
             bp,
             "FieldFolders",
-            source_dataset.get("DataSet").get("FieldFolders"),
+            source_dataset.get("FieldFolders"),
         )
 
         permissions_users = [
-            self.migrate_admin_users[key].permissions_dashboard
+            self.migrate_admin_users[key].permissions_dataset
             for key in self.migrate_admin_users
         ]
 
         permissions_group = [
-            self.migrate_admin_groups[key].permissions_dashboard
+            self.migrate_admin_groups[key].permissions_dataset
             for key in self.migrate_admin_groups
         ]
 
@@ -1335,15 +1380,15 @@ class QuickSightAccount(object):
 
         self.source_dataset = source_dataset
 
-        bp = const.create_dataset_template
+        bp = const.update_dataset_template
 
         utils.update_nested_dict(
             bp,
             "LogicalTableMap",
-            source_dataset.get("DataSet").get("LogicalTableMap"),
+            source_dataset.get("LogicalTableMap"),
         )
 
-        physical_table = source_dataset["DataSet"]["PhysicalTableMap"]
+        physical_table = source_dataset["PhysicalTableMap"]
         for key, value in physical_table.items():
             for i, j in value.items():
                 dsid = j["DataSourceArn"].split("/")[1]
@@ -1356,32 +1401,28 @@ class QuickSightAccount(object):
         utils.update_nested_dict(
             bp,
             "DataSetId",
-            self.source_dataset.get("DataSet").get("DataSetId"),
+            self.source_dataset.get("DataSetId"),
         )
 
-        utils.update_nested_dict(
-            bp, "Name", self.source_dataset.get("DataSet").get("Name")
-        )
+        utils.update_nested_dict(bp, "Name", self.source_dataset.get("Name"))
         utils.update_nested_dict(bp, "PhysicalTableMap", physical_table)
 
         utils.update_nested_dict(
             bp,
             "LogicalTableMap",
-            source_dataset.get("DataSet").get("LogicalTableMap"),
+            source_dataset.get("LogicalTableMap"),
         )
         utils.update_nested_dict(
             bp,
             "ColumnGroups",
-            source_dataset.get("DataSet").get("ColumnGroups"),
+            source_dataset.get("ColumnGroups"),
         )
 
-        utils.update_nested_dict(
-            bp, "ImportMode", source_dataset.get("DataSet").get("ImportMode")
-        )
+        utils.update_nested_dict(bp, "ImportMode", source_dataset.get("ImportMode"))
         utils.update_nested_dict(
             bp,
             "FieldFolders",
-            source_dataset.get("DataSet").get("FieldFolders"),
+            source_dataset.get("FieldFolders"),
         )
 
         new_dataset_args = {k: v for k, v in bp.items() if v and v != ""}
@@ -1398,10 +1439,10 @@ class QuickSightAccount(object):
             )
         return response
 
-    def create_data_source(self, source_datasource):
+    def CreateDataSource(self, source_datasource):
 
         source_datasource_params = source_datasource["DataSourceParameters"]
-
+        credentials = None
         # TODO Supported data source validation
         # AlternateDataSourceParameters
         # Check if the Datasource Type supported by the migration tool
@@ -1434,9 +1475,6 @@ class QuickSightAccount(object):
                 "Port",
                 self.config_parameters.parameters.get("rdsPort"),
             )
-            utils.update_nested_dict(
-                source_datasource_params, "Credentials", credentials
-            )
 
         # REDSHIFT Cluster
         # Replace datasource parameters with config values
@@ -1466,9 +1504,6 @@ class QuickSightAccount(object):
                 source_datasource_params,
                 "Port",
                 self.config_parameters.parameters.get("rdsPort"),
-            )
-            utils.update_nested_dict(
-                source_datasource_params, "Credentials", credentials
             )
 
         # remove empty values from data source parameters
@@ -1501,16 +1536,15 @@ class QuickSightAccount(object):
 
         utils.update_nested_dict(bp, "Tags", self.config_parameters.parameters["tag"])
 
-        utils.update_nested_dict(
-            bp, "Credentials", source_datasource.get("Credentials")
-        )
+        utils.update_nested_dict(bp, "Credentials", credentials)
+
         permissions_users = [
-            self.migrate_admin_users[key].permissions_dashboard
+            self.migrate_admin_users[key].permissions_datasource
             for key in self.migrate_admin_users
         ]
 
         permissions_group = [
-            self.migrate_admin_groups[key].permissions_dashboard
+            self.migrate_admin_groups[key].permissions_datasource
             for key in self.migrate_admin_groups
         ]
 
@@ -1611,16 +1645,16 @@ class QuickSightAccount(object):
             source_dashboard.get("Version").get("SourceEntity"),
         )
 
-        utils.update_nested_dict(
-            bp, "ThemeArn", source_dashboard.get("Version").get("ThemeArn")
-        )
+        # utils.update_nested_dict(
+        #     bp, "ThemeArn", source_dashboard.get("Version").get("ThemeArn")
+        # )
 
-        utils.update_nested_dict(bp, "Tags", self.config_parameters.parameters["tag"])
-        utils.update_nested_dict(
-            bp,
-            "VersionDescription",
-            source_dashboard.get("Version").get("Description"),
-        )
+        # utils.update_nested_dict(bp, "Tags", self.config_parameters.parameters["tag"])
+        # utils.update_nested_dict(
+        #     bp,
+        #     "VersionDescription",
+        #     source_dashboard.get("Version").get("Description"),
+        # )
         utils.update_nested_dict(bp, "DashboardPublishOptions", DashboardPublishOptions)
 
         new_dashboard_args = {k: v for k, v in bp.items() if v and v != ""}
@@ -1635,6 +1669,97 @@ class QuickSightAccount(object):
                 source_dashboard["Name"],
                 err,
             )
+
+    def UpdateDashboardVersion(self, created_dashboard):
+        api_method = UpdateDashboardVersionApiMethod(self.session, created_dashboard)
+        response = QuickSightAPI().execute(api_method)
+        return response
+
+    def UpdateDashboard(self, source_template, source_dashboard, source_datasets):
+
+        # Blueprint for create dashboard
+
+        source_datasets_arns = source_dashboard["Version"]["DataSetArns"]
+        source_dataset_refs = []
+
+        # UPDATE VALUES:
+        # Replace the values in the source that need to be updated with values from target
+        #
+        for source_dataset_arn in source_datasets_arns:
+            source_dataset_id = source_dataset_arn.split("/")[1]
+            source_dataset_name = source_datasets[source_dataset_id].name
+            source_dataset_refs.append(
+                {
+                    "DataSetPlaceholder": source_dataset_name,
+                    "DataSetArn": "arn:aws:quicksight:{}:{}:dataset/{}".format(
+                        self.region, self.accountid, source_dataset_id
+                    ),
+                }
+            )
+        # Replace the Source Entity with the updated dataset arns
+        source_dashboard["Version"]["SourceEntity"] = {
+            "SourceTemplate": {
+                "DataSetReferences": source_dataset_refs,
+                "Arn": source_template["Template"]["Arn"],
+            }
+        }
+
+        DashboardPublishOptions = {
+            "AdHocFilteringOption": {"AvailabilityStatus": "DISABLED"},
+            "ExportToCSVOption": {"AvailabilityStatus": "ENABLED"},
+            "SheetControlsOption": {"VisibilityState": "COLLAPSED"},
+        }
+
+        if source_dashboard.get("ThemeArn"):
+            source_dashboard["ThemeArn"] = "arn:aws:quicksight:{}:{}:theme/{}".format(
+                self.region,
+                self.accountid,
+                source_dashboard.get("Version").get("ThemeArn").split("/")[1],
+            )
+
+        # UPDATE CREATE TEMPLATE:
+        # Create asset template and fills in the values from the source
+        #
+        bp = const.update_dashboard_template
+        utils.update_nested_dict(bp, "AwsAccountId", self.accountid)
+        utils.update_nested_dict(
+            bp,
+            "DashboardId",
+            source_dashboard.get("DashboardId"),
+        )
+
+        utils.update_nested_dict(bp, "Name", source_dashboard.get("Name"))
+
+        utils.update_nested_dict(
+            bp,
+            "SourceEntity",
+            source_dashboard.get("Version").get("SourceEntity"),
+        )
+
+        utils.update_nested_dict(
+            bp, "ThemeArn", source_dashboard.get("Version").get("ThemeArn")
+        )
+
+        # utils.update_nested_dict(
+        #     bp,
+        #     "VersionDescription",
+        #     source_dashboard.get("Version").get("Description"),
+        # )
+        utils.update_nested_dict(bp, "DashboardPublishOptions", DashboardPublishOptions)
+
+        new_dashboard_args = {k: v for k, v in bp.items() if v and v != ""}
+
+        api_method = UpdateDashboardApiMethod(self.session, new_dashboard_args)
+        try:
+            response = QuickSightAPI().execute(api_method)
+
+        except ClientError as err:
+            logger.error(
+                "Failed to update dashboard %s Error: %s",
+                source_dashboard["Name"],
+                err,
+            )
+        return response
 
 
 class QuickSightDashboard:
@@ -1689,7 +1814,7 @@ class QuickSightDataSet:
 
     def __get_datasources(self):
         datasources = []
-        physical_table = self.response["DataSet"]["PhysicalTableMap"]
+        physical_table = self.response["PhysicalTableMap"]
         for key, value in physical_table.items():
             for i, j in value.items():
                 data_source_id = j["DataSourceArn"].split("/")[1]
@@ -1697,11 +1822,11 @@ class QuickSightDataSet:
         return datasources
 
     def __get_name(self):
-        name = self.response["DataSet"]["Name"]
+        name = self.response["Name"]
         return name
 
     def __get_id(self):
-        id = self.response["DataSet"]["DataSetId"]
+        id = self.response["DataSetId"]
         return id
         self.migrated = False
 
@@ -1730,11 +1855,11 @@ class QuickSightTheme:
         self.status = "imported"
 
     def __get_name(self):
-        name = self.response["Theme"]["Name"]
+        name = self.response["Name"]
         return name
 
     def __get_id(self):
-        id = self.response["Theme"]["ThemeId"]
+        id = self.response["ThemeId"]
         return id
 
 
