@@ -4,12 +4,12 @@ from aws_cdk import aws_iam as iam, aws_ssm as ssm, core
 
 
 class QuicksightTargetStack(core.Stack):
-    def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: core.Construct, id: str, central_account, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         self.current_dir = os.path.dirname(__file__)
 
-        # the account that will be able to assume the target role
-        self.central_account_id = os.environ["CDK_SOURCE_ACCOUNT"]
+        # Change to your central account
+        self.central_account_id = central_account
 
         self.quicksight_migration_target_assume_role = iam.Role(
             self,
