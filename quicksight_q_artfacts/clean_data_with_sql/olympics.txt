@@ -24,12 +24,11 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  's3://adhocdatabucket/olympics'
+  's3://<<s3 bucket name>>/olympics'
 TBLPROPERTIES (
   'classification'='csv', 
   'columnsOrdered'='true', 
   'compressionType'='none', 
   'delimiter'=',', 
   'skip.header.line.count'='1', 
-  'transient_lastDdlTime'='1630096722', 
   'typeOfData'='file')
