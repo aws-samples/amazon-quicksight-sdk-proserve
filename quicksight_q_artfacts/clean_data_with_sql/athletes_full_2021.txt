@@ -23,13 +23,12 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  's3://adhocdatabucket/olympics2021/athletes_full'
+  's3://<<s3 bucket name>>/olympics2021/athletes_full'
 TBLPROPERTIES (
   'areColumnsQuoted'='true', 
   'classification'='csv', 
   'columnsOrdered'='true', 
   'compressionType'='none', 
   'delimiter'=',', 
-  'skip.header.line.count'='1', 
-  'transient_lastDdlTime'='1630969965', 
+  'skip.header.line.count'='1',
   'typeOfData'='file')
