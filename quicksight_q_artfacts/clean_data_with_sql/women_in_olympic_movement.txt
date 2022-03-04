@@ -14,7 +14,6 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  's3://adhocdatabucket/womeninolympics/Women-in-the-Olympic-Movement'
+  's3://<<s3 bucket name>>/womeninolympics/Women-in-the-Olympic-Movement'
 TBLPROPERTIES (
-  'has_encrypted_data'='false', 
-  'transient_lastDdlTime'='1644524192')
+  'has_encrypted_data'='false')
