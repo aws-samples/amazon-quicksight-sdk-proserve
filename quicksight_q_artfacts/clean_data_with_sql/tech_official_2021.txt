@@ -17,7 +17,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  's3://adhocdatabucket/olympics2021/tech_official'
+  's3://<<s3 bucket name>>/olympics2021/tech_official'
 TBLPROPERTIES (
   'areColumnsQuoted'='true', 
   'classification'='csv', 
@@ -25,5 +25,4 @@ TBLPROPERTIES (
   'compressionType'='none', 
   'delimiter'=',', 
   'skip.header.line.count'='1', 
-  'transient_lastDdlTime'='1630970331', 
   'typeOfData'='file')
