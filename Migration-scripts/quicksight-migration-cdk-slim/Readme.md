@@ -29,16 +29,25 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+### Set enviroment varibles
 
----
+#### Central/Source Account
+```bash
+export CDK_CENTRAL_ACCOUNT=[Your Source AWS Account]
+export CDK_CENTRAL_REGION=[Your Source AWS Region]
+```
+
+#### Target/Destination Account
+```bash
+export CDK_TARGET_ACCOUNT=[Your Target AWS Account]
+export CDK_TARGET_REGION=[Your Target AWS Region]
+```
 
 ## Deploy QuickSight Source Stack
 
 ### Deploy Stack
 
 ```bash
-export CDK_DEFAULT_ACCOUNT=[Your Source/Dev AWS Account]
-export CDK_DEFAULT_REGION=[Your Source/Dev AWS Region]
 cdk bootstrap
 cdk deploy quicksight-migration-stack
 ```
@@ -51,16 +60,13 @@ An IAM role needs to be created on target accounts that will allow the source ac
 
 ### Pre-Deploy Setup
 
-#### Code Changes
+#### Code Changes (Optional - Can be done after deployment)
+- Update the `/infra/config` Systems Manager parameter found in `infra_target_account_stack.py` file with the values of your existing Amazon Redshift or RDS clusters. 
+- Set redshiftPassword and rdsPassword to the name of the secret found in Secrets Manager for these resources.
 
-- Open `cdk/quicksight-target-stack.py` and update `self.central_account_id = "[change me]"` with the source account ID.
-- Update the `/infra/config` Systems Manager parameter found in `infra_target_account_stack.py` file with the values of your existing Amazon Redshift or RDS clusters. Set redshiftPassword and rdsPassword to the name of the secret found in Secrets Manager for these resources.
-
-### Deploy Stack
+#### Deploy Stack
 
 ```bash
-export CDK_DEFAULT_ACCOUNT=[Your Target/Prod AWS Account]
-export CDK_DEFAULT_REGION=[Your Target/Prod AWS Region]
 cdk bootstrap
 cdk deploy quicksight-target-stack
 ```

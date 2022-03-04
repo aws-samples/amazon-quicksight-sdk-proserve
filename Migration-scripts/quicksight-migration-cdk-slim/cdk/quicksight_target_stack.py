@@ -4,12 +4,12 @@ from aws_cdk import aws_iam as iam, aws_ssm as ssm, core
 
 
 class QuicksightTargetStack(core.Stack):
-    def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: core.Construct, id: str, central_account, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         self.current_dir = os.path.dirname(__file__)
 
         # Change to your central account
-        self.central_account_id = "[change me]"
+        self.central_account_id = central_account
 
         self.quicksight_migration_target_assume_role = iam.Role(
             self,
@@ -62,6 +62,49 @@ class QuicksightTargetStack(core.Stack):
             "InfraConfigParam",
             parameter_name="/infra/config",
             string_value=json.dumps(self.to_dict()),
+        )
+
+        self.quicksight_managed_resources_policy = iam.ManagedPolicy(
+            self,
+            "iam_policy",
+            managed_policy_name="QuickSightMigrationPolicy",
+            statements=[
+                iam.PolicyStatement(
+                    sid="QuickSightAccess",
+                    effect=iam.Effect.ALLOW,
+                    actions=["quicksight:*"],
+                    resources=["*"],
+                    conditions={
+                        "StringEquals": {
+                            "quicksight:UserName": self.quicksight_migration_target_assume_role.role_name
+                        }
+                    },
+                ),
+                iam.PolicyStatement(
+                    sid="AWSResourceAccess",
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "iam:List*",
+                        "redshift:Describe*",
+                        "rds:Describe*",
+                        "athena:Get*",
+                        "athena:List*",
+                        "athena:BatchGetQueryExecution",
+                        "athena:StartQueryExecution",
+                        "athena:StopQueryExecution",
+                        "s3:GetBucketLocation",
+                        "s3:GetObject",
+                        "s3:ListBucket",
+                        "s3:ListBucketMultipartUploads",
+                        "s3:ListMultipartUploadParts",
+                        "s3:AbortMultipartUpload",
+                        "s3:CreateBucket",
+                        "s3:PutObject",
+                        "s3:PutBucketPublicAccessBlock",
+                    ],
+                    resources=["*"],
+                ),
+            ],
         )
 
     def to_dict(self):
