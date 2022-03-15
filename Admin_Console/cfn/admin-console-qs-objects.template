@@ -697,7 +697,7 @@
         ],
         "SourceEntity": {
           "SourceTemplate": {
-            "Arn": "arn:aws:quicksight:us-east-1:499080683179:template/Admin-Console-Public-CFN-Template",
+            "Arn": "arn:aws:quicksight:us-east-1:889399602426:template/Admin-Console-Public-CFN-Template",
             "DataSetReferences": [
               {
                 "DataSetArn": {
