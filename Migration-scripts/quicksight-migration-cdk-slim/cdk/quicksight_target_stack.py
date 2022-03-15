@@ -1,10 +1,18 @@
 import os
 import json
 from aws_cdk import aws_iam as iam, aws_ssm as ssm, core
+from aws_cdk.custom_resources import (
+    AwsCustomResource,
+    AwsCustomResourcePolicy,
+    PhysicalResourceId,
+    AwsSdkCall,
+)
 
 
 class QuicksightTargetStack(core.Stack):
-    def __init__(self, scope: core.Construct, id: str, central_account, **kwargs) -> None:
+    def __init__(
+        self, scope: core.Construct, id: str, central_account, **kwargs
+    ) -> None:
         super().__init__(scope, id, **kwargs)
         self.current_dir = os.path.dirname(__file__)
 
@@ -70,17 +78,6 @@ class QuicksightTargetStack(core.Stack):
             managed_policy_name="QuickSightMigrationPolicy",
             statements=[
                 iam.PolicyStatement(
-                    sid="QuickSightAccess",
-                    effect=iam.Effect.ALLOW,
-                    actions=["quicksight:*"],
-                    resources=["*"],
-                    conditions={
-                        "StringEquals": {
-                            "quicksight:UserName": self.quicksight_migration_target_assume_role.role_name
-                        }
-                    },
-                ),
-                iam.PolicyStatement(
                     sid="AWSResourceAccess",
                     effect=iam.Effect.ALLOW,
                     actions=[
@@ -106,17 +103,119 @@ class QuicksightTargetStack(core.Stack):
                 ),
             ],
         )
+        # create a custom resource that will create a quicksight user using the IAM target role
+        self.qs_user = AwsCustomResource(
+            self,
+            "AWSCustomResourceQSUser",
+            role=self.quicksight_migration_target_assume_role,
+            policy=AwsCustomResourcePolicy.from_sdk_calls(
+                resources=AwsCustomResourcePolicy.ANY_RESOURCE
+            ),
+            on_create=self.create_qsuser(),
+            on_delete=self.delete_qsuser(),
+            resource_type="Custom::QuickSightMigrationUser",
+        )
+        self.qs_user.node.add_dependency(self.quicksight_managed_resources_policy)
+
+        # create a custom resource that will create a quicksight policy assignment
+        self.qs_policy_assignment = AwsCustomResource(
+            self,
+            "AWSCustomResourceQSPolicyAssignment",
+            role=self.quicksight_migration_target_assume_role,
+            policy=AwsCustomResourcePolicy.from_sdk_calls(
+                resources=AwsCustomResourcePolicy.ANY_RESOURCE
+            ),
+            on_create=self.create_policy_assignment(),
+            on_delete=self.delete_policy_assignment(),
+            resource_type="Custom::QuickSightPolicyAssignment",
+        )
+        self.qs_policy_assignment.node.add_dependency(self.qs_user)
+
+    # create quicksight user
+    def create_qsuser(self):
+        create_params = {
+            "IdentityType": "IAM",
+            "Email": " ",
+            "UserRole": "ADMIN",
+            "IamArn": self.quicksight_migration_target_assume_role.role_arn,
+            "SessionName": "quicksight",
+            "AwsAccountId": core.Aws.ACCOUNT_ID,
+            "Namespace": "default",
+        }
+
+        return AwsSdkCall(
+            action="registerUser",
+            service="QuickSight",
+            parameters=create_params,
+            physical_resource_id=PhysicalResourceId.of("cdksdk_qsuser"),
+        )
+
+    # delete quicksight user
+    def delete_qsuser(self):
+        params = {
+            "UserName": self.quicksight_migration_target_assume_role.role_name
+            + "/quicksight",
+            "AwsAccountId": core.Aws.ACCOUNT_ID,
+            "Namespace": "default",
+        }
+
+        return AwsSdkCall(
+            action="deleteUser",
+            service="QuickSight",
+            parameters=params,
+            physical_resource_id=PhysicalResourceId.of("cdksdk_qsuser"),
+        )
+
+    # create policy assignment
+    def create_policy_assignment(self):
+        create_params = {
+            "AssignmentName": "QuickSightMigration",
+            "AssignmentStatus": "ENABLED",
+            "AwsAccountId": core.Aws.ACCOUNT_ID,
+            "Namespace": "default",
+            "Identities": {
+                "user": [
+                    self.quicksight_migration_target_assume_role.role_name
+                    + "/quicksight"
+                ]
+            },
+            "PolicyArn": self.quicksight_managed_resources_policy.managed_policy_arn,
+        }
+
+        return AwsSdkCall(
+            action="createIAMPolicyAssignment",
+            service="QuickSight",
+            assumed_role_arn=self.quicksight_migration_target_assume_role.role_arn,
+            parameters=create_params,
+            physical_resource_id=PhysicalResourceId.of("cdksdk_policyassignment"),
+        )
+
+    # delete policy assignment
+    def delete_policy_assignment(self):
+        delete_params = {
+            "AssignmentName": "QuickSightMigration",
+            "AwsAccountId": core.Aws.ACCOUNT_ID,
+            "Namespace": "default",
+        }
+
+        return AwsSdkCall(
+            action="deleteIAMPolicyAssignment",
+            service="QuickSight",
+            assumed_role_arn=self.quicksight_migration_target_assume_role.role_arn,
+            parameters=delete_params,
+            physical_resource_id=PhysicalResourceId.of("cdksdk_policyassignment"),
+        )
 
     def to_dict(self):
         config = {}
         config["vpcId"] = ""
         config["redshiftUsername"] = "admin"
-        config["redshiftPassword"] = ""
+        config["redshiftSecretId"] = ""
         config["redshiftClusterId"] = ""
         config["redshiftHost"] = ""
         config["redshiftDB"] = ""
         config["rdsUsername"] = "admin"
-        config["rdsPassword"] = ""
+        config["rdsSecretId"] = ""
         config["rdsInstanceId"] = ""
         config["rdsDB"] = ""
         config["rdsPort"] = ""
