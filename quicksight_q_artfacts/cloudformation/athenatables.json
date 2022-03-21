@@ -1,0 +1,1206 @@
+{
+
+"AWSTemplateFormatVersion": "2010-09-09",
+
+"Parameters": {
+
+},
+
+"Resources": {
+
+"olympicsdb": {
+
+"Type": "AWS::Glue::Database",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseInput": {
+
+"Name": "olympicsdatabase"
+
+}
+
+}
+
+},
+
+"medalsathletes2021": {"Type": "AWS::Glue::Table",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseName": {"Ref": "olympicsdb"},
+
+"TableInput": {
+
+"Description": "medals and athletes information",
+
+"Name": "medals_athletes_2021",
+
+"Parameters": {
+
+"has_encrypted_data": false,
+
+"skip.header.line.count": "1",
+
+"classification": "csv",
+
+"areColumnsQuoted": "false",
+
+"typeOfData": "file",
+
+"columnsOrdered": "true",
+
+"delimiter": ","
+
+},
+
+"StorageDescriptor": {
+
+"Columns": [
+
+{
+
+"Comment": "medal_type",
+
+"Name": "medal_type",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "medal_code",
+
+"Name": "medal_code",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "medal_date",
+
+"Name": "medal_date",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "athlete_short_name",
+
+"Name": "athlete_short_name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "athlete_name",
+
+"Name": "athlete_name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "athlete_sex",
+
+"Name": "athlete_sex",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "athlete_link",
+
+"Name": "athlete_link",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "country_code",
+
+"Name": "country_code",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "event",
+
+"Name": "event",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "country",
+
+"Name": "country",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "sport",
+
+"Name": "sport",
+
+"Type": "string"
+
+}
+
+],
+
+"Compressed": false,
+
+"InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+
+"Location": "s3://<<s3 bucket name>>/<<folder name>>",
+
+"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+
+
+"SerdeInfo": {
+
+	"Parameters": {
+	
+             "field.delim": ","
+
+         },
+
+	"SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      },
+
+      "StoredAsSubDirectories": false
+
+     },
+
+    "TableType": "EXTERNAL_TABLE"
+
+}
+
+}
+
+},
+
+"athletesfull2021": {"Type": "AWS::Glue::Table",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseName": {"Ref": "olympicsdb"},
+
+"TableInput": {
+
+"Description": "athletes information",
+
+"Name": "athletes_full_2021",
+
+"Parameters": {
+
+"has_encrypted_data": false,
+
+"skip.header.line.count": "1",
+
+"classification": "csv",
+
+"areColumnsQuoted": "false",
+
+"typeOfData": "file",
+
+"columnsOrdered": "true",
+
+"delimiter": ","
+
+},
+
+"StorageDescriptor": {
+
+"Columns": [
+
+{
+
+"Comment": "athlete_name",
+
+"Name": "athlete_name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "short_name",
+
+"Name": "short_name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "athlete_gender",
+
+"Name": "athlete_gender",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "athlete_birth_date",
+
+"Name": "athlete_birth_date",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "athlete_birth_place",
+
+"Name": "athlete_birth_place",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "athlete_birth_country",
+
+"Name": "athlete_birth_country",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "country",
+
+"Name": "country",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "country_code",
+
+"Name": "country_code",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "discipline",
+
+"Name": "discipline",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "discipline_code",
+
+"Name": "discipline_code",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "residence_place",
+
+"Name": "residence_place",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "residence_country",
+
+"Name": "residence_country",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "height_m/ft",
+
+"Name": "height_m/ft",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "url",
+
+"Name": "url",
+
+"Type": "string"
+
+}
+
+],
+
+"Compressed": false,
+
+"InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+
+"Location": "s3://<<s3 bucket name>>/<<folder name>>",
+
+"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+
+
+"SerdeInfo": {
+
+	"Parameters": {
+	
+             "field.delim": ","
+
+         },
+
+	"SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      },
+
+      "StoredAsSubDirectories": false
+
+     },
+
+    "TableType": "EXTERNAL_TABLE"
+
+}
+
+}
+
+},
+"coachfull2021": {"Type": "AWS::Glue::Table",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseName": {"Ref": "olympicsdb"},
+
+"TableInput": {
+
+"Description": "coach information",
+
+"Name": "coach_full_2021",
+
+"Parameters": {
+
+"has_encrypted_data": false,
+
+"skip.header.line.count": "1",
+
+"classification": "csv",
+
+"areColumnsQuoted": "false",
+
+"typeOfData": "file",
+
+"columnsOrdered": "true",
+
+"delimiter": ","
+
+},
+
+"StorageDescriptor": {
+
+"Columns": [
+
+{
+
+"Comment": "coach_name",
+
+"Name": "coach_name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "short_name",
+
+"Name": "short_name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "coach_gender",
+
+"Name": "coach_gender",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "coach_birth_date",
+
+"Name": "coach_birth_date",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "country",
+
+"Name": "country",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "discipline",
+
+"Name": "discipline",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "coach_function",
+
+"Name": "coach_function",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "event",
+
+"Name": "event",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "url",
+
+"Name": "url",
+
+"Type": "string"
+
+}
+
+],
+
+"Compressed": false,
+
+"InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+
+"Location": "s3://<<s3 bucket name>>/<<folder name>>",
+
+"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+
+
+"SerdeInfo": {
+
+	"Parameters": {
+	
+             "field.delim": ","
+
+         },
+
+	"SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      },
+
+      "StoredAsSubDirectories": false
+
+     },
+
+    "TableType": "EXTERNAL_TABLE"
+
+}
+
+}
+
+},
+"techofficial2021": {"Type": "AWS::Glue::Table",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseName": {"Ref": "olympicsdb"},
+
+"TableInput": {
+
+"Description": "technical officials information",
+
+"Name": "tech_official_2021",
+
+"Parameters": {
+
+"has_encrypted_data": false,
+
+"skip.header.line.count": "1",
+
+"classification": "csv",
+
+"areColumnsQuoted": "false",
+
+"typeOfData": "file",
+
+"columnsOrdered": "true",
+
+"delimiter": ","
+
+},
+
+"StorageDescriptor": {
+
+"Columns": [
+
+{
+
+"Comment": "name",
+
+"Name": "name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "short_name",
+
+"Name": "short_name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "gender",
+
+"Name": "gender",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "birth_date",
+
+"Name": "birth_date",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "country",
+
+"Name": "country",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "discipline",
+
+"Name": "discipline",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "function",
+
+"Name": "function",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "url",
+
+"Name": "url",
+
+"Type": "string"
+
+}
+
+],
+
+"Compressed": false,
+
+"InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+
+"Location": "s3://<<s3 bucket name>>/<<folder name>>",
+
+"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+
+
+"SerdeInfo": {
+
+	"Parameters": {
+	
+             "field.delim": ","
+
+         },
+
+	"SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      },
+
+      "StoredAsSubDirectories": false
+
+     },
+
+    "TableType": "EXTERNAL_TABLE"
+
+}
+
+}
+
+},
+"Olympics": {"Type": "AWS::Glue::Table",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseName": {"Ref": "olympicsdb"},
+
+"TableInput": {
+
+"Description": "olympic history information",
+
+"Name": "olympics",
+
+"Parameters": {
+
+"has_encrypted_data": false,
+
+"skip.header.line.count": "1",
+
+"classification": "csv",
+
+"areColumnsQuoted": "false",
+
+"typeOfData": "file",
+
+"columnsOrdered": "true",
+
+"delimiter": ","
+
+},
+
+"StorageDescriptor": {
+
+"Columns": [
+
+{
+
+"Comment": "ID",
+
+"Name": "ID",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Name",
+
+"Name": "Name",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Sex",
+
+"Name": "Sex",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Age",
+
+"Name": "Age",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Height",
+
+"Name": "Height",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Weight",
+
+"Name": "Weight",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Team",
+
+"Name": "Team",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "NOC",
+
+"Name": "NOC",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "Games",
+
+"Name": "Games",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "Year",
+
+"Name": "Year",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "Season",
+
+"Name": "Season",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "City",
+
+"Name": "City",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "Sport",
+
+"Name": "Sport",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "Event",
+
+"Name": "Event",
+
+"Type": "string"
+
+},
+{
+
+"Comment": "Medal",
+
+"Name": "Medal",
+
+"Type": "string"
+
+}
+
+],
+
+"Compressed": false,
+
+"InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+
+"Location": "s3://<<s3 bucket name>>/<<folder name>>",
+
+"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+
+
+"SerdeInfo": {
+
+	"Parameters": {
+	
+             "field.delim": ","
+
+         },
+
+	"SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      },
+
+      "StoredAsSubDirectories": false
+
+     },
+
+    "TableType": "EXTERNAL_TABLE"
+
+}
+
+}
+
+},
+"Introductionofwomen": {"Type": "AWS::Glue::Table",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseName": {"Ref": "olympicsdb"},
+
+"TableInput": {
+
+"Description": "introduction to women in olympics information",
+
+"Name": "women_introduction_olympics",
+
+"Parameters": {
+
+"has_encrypted_data": false,
+
+"skip.header.line.count": "1",
+
+"classification": "csv",
+
+"areColumnsQuoted": "false",
+
+"typeOfData": "file",
+
+"columnsOrdered": "true",
+
+"delimiter": ","
+
+},
+
+"StorageDescriptor": {
+
+"Columns": [
+
+{
+
+"Comment": "year",
+
+"Name": "year",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "sport",
+
+"Name": "sport",
+
+"Type": "string"
+
+}
+
+],
+
+"Compressed": false,
+
+"InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+
+"Location": "s3://<<s3 bucket name>>/<<folder name>>",
+
+"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+
+
+"SerdeInfo": {
+
+	"Parameters": {
+	
+             "field.delim": ","
+
+         },
+
+	"SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      },
+
+      "StoredAsSubDirectories": false
+
+     },
+
+    "TableType": "EXTERNAL_TABLE"
+
+}
+
+}
+
+},
+"Womeninolympics": {"Type": "AWS::Glue::Table",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseName": {"Ref": "olympicsdb"},
+
+"TableInput": {
+
+"Description": "women in olympics information",
+
+"Name": "women_in_olympics",
+
+"Parameters": {
+
+"has_encrypted_data": false,
+
+"skip.header.line.count": "1",
+
+"classification": "csv",
+
+"areColumnsQuoted": "false",
+
+"typeOfData": "file",
+
+"columnsOrdered": "true",
+
+"delimiter": ","
+
+},
+
+"StorageDescriptor": {
+
+"Columns": [
+
+{
+
+"Comment": "Year",
+
+"Name": "Year",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Olympics",
+
+"Name": "Olympics",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "% Of Women Participants",
+
+"Name": "% Of Women Participants",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "% Of Women’s Events",
+
+"Name": "% Of Women’s Events",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Sports",
+
+"Name": "Sports",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Total Events",
+
+"Name": "Total Events",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Women Participants",
+
+"Name": "Women Participants",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Women’s Events",
+
+"Name": "Women’s Events",
+
+"Type": "string"
+
+}
+
+],
+
+"Compressed": false,
+
+"InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+
+"Location": "s3://<<s3 bucket name>>/<<folder name>>",
+
+"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+
+
+"SerdeInfo": {
+
+	"Parameters": {
+	
+             "field.delim": ","
+
+         },
+
+	"SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      },
+
+      "StoredAsSubDirectories": false
+
+     },
+
+    "TableType": "EXTERNAL_TABLE"
+
+}
+
+}
+
+}
+
+
+}
+
+}
