@@ -1,0 +1,1725 @@
+{
+
+"AWSTemplateFormatVersion": "2010-09-09",
+
+"Parameters": {
+
+"adminarn": {
+
+"Type": "String",
+
+"MinLength": 1,
+
+"Description": "Enter arn of your quicksight admin. for example: arn:aws:quicksight:us-east-1:accountid:user/default/admin"
+
+}
+
+},
+
+"Resources": {
+
+"qsdatasource": {
+
+"Type": "AWS::QuickSight::DataSource",
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSourceId": "athena-olympics",
+
+"Name": "athena-olympics",
+
+"Permissions": [
+
+{
+
+"Actions": [
+
+"quicksight:UpdateDataSourcePermissions",
+
+"quicksight:DescribeDataSource",
+
+"quicksight:DescribeDataSourcePermissions",
+
+"quicksight:PassDataSource",
+
+"quicksight:UpdateDataSource",
+
+"quicksight:DeleteDataSource"
+
+],
+
+"Principal": {
+
+"Ref": "adminarn"
+
+}
+
+}
+
+],
+
+"SslProperties": {
+
+"DisableSsl": false
+
+},
+
+"DataSourceParameters": {
+
+"AthenaParameters": {
+
+"WorkGroup": "primary"
+
+}
+
+},
+
+"Type": "ATHENA"
+
+},
+
+"DeletionPolicy": "Retain",
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "58b157d0-c1d9-43a2-9e91-8025139547e8"
+
+}
+
+}
+
+},
+
+"olympicswomenintroduction": {
+
+"Type": "AWS::QuickSight::DataSet",
+
+"DeletionPolicy": "Retain",
+
+"DependsOn": [
+
+"qsdatasource"
+
+],
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSetId": "olympics-women-introduction",
+
+"ImportMode": "SPICE",
+
+"LogicalTableMap": {
+
+"olympics-women-introduction-logic": {
+
+"Alias": "women_introduction",
+
+"DataTransforms": [
+
+{
+
+"ProjectOperation": {
+
+"ProjectedColumns": [
+
+"year",
+
+"sport"
+
+]
+
+}
+
+}
+
+],
+
+"Source": {
+
+"PhysicalTableId": "olympics-women-introduction-physical"
+
+}
+
+}
+
+},
+
+"Name": "olympics-women-introduction",
+
+"Permissions": [
+
+{
+
+"Principal": {
+
+"Ref": "adminarn"
+
+},
+
+"Actions": [
+
+"quicksight:UpdateDataSetPermissions",
+
+"quicksight:DescribeDataSet",
+
+"quicksight:DescribeDataSetPermissions",
+
+"quicksight:PassDataSet",
+
+"quicksight:DescribeIngestion",
+
+"quicksight:ListIngestions",
+
+"quicksight:UpdateDataSet",
+
+"quicksight:DeleteDataSet",
+
+"quicksight:CreateIngestion",
+
+"quicksight:CancelIngestion"
+
+]
+
+}
+
+],
+
+"PhysicalTableMap": {
+
+"olympics-women-introduction-physical": {
+
+"CustomSql": {
+
+"DataSourceArn": {
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-olympics"
+
+},
+
+"Name": "women_introduction_olympics",
+
+"SqlQuery": "select * from \"olympicsdatabase\".women_introduction_olympics",
+
+"Columns": [
+
+{
+
+"Name": "year",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "sport",
+
+"Type": "STRING"
+
+}
+
+]
+
+}
+
+}
+
+}
+
+},
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+}
+
+}
+
+},
+
+"womeninolympics": {
+
+"Type": "AWS::QuickSight::DataSet",
+
+"DeletionPolicy": "Retain",
+
+"DependsOn": [
+
+"qsdatasource"
+
+],
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSetId": "women-in-olympics",
+
+"ImportMode": "SPICE",
+
+"LogicalTableMap": {
+
+"women-in-olympics-logic": {
+
+"Alias": "women_olympics",
+
+"DataTransforms": [
+
+{
+
+"ProjectOperation": {
+
+"ProjectedColumns": [
+
+"year",
+
+"olympics",
+
+"% of women participants",
+
+"% Of Women’s Events",
+
+"sports",
+
+"total events",
+
+"women participants",
+
+"Women’s Events"
+
+]
+
+}
+
+}
+
+],
+
+"Source": {
+
+"PhysicalTableId": "women-in-olympics-physical"
+
+}
+
+}
+
+},
+
+"Name": "women-in-olympics",
+
+"Permissions": [
+
+{
+
+"Principal": {
+
+"Ref": "adminarn"
+
+},
+
+"Actions": [
+
+"quicksight:UpdateDataSetPermissions",
+
+"quicksight:DescribeDataSet",
+
+"quicksight:DescribeDataSetPermissions",
+
+"quicksight:PassDataSet",
+
+"quicksight:DescribeIngestion",
+
+"quicksight:ListIngestions",
+
+"quicksight:UpdateDataSet",
+
+"quicksight:DeleteDataSet",
+
+"quicksight:CreateIngestion",
+
+"quicksight:CancelIngestion"
+
+]
+
+}
+
+],
+
+"PhysicalTableMap": {
+
+"women-in-olympics-physical": {
+
+"CustomSql": {
+
+"DataSourceArn": {
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-olympics"
+
+},
+
+"Name": "women-in-olympics_olympics",
+
+"SqlQuery": "select * from \"olympicsdatabase\".women_in_olympics",
+
+"Columns": [
+
+{
+
+"Name": "year",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "olympics",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "% of women participants",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "% Of Women’s Events",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "sports",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "total events",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "women participants",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "Women’s Events",
+
+"Type": "STRING"
+
+}
+
+]
+
+}
+
+}
+
+}
+
+},
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+}
+
+}
+
+},
+
+"techofficial2021": {
+
+"Type": "AWS::QuickSight::DataSet",
+
+"DeletionPolicy": "Retain",
+
+"DependsOn": [
+
+"qsdatasource"
+
+],
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSetId": "tech-official-2021",
+
+"ImportMode": "SPICE",
+
+"LogicalTableMap": {
+
+"tech-official-2021-logic": {
+
+"Alias": "tech_official_2021",
+
+"DataTransforms": [
+
+{
+
+"ProjectOperation": {
+
+"ProjectedColumns": [
+
+"name",
+
+"short_name",
+
+"gender",
+
+"birth_date",
+
+"country",
+
+"discipline",
+
+"function",
+
+"url"
+
+]
+
+}
+
+}
+
+],
+
+"Source": {
+
+"PhysicalTableId": "tech-official-2021-physical"
+
+}
+
+}
+
+},
+
+"Name": "tech-official-2021",
+
+"Permissions": [
+
+{
+
+"Principal": {
+
+"Ref": "adminarn"
+
+},
+
+"Actions": [
+
+"quicksight:UpdateDataSetPermissions",
+
+"quicksight:DescribeDataSet",
+
+"quicksight:DescribeDataSetPermissions",
+
+"quicksight:PassDataSet",
+
+"quicksight:DescribeIngestion",
+
+"quicksight:ListIngestions",
+
+"quicksight:UpdateDataSet",
+
+"quicksight:DeleteDataSet",
+
+"quicksight:CreateIngestion",
+
+"quicksight:CancelIngestion"
+
+]
+
+}
+
+],
+
+"PhysicalTableMap": {
+
+"tech-official-2021-physical": {
+
+"CustomSql": {
+
+"DataSourceArn": {
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-olympics"
+
+},
+
+"Name": "tech_official_2021",
+
+"SqlQuery": "select * from \"olympicsdatabase\".tech_official_2021",
+
+"Columns": [
+
+{
+
+"Name": "name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "short_name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "gender",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "birth_date",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "country",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "discipline",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "function",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "url",
+
+"Type": "STRING"
+
+}
+
+]
+
+}
+
+}
+
+}
+
+},
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+}
+
+}
+
+},
+
+"olympics": {
+
+"Type": "AWS::QuickSight::DataSet",
+
+"DeletionPolicy": "Retain",
+
+"DependsOn": [
+
+"qsdatasource"
+
+],
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSetId": "olympics",
+
+"ImportMode": "SPICE",
+
+"LogicalTableMap": {
+
+"olympics-logic": {
+
+"Alias": "olympics",
+
+"DataTransforms": [
+
+{
+
+"ProjectOperation": {
+
+"ProjectedColumns": [
+
+"id",
+
+"name",
+
+"sex",
+
+"age",
+
+"height",
+
+"weight",
+
+"team",
+
+"noc",
+
+"games",
+
+"year",
+
+"season",
+
+"city",
+
+"sport",
+
+"event",
+
+"medal"
+
+]
+
+}
+
+}
+
+],
+
+"Source": {
+
+"PhysicalTableId": "olympics-physical"
+
+}
+
+}
+
+},
+
+"Name": "olympics",
+
+"Permissions": [
+
+{
+
+"Principal": {
+
+"Ref": "adminarn"
+
+},
+
+"Actions": [
+
+"quicksight:UpdateDataSetPermissions",
+
+"quicksight:DescribeDataSet",
+
+"quicksight:DescribeDataSetPermissions",
+
+"quicksight:PassDataSet",
+
+"quicksight:DescribeIngestion",
+
+"quicksight:ListIngestions",
+
+"quicksight:UpdateDataSet",
+
+"quicksight:DeleteDataSet",
+
+"quicksight:CreateIngestion",
+
+"quicksight:CancelIngestion"
+
+]
+
+}
+
+],
+
+"PhysicalTableMap": {
+
+"olympics-physical": {
+
+"CustomSql": {
+
+"DataSourceArn": {
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-olympics"
+
+},
+
+"Name": "olympics",
+
+"SqlQuery": "select * from \"olympicsdatabase\".olympics",
+
+"Columns": [
+
+{
+
+"Name": "id",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "sex",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "age",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "height",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "weight",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "team",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "noc",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "games",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "year",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "season",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "city",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "sport",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "event",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "medal",
+
+"Type": "STRING"
+
+}
+
+]
+
+}
+
+}
+
+}
+
+},
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+}
+
+}
+
+},
+
+"medalsathletes2021": {
+
+"Type": "AWS::QuickSight::DataSet",
+
+"DeletionPolicy": "Retain",
+
+"DependsOn": [
+
+"qsdatasource"
+
+],
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSetId": "medals-athletes-2021",
+
+"ImportMode": "SPICE",
+
+"LogicalTableMap": {
+
+"medals-athletes-2021-logic": {
+
+"Alias": "medals-athletes-2021",
+
+"DataTransforms": [
+
+{
+
+"ProjectOperation": {
+
+"ProjectedColumns": [
+
+"medal_type",
+
+"medal_code",
+
+"medal_date",
+
+"athlete_short_name",
+
+"athlete_name",
+
+"athlete_sex",
+
+"athlete_link",
+
+"country_code",
+
+"event",
+
+"country",
+
+"sport"
+
+]
+
+}
+
+}
+
+],
+
+"Source": {
+
+"PhysicalTableId": "medals-athletes-2021-physical"
+
+}
+
+}
+
+},
+
+"Name": "medals-athletes-2021",
+
+"Permissions": [
+
+{
+
+"Principal": {
+
+"Ref": "adminarn"
+
+},
+
+"Actions": [
+
+"quicksight:UpdateDataSetPermissions",
+
+"quicksight:DescribeDataSet",
+
+"quicksight:DescribeDataSetPermissions",
+
+"quicksight:PassDataSet",
+
+"quicksight:DescribeIngestion",
+
+"quicksight:ListIngestions",
+
+"quicksight:UpdateDataSet",
+
+"quicksight:DeleteDataSet",
+
+"quicksight:CreateIngestion",
+
+"quicksight:CancelIngestion"
+
+]
+
+}
+
+],
+
+"PhysicalTableMap": {
+
+"medals-athletes-2021-physical": {
+
+"CustomSql": {
+
+"DataSourceArn": {
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-olympics"
+
+},
+
+"Name": "medals-athletes-2021",
+
+"SqlQuery": "select * from \"olympicsdatabase\".medals_athletes_2021",
+
+"Columns": [
+
+{
+
+"Name": "medal_type",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "medal_code",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "medal_date",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "athlete_short_name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "athlete_name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "athlete_sex",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "athlete_link",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "country_code",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "event",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "country",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "sport",
+
+"Type": "STRING"
+
+}
+
+]
+
+}
+
+}
+
+}
+
+},
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+}
+
+}
+
+},
+
+"coachfull2021": {
+
+"Type": "AWS::QuickSight::DataSet",
+
+"DeletionPolicy": "Retain",
+
+"DependsOn": [
+
+"qsdatasource"
+
+],
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSetId": "coach-full-2021",
+
+"ImportMode": "SPICE",
+
+"LogicalTableMap": {
+
+"coach-full-2021-logic": {
+
+"Alias": "coach-full-2021",
+
+"DataTransforms": [
+
+{
+
+"ProjectOperation": {
+
+"ProjectedColumns": [
+
+"coach_name",
+
+"short_name",
+
+"coach_gender",
+
+"coach_birth_date",
+
+"country",
+
+"discipline",
+
+"coach_function",
+
+"event",
+
+"url"
+
+]
+
+}
+
+}
+
+],
+
+"Source": {
+
+"PhysicalTableId": "coach-full-2021-physical"
+
+}
+
+}
+
+},
+
+"Name": "coach-full-2021",
+
+"Permissions": [
+
+{
+
+"Principal": {
+
+"Ref": "adminarn"
+
+},
+
+"Actions": [
+
+"quicksight:UpdateDataSetPermissions",
+
+"quicksight:DescribeDataSet",
+
+"quicksight:DescribeDataSetPermissions",
+
+"quicksight:PassDataSet",
+
+"quicksight:DescribeIngestion",
+
+"quicksight:ListIngestions",
+
+"quicksight:UpdateDataSet",
+
+"quicksight:DeleteDataSet",
+
+"quicksight:CreateIngestion",
+
+"quicksight:CancelIngestion"
+
+]
+
+}
+
+],
+
+"PhysicalTableMap": {
+
+"coach-full-2021-physical": {
+
+"CustomSql": {
+
+"DataSourceArn": {
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-olympics"
+
+},
+
+"Name": "coach-full-2021",
+
+"SqlQuery": "select * from \"olympicsdatabase\".coach_full_2021",
+
+"Columns": [
+
+{
+
+"Name": "coach_name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "short_name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "coach_gender",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "coach_birth_date",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "country",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "discipline",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "coach_function",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "event",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "url",
+
+"Type": "STRING"
+
+}
+
+]
+
+}
+
+}
+
+}
+
+},
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+}
+
+}
+
+},
+
+"athletesfull2021": {
+
+"Type": "AWS::QuickSight::DataSet",
+
+"DeletionPolicy": "Retain",
+
+"DependsOn": [
+
+"qsdatasource"
+
+],
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSetId": "athletes-full-2021",
+
+"ImportMode": "SPICE",
+
+"LogicalTableMap": {
+
+"athletes-full-2021-logic": {
+
+"Alias": "athletes-full-2021",
+
+"DataTransforms": [
+
+{
+
+"ProjectOperation": {
+
+"ProjectedColumns": [
+
+"athlete_name",
+
+"short_name",
+
+"athlete_gender",
+
+"athlete_birth_date",
+
+"athlete_birth_place",
+
+"athlete_birth_country",
+
+"country",
+
+"country_code",
+
+"discipline",
+
+"discipline_code",
+
+"residence_place",
+
+"residence_country",
+
+"height_m/ft",
+
+"url"
+
+]
+
+}
+
+}
+
+],
+
+"Source": {
+
+"PhysicalTableId": "athletes-full-2021-physical"
+
+}
+
+}
+
+},
+
+"Name": "athletes-full-2021",
+
+"Permissions": [
+
+{
+
+"Principal": {
+
+"Ref": "adminarn"
+
+},
+
+"Actions": [
+
+"quicksight:UpdateDataSetPermissions",
+
+"quicksight:DescribeDataSet",
+
+"quicksight:DescribeDataSetPermissions",
+
+"quicksight:PassDataSet",
+
+"quicksight:DescribeIngestion",
+
+"quicksight:ListIngestions",
+
+"quicksight:UpdateDataSet",
+
+"quicksight:DeleteDataSet",
+
+"quicksight:CreateIngestion",
+
+"quicksight:CancelIngestion"
+
+]
+
+}
+
+],
+
+"PhysicalTableMap": {
+
+"athletes-full-2021-physical": {
+
+"CustomSql": {
+
+"DataSourceArn": {
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-olympics"
+
+},
+
+"Name": "athletes-full-2021",
+
+"SqlQuery": "select * from \"olympicsdatabase\".athletes_full_2021",
+
+"Columns": [
+
+{
+
+"Name": "athlete_name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "short_name",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "athlete_gender",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "athlete_birth_date",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "athlete_birth_place",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "athlete_birth_country",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "country",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "country_code",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "discipline",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "discipline_code",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "residence_place",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "residence_country",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "height_m/ft",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "url",
+
+"Type": "STRING"
+
+}
+
+]
+
+}
+
+}
+
+}
+
+},
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+}
+
+}
+
+}
+
+}
+
+}
