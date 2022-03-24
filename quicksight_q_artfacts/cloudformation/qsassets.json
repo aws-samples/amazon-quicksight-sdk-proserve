@@ -253,6 +253,211 @@
 }
 
 },
+"medals2021": {
+
+"Type": "AWS::QuickSight::DataSet",
+
+"DeletionPolicy": "Retain",
+
+"DependsOn": [
+
+"qsdatasource"
+
+],
+
+"Properties": {
+
+"AwsAccountId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DataSetId": "medals-2021",
+
+"ImportMode": "SPICE",
+
+"LogicalTableMap": {
+
+"medals-2021-logic": {
+
+"Alias": "medals_2021",
+
+"DataTransforms": [
+
+{
+
+"ProjectOperation": {
+
+"ProjectedColumns": [
+
+"Rank",
+
+"Team/NOC",
+
+"Gold",
+
+"Silver",
+
+"Bronze",
+
+"Total",
+
+"Rank by Total"
+
+]
+
+}
+
+}
+
+],
+
+"Source": {
+
+"PhysicalTableId": "medals-2021-physical"
+
+}
+
+}
+
+},
+
+"Name": "medals-2021",
+
+"Permissions": [
+
+{
+
+"Principal": {
+
+"Ref": "adminarn"
+
+},
+
+"Actions": [
+
+"quicksight:UpdateDataSetPermissions",
+
+"quicksight:DescribeDataSet",
+
+"quicksight:DescribeDataSetPermissions",
+
+"quicksight:PassDataSet",
+
+"quicksight:DescribeIngestion",
+
+"quicksight:ListIngestions",
+
+"quicksight:UpdateDataSet",
+
+"quicksight:DeleteDataSet",
+
+"quicksight:CreateIngestion",
+
+"quicksight:CancelIngestion"
+
+]
+
+}
+
+],
+
+"PhysicalTableMap": {
+
+"medals-2021-physical": {
+
+"CustomSql": {
+
+"DataSourceArn": {
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/athena-olympics"
+
+},
+
+"Name": "medals_2021",
+
+"SqlQuery": "select * from \"olympicsdatabase\".medals_2021",
+
+"Columns": [
+
+{
+
+"Name": "Rank",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "Team/NOC",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "Gold",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "Silver",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "Bronze",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "Total",
+
+"Type": "STRING"
+
+},
+
+{
+
+"Name": "Rank by Total",
+
+"Type": "STRING"
+
+}
+
+]
+
+}
+
+}
+
+}
+
+},
+
+"Metadata": {
+
+"AWS::CloudFormation::Designer": {
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+}
+
+}
+
+},  
 
 "womeninolympics": {
 
