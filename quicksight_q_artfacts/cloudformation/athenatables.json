@@ -1045,6 +1045,150 @@
 }
 
 },
+"Medals2021": {"Type": "AWS::Glue::Table",
+
+"Properties": {
+
+"CatalogId": {
+
+"Ref": "AWS::AccountId"
+
+},
+
+"DatabaseName": {"Ref": "olympicsdb"},
+
+"TableInput": {
+
+"Description": "medals full 2021 information",
+
+"Name": "medals_2021",
+
+"Parameters": {
+
+"has_encrypted_data": false,
+
+"skip.header.line.count": "1",
+
+"classification": "csv",
+
+"areColumnsQuoted": "false",
+
+"typeOfData": "file",
+
+"columnsOrdered": "true",
+
+"delimiter": ","
+
+},
+
+"StorageDescriptor": {
+
+"Columns": [
+
+{
+
+"Comment": "Rank",
+
+"Name": "Rank",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Team/NOC",
+
+"Name": "Team/NOC",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Gold",
+
+"Name": "Gold",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Silver",
+
+"Name": "Silver",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Bronze",
+
+"Name": "Bronze",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Total",
+
+"Name": "Total",
+
+"Type": "string"
+
+},
+
+{
+
+"Comment": "Rank_by_Total",
+
+"Name": "Rank_by_Total",
+
+"Type": "string"
+
+}
+
+],
+
+"Compressed": false,
+
+"InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+
+"Location": "s3://<<s3 bucket name>>/<<folder name>>",
+
+"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+
+
+"SerdeInfo": {
+
+	"Parameters": {
+	
+             "field.delim": ","
+
+         },
+
+	"SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+
+      },
+
+      "StoredAsSubDirectories": false
+
+     },
+
+    "TableType": "EXTERNAL_TABLE"
+
+}
+
+}
+
+},	
 "Womeninolympics": {"Type": "AWS::Glue::Table",
 
 "Properties": {
