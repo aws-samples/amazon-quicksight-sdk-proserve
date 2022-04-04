@@ -72,14 +72,15 @@ Besides the two output files of the previous step, the error logs and user delet
 
 ### Create Athena table
 
-Run the following SQL query to create an Athena table (membership):
+Run the following SQL query to create an Athena table (employee_information):
 
 ```sql
-CREATE EXTERNAL TABLE `mem`(
-  `namespace` string, 
-  `group` string, 
-  `username` string, 
-  `email` string)
+CREATE EXTERNAL TABLE `employee_information`(
+  `country` string, 
+  `city` string, 
+  `job_title` string, 
+  `employee_login` string, 
+  `employee_name` string)
 ROW FORMAT DELIMITED 
   FIELDS TERMINATED BY ',' 
 STORED AS INPUTFORMAT 
@@ -87,7 +88,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  's3://qs-granular-access-demo-<ACCOUNT ID>/membership'
+  's3://qs-granular-access-employee/employee-information'
 TBLPROPERTIES (
   'has_encrypted_data'='false'
 ```
