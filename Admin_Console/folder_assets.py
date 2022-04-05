@@ -55,8 +55,13 @@ def lambda_handler(event, context):
     local_file_name = 'folder_lk.csv'
     path_lk = os.path.join(tmpdir, local_file_name)
 
+    key_path = 'monitoring/quicksight/folder_path/folder_path.csv'
+    local_file_name = 'folder_path.csv'
+    path_path = os.path.join(tmpdir, local_file_name)
+
     folder_assets = []
     access = []
+    folder_path = []
 
     folders = list_folders(account_id, lambda_aws_region)
 
@@ -89,8 +94,17 @@ def lambda_handler(event, context):
         try: #get member which is a folder
             folder_details = describe_folder(account_id, folderid, lambda_aws_region)
             parent = folder_details['FolderPath'][-1]
+            parent = parent.split("/")[-1]
             # print(parent)
             folder_assets.append([lambda_aws_region, parent, folderid])
+            folderpath = '\\'
+            for f in folder_details['FolderPath']:
+                parentid = f.split("/")[-1]
+                parentdeatils = describe_folder(account_id, parentid, lambda_aws_region)
+                parentname = parentdeatils['Name']
+                folderpath = folderpath + parentname + '\\'
+
+            folder_path.append([lambda_aws_region, folderid, foldername, folderpath])
         except Exception as e:
             if str(e).find('is not found'):
                 pass
@@ -113,6 +127,14 @@ def lambda_handler(event, context):
     outfile.close()
     # upload file from tmp to s3 key
     bucket.upload_file(path_lk, key_lk)
+
+    with open(path_path, 'w', newline='') as outfile:
+        writer = csv.writer(outfile, delimiter=',')
+        for line in folder_path:
+            writer.writerow(line)
+    outfile.close()
+    # upload file from tmp to s3 key
+    bucket.upload_file(path_path, key_path)
 
 def _list(
         func_name: str,
