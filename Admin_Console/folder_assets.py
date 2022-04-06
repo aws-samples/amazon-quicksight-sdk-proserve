@@ -25,6 +25,7 @@ def default_botocore_config() -> botocore.config.Config:
         user_agent_extra=f"qs_sdk_admin_console",
     )
 
+
 sts_client = boto3.client("sts", config=default_botocore_config())
 account_id = sts_client.get_caller_identity()["Account"]
 aws_region = 'us-east-1'
@@ -69,7 +70,7 @@ def lambda_handler(event, context):
         folderid = folder['FolderId']
         folderarn = folder['Arn']
         foldername = folder['Name']
-        permissions = describe_folder_permissions(account_id,folderid,lambda_aws_region)
+        permissions = describe_folder_permissions(account_id, folderid, lambda_aws_region)
         for principal in permissions:
             actions = '|'.join(principal['Actions'])
             principal = principal['Principal'].split("/")
@@ -84,32 +85,27 @@ def lambda_handler(event, context):
             access.append(
                 [account_id, lambda_aws_region, 'folder', foldername, folderid, folderarn, ptype, principal,
                  additional_info, actions])
-
-        members = list_folder_members(account_id, folderid, lambda_aws_region)
+        members = list_folder_members(account_id, lambda_aws_region, folderid)
         for member in members:
             memberid = member['MemberId']
-            #get member which is not a folder
+            # get member which is not a folder
             folder_assets.append([lambda_aws_region, folderid, memberid])
-
-        try: #get member which is a folder
-            folder_details = describe_folder(account_id, folderid, lambda_aws_region)
+        # get member which is a folder
+        folder_details = describe_folder(account_id, folderid, lambda_aws_region)
+        if len(folder_details['FolderPath']) > 0:
             parent = folder_details['FolderPath'][-1]
             parent = parent.split("/")[-1]
-            # print(parent)
             folder_assets.append([lambda_aws_region, parent, folderid])
-            folderpath = '\\'
+
+        folderpath = '\\'
+        if len(folder_details['FolderPath']) > 0:
             for f in folder_details['FolderPath']:
                 parentid = f.split("/")[-1]
                 parentdeatils = describe_folder(account_id, parentid, lambda_aws_region)
                 parentname = parentdeatils['Name']
                 folderpath = folderpath + parentname + '\\'
 
-            folder_path.append([lambda_aws_region, folderid, foldername, folderpath])
-        except Exception as e:
-            if str(e).find('is not found'):
-                pass
-            else:
-                raise e
+        folder_path.append([lambda_aws_region, folderid, foldername, folderpath])
 
     with open(path_relation, 'w', newline='') as outfile:
         writer = csv.writer(outfile, delimiter=',')
@@ -135,6 +131,7 @@ def lambda_handler(event, context):
     outfile.close()
     # upload file from tmp to s3 key
     bucket.upload_file(path_path, key_path)
+
 
 def _list(
         func_name: str,
@@ -203,6 +200,7 @@ def list_ingestions(
         DataSetId=DataSetId
     )
 
+
 def list_folders(
         account_id,
         aws_region
@@ -214,16 +212,20 @@ def list_folders(
         aws_region=aws_region
     )
 
+
 def list_folder_members(
         account_id,
-        aws_region
+        aws_region,
+        folderid
 ) -> List[Dict[str, Any]]:
     return _list(
         func_name="list_folder_members",
         attr_name="FolderMemberList",
         account_id=account_id,
-        aws_region=aws_region
+        aws_region=aws_region,
+        FolderId=folderid
     )
+
 
 def _describe(
         func_name: str,
@@ -237,6 +239,7 @@ def _describe(
     result = response[attr_name]
     return result
 
+
 def describe_folder(
         account_id,
         id,
@@ -248,6 +251,7 @@ def describe_folder(
         aws_region=aws_region,
         FolderId=id
     )
+
 
 def describe_dashboard(account_id, dashboardid, aws_region):
     qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
@@ -283,6 +287,7 @@ def describe_data_source(account_id, id, aws_region):
         DataSourceId=id
     )
     return res
+
 
 def describe_folder_permissions(
         account_id,
