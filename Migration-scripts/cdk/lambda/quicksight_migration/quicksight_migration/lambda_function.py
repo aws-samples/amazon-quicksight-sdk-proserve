@@ -7,6 +7,25 @@ from botocore.exceptions import ClientError
 from quicksight_migration.batch_migration_lambda import migrate as batch
 from quicksight_migration.incremental_migration_lambda import migrate as incremental
 import quicksight_migration.quicksight_utils as qs_utils
+from typing import Dict, Optional, Union
+import botocore
+
+
+def default_botocore_config() -> botocore.config.Config:
+    """Botocore configuration."""
+    retries_config: Dict[str, Union[str, int]] = {
+        "max_attempts": int(os.getenv("AWS_MAX_ATTEMPTS", "5")),
+    }
+    mode: Optional[str] = os.getenv("AWS_RETRY_MODE")
+    if mode:
+        retries_config["mode"] = mode
+    return botocore.config.Config(
+        retries=retries_config,
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"qs_sdk_BIOps",
+    )
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -15,7 +34,7 @@ logger.setLevel(logging.INFO)
 def delete_sqs_message(sqs_queue, aws_region, receipt_handle):
     """Delete the processed message in the SQS queue"""
 
-    client = boto3.client('sqs', region_name=aws_region)
+    client = boto3.client('sqs', region_name=aws_region, config=default_botocore_config())
     try:
         response = client.delete_message(
             QueueUrl=sqs_queue,
@@ -63,7 +82,7 @@ def lambda_handler(event, context):
                                             source_region)
     target_session = qs_utils.assume_role(target_account_id, target_role_name,
                                             target_region)
-    target_admin = qs_utils.get_user_arn(target_session, 'quicksight-migrations-user')
+    target_admin = qs_utils.get_user_arn(target_session, 'quicksight-migration-user')
     infra_details = qs_utils.get_ssm_parameters(target_session, infra_config_param_name)
 
     # QuickSight VPC connection will use VPC ID as name
