@@ -187,7 +187,7 @@ class QuicksightEmbedStack(core.Stack):
             self, 'embed-auth-lambda',
             handler='index.handler',
             description="A Lambda@Edge function for QuickSight embed authentication via CloudFront Distribution",
-            runtime=_lambda.Runtime.NODEJS_10_X,
+            runtime=_lambda.Runtime.NODEJS_14_X,
             code=_lambda.Code.from_asset(os.path.join(self.current_dir,
                                                         '../lambda/embed_auth/')),
             function_name='embed_auth_lambda',
