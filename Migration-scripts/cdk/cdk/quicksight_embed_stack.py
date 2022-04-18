@@ -78,8 +78,8 @@ class QuicksightEmbedStack(core.Stack):
             timeout=core.Duration.minutes(3),
             memory_size=512,
             environment={
-                'DASHBOARD_ID': 'CHANGEME_DASHBOARD_ID',
-                'QUICKSIGHT_USER_ARN': f'arn:aws:quicksight:us-east-1:{core.Aws.ACCOUNT_ID}:user/default/quicksight-migration-user'
+                'DASHBOARD_ID': 'aff69683-e4cf-4072-97ff-5a369e34d26e',
+                'QUICKSIGHT_USER_ARN': f'arn:aws:quicksight:us-east-1:{core.Aws.ACCOUNT_ID}:user/default/quicksight-migrations-user'
             }
         )
 
@@ -187,7 +187,7 @@ class QuicksightEmbedStack(core.Stack):
             self, 'embed-auth-lambda',
             handler='index.handler',
             description="A Lambda@Edge function for QuickSight embed authentication via CloudFront Distribution",
-            runtime=_lambda.Runtime.NODEJS_10_X,
+            runtime=_lambda.Runtime.NODEJS_14_X,
             code=_lambda.Code.from_asset(os.path.join(self.current_dir,
                                                         '../lambda/embed_auth/')),
             function_name='embed_auth_lambda',

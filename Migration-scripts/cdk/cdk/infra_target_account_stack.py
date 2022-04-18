@@ -13,7 +13,7 @@ class InfraTargetAccountStack(core.Stack):
         self.current_dir = os.path.dirname(__file__)
 
         # Change to your central account
-        self.central_account_id = "123456789123"
+        self.central_account_id = "175760604100"
 
         self.quicksight_migration_target_assume_role = iam.Role(
             self, 'quicksight-migration-target-assume-role',
@@ -66,15 +66,15 @@ class InfraTargetAccountStack(core.Stack):
 
     def to_dict(self):
         config={}
-        config['vpcId'] = ''
+        config['vpcId'] = 'vpc-035986c8ae7d23bb6'
         config['redshiftUsername'] = 'admin'
-        config['redshiftPassword'] = ''
-        config['redshiftClusterId'] = ''
-        config['redshiftHost'] = ''
-        config['redshiftDB'] = ''
-        config['rdsUsername'] = 'admin'
-        config['rdsPassword'] = ''
-        config['rdsClusterId'] = ''
+        config['redshiftPassword'] = 'redshift-admin'
+        config['redshiftClusterId'] = 'datasourceredshifta2a4c071-nhrnz8a6smzb'
+        config['redshiftHost'] = 'datasourceredshifta2a4c071-nhrnz8a6smzb.cpoeyrlwhvgx.us-east-1.redshift.amazonaws.com'
+        config['redshiftDB'] = 'dev'
+        config['rdsUsername'] = 'administrator'
+        config['rdsPassword'] = 'rds-admin'
+        config['rdsClusterId'] = 'optional-infra-target-accou-datasourcerds82b36008-bi5o63jmx978'
         config['namespace'] = 'default'
         config['version'] = '1'
 

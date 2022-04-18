@@ -63,7 +63,7 @@ def lambda_handler(event, context):
                                             source_region)
     target_session = qs_utils.assume_role(target_account_id, target_role_name,
                                             target_region)
-    target_admin = qs_utils.get_user_arn(target_session, 'quicksight-migration-user')
+    target_admin = qs_utils.get_user_arn(target_session, 'quicksight-migrations-user')
     infra_details = qs_utils.get_ssm_parameters(target_session, infra_config_param_name)
 
     # QuickSight VPC connection will use VPC ID as name

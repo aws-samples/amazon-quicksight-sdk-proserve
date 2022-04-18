@@ -35,7 +35,7 @@
         }
 
         function pocBtnClick() {
-            const apiGatewayUrl = '<quicksight-migration-stack.MigrationAPIGatewayURL>';
+            const apiGatewayUrl = 'https://nx6jc17ex2.execute-api.us-east-1.amazonaws.com/prod/';
 
             if (confirm('Submit migration?')) {
                 var source_account_id = $("#source_account_id").val(),
@@ -82,7 +82,7 @@
 
             var awsData = {
                 dashboardName: dashboardNameParam,
-                apiGatewayUrl: '<quicksight-embed-stack.EmbedAPIGatewayURL>'
+                apiGatewayUrl: 'https://pkus55d1u8.execute-api.us-east-1.amazonaws.com/prod/embedurl?'
             }
             embedDashboardQuickSightAuthenticated(awsData);
 

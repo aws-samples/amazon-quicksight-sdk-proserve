@@ -6,8 +6,8 @@ exports.handler = (event, context, callback) => {
     const headers = request.headers;
 
     // Configure authentication
-    const authUser = 'CHANGEME_USERNAME';
-    const authPass = 'CHANGEME_PASSWORD';
+    const authUser = 'quicksight-migrations-user';
+    const authPass = 'Xuan@0122';
 
     // Construct the Basic Auth string
     const authString = 'Basic ' + new Buffer(authUser + ':' + authPass).toString('base64');
