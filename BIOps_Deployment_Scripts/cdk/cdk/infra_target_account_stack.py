@@ -67,15 +67,15 @@ class InfraTargetAccountStack(core.Stack):
     def to_dict(self):
         config={}
         config['vpcId'] = ''
-        config['redshiftUsername'] = 'admin'
+        config['redshiftUsername'] = ''
         config['redshiftPassword'] = ''
-        config['redshiftClusterId'] = ''
+        config['redshiftClusterId'] = None
         config['redshiftHost'] = ''
         config['redshiftDB'] = ''
-        config['rdsUsername'] = 'admin'
+        config['rdsUsername'] = ''
         config['rdsPassword'] = ''
-        config['rdsClusterId'] = ''
-        config['namespace'] = 'default'
+        config['rdsClusterId'] = None
+        config['namespace'] = ''
         config['version'] = '1'
 
         return config
