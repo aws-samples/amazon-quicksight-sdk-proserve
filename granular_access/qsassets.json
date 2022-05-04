@@ -1,0 +1,1443 @@
+{
+
+
+
+"AWSTemplateFormatVersion": "2010-09-09",
+
+
+
+"Parameters": {
+
+
+
+"adminarn": {
+
+
+
+"Type": "String",
+
+
+
+"MinLength": 1,
+
+
+
+"Description": "Enter arn of your quicksight admin. for example: arn:aws:quicksight:us-east-1:accountid:user/default/admin"
+
+
+
+}
+
+
+
+},
+
+
+
+"Resources": {
+
+
+
+"qsdatasource": {
+
+
+
+"Type": "AWS::QuickSight::DataSource",
+
+
+
+"Properties": {
+
+
+
+"AwsAccountId": {
+
+
+
+"Ref": "AWS::AccountId"
+
+
+
+},
+
+
+
+"DataSourceId": "granular-access",
+
+
+
+"Name": "granular-access",
+
+
+
+"Permissions": [
+
+
+
+{
+
+
+
+"Actions": [
+
+
+
+"quicksight:UpdateDataSourcePermissions",
+
+
+
+"quicksight:DescribeDataSource",
+
+
+
+"quicksight:DescribeDataSourcePermissions",
+
+
+
+"quicksight:PassDataSource",
+
+
+
+"quicksight:UpdateDataSource",
+
+
+
+"quicksight:DeleteDataSource"
+
+
+
+],
+
+
+
+"Principal": {
+
+
+
+"Ref": "adminarn"
+
+
+
+}
+
+
+
+}
+
+
+
+],
+
+
+
+"SslProperties": {
+
+
+
+"DisableSsl": false
+
+
+
+},
+
+
+
+"DataSourceParameters": {
+
+
+
+"AthenaParameters": {
+
+
+
+"WorkGroup": "primary"
+
+
+
+}
+
+
+
+},
+
+
+
+"Type": "ATHENA"
+
+
+
+},
+
+
+
+"DeletionPolicy": "Retain",
+
+
+
+"Metadata": {
+
+
+
+"AWS::CloudFormation::Designer": {
+
+
+
+"id": "58b157d0-c1d9-43a2-9e91-8025139547e8"
+
+
+
+}
+
+
+
+}
+
+
+
+},
+
+
+
+"factrevenue": {
+
+
+
+"Type": "AWS::QuickSight::DataSet",
+
+
+
+"DeletionPolicy": "Retain",
+
+
+
+"DependsOn": [
+
+
+
+"qsdatasource"
+
+
+
+],
+
+
+
+"Properties": {
+
+
+
+"AwsAccountId": {
+
+
+
+"Ref": "AWS::AccountId"
+
+
+
+},
+
+
+
+"DataSetId": "fact-revenue",
+
+
+
+"ImportMode": "SPICE",
+
+
+
+"LogicalTableMap": {
+
+
+
+"fact-revenue-logic": {
+
+
+
+"Alias": "fact_revenue",
+
+
+
+"DataTransforms": [
+
+
+
+{
+
+
+
+"ProjectOperation": {
+
+
+
+"ProjectedColumns": [
+
+
+
+"country",
+
+
+
+"city",
+
+
+
+"employee_name",
+
+
+
+"revenue"
+
+
+
+]
+
+
+
+}
+
+
+
+}
+
+
+
+],
+
+
+
+"Source": {
+
+
+
+"PhysicalTableId": "fact-revenue-physical"
+
+
+
+}
+
+
+
+}
+
+
+
+},
+
+
+
+"Name": "fact-revenue",
+
+
+
+"Permissions": [
+
+
+
+{
+
+
+
+"Principal": {
+
+
+
+"Ref": "adminarn"
+
+
+
+},
+
+
+
+"Actions": [
+
+
+
+"quicksight:UpdateDataSetPermissions",
+
+
+
+"quicksight:DescribeDataSet",
+
+
+
+"quicksight:DescribeDataSetPermissions",
+
+
+
+"quicksight:PassDataSet",
+
+
+
+"quicksight:DescribeIngestion",
+
+
+
+"quicksight:ListIngestions",
+
+
+
+"quicksight:UpdateDataSet",
+
+
+
+"quicksight:DeleteDataSet",
+
+
+
+"quicksight:CreateIngestion",
+
+
+
+"quicksight:CancelIngestion"
+
+
+
+]
+
+
+
+}
+
+
+
+],
+
+
+
+"PhysicalTableMap": {
+
+
+
+"fact-revenue-physical": {
+
+
+
+"CustomSql": {
+
+
+
+"DataSourceArn": {
+
+
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/granular-access"
+
+
+
+},
+
+
+
+"Name": "fact_revenue",
+
+
+
+"SqlQuery": "select * from \"granularaccess\".fact_revenue",
+
+
+
+"Columns": [
+
+
+
+{
+
+
+
+"Name": "country",
+
+
+
+"Type": "STRING"
+
+
+
+},
+
+
+
+{
+
+
+
+"Name": "city",
+
+
+
+"Type": "STRING"
+
+
+
+},
+
+
+
+{
+
+
+
+"Name": "employee_name",
+
+
+
+"Type": "STRING"
+
+
+
+},
+
+
+
+{
+
+
+
+"Name": "revenue",
+
+
+
+"Type": "STRING"
+
+
+
+}
+
+
+
+]
+
+
+
+}
+
+
+
+}
+
+
+
+}
+
+
+
+},
+
+
+
+"Metadata": {
+
+
+
+"AWS::CloudFormation::Designer": {
+
+
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+
+
+}
+
+
+
+}
+
+
+
+},
+
+
+
+"rlsdataset": {
+
+
+
+"Type": "AWS::QuickSight::DataSet",
+
+
+
+"DeletionPolicy": "Retain",
+
+
+
+"DependsOn": [
+
+
+
+"qsdatasource"
+
+
+
+],
+
+
+
+"Properties": {
+
+
+
+"AwsAccountId": {
+
+
+
+"Ref": "AWS::AccountId"
+
+
+
+},
+
+
+
+"DataSetId": "rls-dataset",
+
+
+
+"ImportMode": "SPICE",
+
+
+
+"LogicalTableMap": {
+
+
+
+"rls-dataset-logic": {
+
+
+
+"Alias": "rls_dataset",
+
+
+
+"DataTransforms": [
+
+
+
+{
+
+
+
+"ProjectOperation": {
+
+
+
+"ProjectedColumns": [
+
+
+
+"groupname",
+
+
+
+"username",
+
+
+
+"country",
+
+
+
+"city"
+
+
+
+]
+
+
+
+}
+
+
+
+}
+
+
+
+],
+
+
+
+"Source": {
+
+
+
+"PhysicalTableId": "rls-dataset-physical"
+
+
+
+}
+
+
+
+}
+
+
+
+},
+
+
+
+"Name": "rls-dataset",
+
+
+
+"Permissions": [
+
+
+
+{
+
+
+
+"Principal": {
+
+
+
+"Ref": "adminarn"
+
+
+
+},
+
+
+
+"Actions": [
+
+
+
+"quicksight:UpdateDataSetPermissions",
+
+
+
+"quicksight:DescribeDataSet",
+
+
+
+"quicksight:DescribeDataSetPermissions",
+
+
+
+"quicksight:PassDataSet",
+
+
+
+"quicksight:DescribeIngestion",
+
+
+
+"quicksight:ListIngestions",
+
+
+
+"quicksight:UpdateDataSet",
+
+
+
+"quicksight:DeleteDataSet",
+
+
+
+"quicksight:CreateIngestion",
+
+
+
+"quicksight:CancelIngestion"
+
+
+
+]
+
+
+
+}
+
+
+
+],
+
+
+
+"PhysicalTableMap": {
+
+
+
+"rls-dataset-physical": {
+
+
+
+"CustomSql": {
+
+
+
+"DataSourceArn": {
+
+
+
+"Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:datasource/granular-access"
+
+
+
+},
+
+
+
+"Name": "rls_dataset",
+
+
+
+"SqlQuery": "select * from \"granularaccess\".rls_dataset",
+
+
+
+"Columns": [
+
+
+
+{
+
+
+
+"Name": "groupname",
+
+
+
+"Type": "STRING"
+
+
+
+},
+
+
+
+{
+
+
+
+"Name": "username",
+
+
+
+"Type": "STRING"
+
+
+
+},
+
+
+
+{
+
+
+
+"Name": "country",
+
+
+
+"Type": "STRING"
+
+
+
+},
+
+
+
+{
+
+
+
+"Name": "city",
+
+
+
+"Type": "STRING"
+
+
+
+}
+
+
+
+]
+
+
+
+}
+
+
+
+}
+
+
+
+}
+
+
+
+},
+
+
+
+"Metadata": {
+
+
+
+"AWS::CloudFormation::Designer": {
+
+
+
+"id": "3d4ff1b6-9705-41f7-8231-6ec511700320"
+
+
+
+}
+
+
+
+}
+
+
+
+},
+
+"fieldoperationsdashboard": {
+
+
+
+"Type": "AWS::QuickSight::Dashboard",
+
+
+
+"DependsOn": [
+
+
+
+"qsdatasource",
+
+
+
+"factrevenue"
+
+
+
+],
+
+
+
+"DeletionPolicy": "Retain",
+
+
+
+"Properties": {
+
+
+
+"AwsAccountId": {
+
+
+
+"Ref": "AWS::AccountId"
+
+
+
+},
+
+
+
+"DashboardId": "field-operations",
+
+
+
+"DashboardPublishOptions": {
+
+          "AdHocFilteringOption": {
+
+            "AvailabilityStatus": "DISABLED"
+
+          },
+
+          "ExportToCSVOption": {
+
+            "AvailabilityStatus": "ENABLED"
+
+          }
+
+        },
+
+ "Name": "Field Operations Dashboard",
+
+"Permissions": [
+
+          {
+
+            "Actions": [
+
+              "quicksight:DescribeDashboard",
+
+              "quicksight:ListDashboardVersions",
+
+              "quicksight:UpdateDashboardPermissions",
+
+              "quicksight:QueryDashboard",
+
+              "quicksight:UpdateDashboard",
+
+              "quicksight:DeleteDashboard",
+
+              "quicksight:DescribeDashboardPermissions",
+
+              "quicksight:UpdateDashboardPublishedVersion"
+
+            ],
+
+            "Principal": {
+
+              "Ref": "adminarn"
+
+            }
+
+          }
+
+        ],
+
+"SourceEntity": {
+
+          "SourceTemplate": {
+
+            "Arn": "arn:aws:quicksight:us-east-1:648934033967:template/gafod",
+
+"DataSetReferences": [
+
+              {
+
+                "DataSetArn": {
+
+                  "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/fact-revenue"
+
+                },
+
+                "DataSetPlaceholder": "fact-revenue"
+
+              }
+
+]
+
+}
+
+},
+
+"ThemeArn": "arn:aws:quicksight::aws:theme/CLASSIC"
+
+      } 
+
+}
+
+,
+
+"marketingkpisdashboard": {
+
+
+
+"Type": "AWS::QuickSight::Dashboard",
+
+
+
+"DependsOn": [
+
+
+
+"qsdatasource",
+
+
+
+"factrevenue"
+
+
+
+],
+
+
+
+"DeletionPolicy": "Retain",
+
+
+
+"Properties": {
+
+
+
+"AwsAccountId": {
+
+
+
+"Ref": "AWS::AccountId"
+
+
+
+},
+
+
+
+"DashboardId": "marketing-kpis",
+
+
+
+"DashboardPublishOptions": {
+
+          "AdHocFilteringOption": {
+
+            "AvailabilityStatus": "DISABLED"
+
+          },
+
+          "ExportToCSVOption": {
+
+            "AvailabilityStatus": "ENABLED"
+
+          }
+
+        },
+
+ "Name": "Marketing KPIs",
+
+"Permissions": [
+
+          {
+
+            "Actions": [
+
+              "quicksight:DescribeDashboard",
+
+              "quicksight:ListDashboardVersions",
+
+              "quicksight:UpdateDashboardPermissions",
+
+              "quicksight:QueryDashboard",
+
+              "quicksight:UpdateDashboard",
+
+              "quicksight:DeleteDashboard",
+
+              "quicksight:DescribeDashboardPermissions",
+
+              "quicksight:UpdateDashboardPublishedVersion"
+
+            ],
+
+            "Principal": {
+
+              "Ref": "adminarn"
+
+            }
+
+          }
+
+        ],
+
+"SourceEntity": {
+
+          "SourceTemplate": {
+
+            "Arn": "arn:aws:quicksight:us-east-1:648934033967:template/gamkpi",
+
+"DataSetReferences": [
+
+              {
+
+                "DataSetArn": {
+
+                  "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/fact-revenue"
+
+                },
+
+                "DataSetPlaceholder": "fact-revenue"
+
+              }
+
+]
+
+}
+
+},
+
+"ThemeArn": "arn:aws:quicksight::aws:theme/CLASSIC"
+
+      }
+
+      },
+
+
+
+"salesresultscritical": {
+
+
+
+"Type": "AWS::QuickSight::Dashboard",
+
+
+
+"DependsOn": [
+
+
+
+"qsdatasource",
+
+
+
+"factrevenue"
+
+
+
+],
+
+
+
+"DeletionPolicy": "Retain",
+
+
+
+"Properties": {
+
+
+
+"AwsAccountId": {
+
+
+
+"Ref": "AWS::AccountId"
+
+
+
+},
+
+
+
+"DashboardId": "sales-critical",
+
+
+
+"DashboardPublishOptions": {
+
+          "AdHocFilteringOption": {
+
+            "AvailabilityStatus": "DISABLED"
+
+          },
+
+          "ExportToCSVOption": {
+
+            "AvailabilityStatus": "ENABLED"
+
+          }
+
+        },
+
+ "Name": "Sales Results - Critical",
+
+"Permissions": [
+
+          {
+
+            "Actions": [
+
+              "quicksight:DescribeDashboard",
+
+              "quicksight:ListDashboardVersions",
+
+              "quicksight:UpdateDashboardPermissions",
+
+              "quicksight:QueryDashboard",
+
+              "quicksight:UpdateDashboard",
+
+              "quicksight:DeleteDashboard",
+
+              "quicksight:DescribeDashboardPermissions",
+
+              "quicksight:UpdateDashboardPublishedVersion"
+
+            ],
+
+            "Principal": {
+
+              "Ref": "adminarn"
+
+            }
+
+          }
+
+        ],
+
+"SourceEntity": {
+
+          "SourceTemplate": {
+
+            "Arn": "arn:aws:quicksight:us-east-1:648934033967:template/gasrcr",
+
+"DataSetReferences": [
+
+              {
+
+                "DataSetArn": {
+
+                  "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/fact-revenue"
+
+                },
+
+                "DataSetPlaceholder": "fact-revenue"
+
+              }
+
+]
+
+}
+
+},
+
+"ThemeArn": "arn:aws:quicksight::aws:theme/CLASSIC"
+
+      }
+
+}
+
+,
+
+"salesresultsconfidential": {
+
+
+
+"Type": "AWS::QuickSight::Dashboard",
+
+
+
+"DependsOn": [
+
+
+
+"qsdatasource",
+
+
+
+"factrevenue"
+
+
+
+],
+
+
+
+"DeletionPolicy": "Retain",
+
+
+
+"Properties": {
+
+
+
+"AwsAccountId": {
+
+
+
+"Ref": "AWS::AccountId"
+
+
+
+},
+
+
+
+"DashboardId": "sales-confidential",
+
+
+
+"DashboardPublishOptions": {
+
+          "AdHocFilteringOption": {
+
+            "AvailabilityStatus": "DISABLED"
+
+          },
+
+          "ExportToCSVOption": {
+
+            "AvailabilityStatus": "ENABLED"
+
+          }
+
+        },
+
+ "Name": "Sales Results - Highly Confidential",
+
+"Permissions": [
+
+          {
+
+            "Actions": [
+
+              "quicksight:DescribeDashboard",
+
+              "quicksight:ListDashboardVersions",
+
+              "quicksight:UpdateDashboardPermissions",
+
+              "quicksight:QueryDashboard",
+
+              "quicksight:UpdateDashboard",
+
+              "quicksight:DeleteDashboard",
+
+              "quicksight:DescribeDashboardPermissions",
+
+              "quicksight:UpdateDashboardPublishedVersion"
+
+            ],
+
+            "Principal": {
+
+              "Ref": "adminarn"
+
+            }
+
+          }
+
+        ],
+
+"SourceEntity": {
+
+          "SourceTemplate": {
+
+            "Arn": "arn:aws:quicksight:us-east-1:648934033967:template/gashc",
+
+"DataSetReferences": [
+
+              {
+
+                "DataSetArn": {
+
+                  "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/fact-revenue"
+
+                },
+
+                "DataSetPlaceholder": "fact-revenue"
+
+              }
+
+]
+
+}
+
+},
+
+"ThemeArn": "arn:aws:quicksight::aws:theme/CLASSIC"
+
+      }
+
+
+
+}
+
+}
+
+
+
+}
