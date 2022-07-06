@@ -66,4 +66,4 @@ Resources:
       Role: !GetAtt LambdaFunctionRole.Arn
       Code:
         S3Bucket: qs-ds-refresh-optimizer
-        S3Key: lambda_source/dashboard-ds-auto-refresh.zip
+        S3Key: lambda_source/lambda.zip
