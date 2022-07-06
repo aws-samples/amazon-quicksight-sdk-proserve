@@ -20,7 +20,6 @@ class Scheduler(object):
 
     def __init__(self):
         """Constructor."""
-        self.__author__ = 'sabtahiz[at]amazon[dot]com'
         self._name = 'scheduler'
         self.__debug_level = 5
         self.__debug_info_level = 3
