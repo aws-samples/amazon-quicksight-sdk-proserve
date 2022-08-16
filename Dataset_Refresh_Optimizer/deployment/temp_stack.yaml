@@ -15,7 +15,7 @@ Resources:
     Type: "AWS::SNS::Topic"
     Properties:
       Subscription:
-        - Endpoint: "sabtahiz@amazon.com"
+        - Endpoint: "your_email"
           Protocol: "email"
 
   LambdaFunctionRole:
