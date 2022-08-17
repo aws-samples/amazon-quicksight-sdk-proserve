@@ -75,13 +75,15 @@ class QuickSightAPI:
         results = {}
         api_start_time = time.time()
         try:
-            response = getattr(self.qs_client, self.api_method.action)(**params)
-            results = response
-
-            while "NextToken" in response:
-                params["NextToken"] = response["NextToken"]
+            # api operation can be paginated, build entire result
+            if self.qs_client.can_paginate(self.api_method.action):
+                paginator = self.qs_client.get_paginator(self.api_method.action)
+                response = paginator.paginate(**params).build_full_result()
+            # api operation can't be paginated, response is already the full result
+            else:
                 response = getattr(self.qs_client, self.api_method.action)(**params)
-                results.extend(response)
+
+            results = response
 
             # check if action is create or update
             if any(action in self.api_method.action for action in ["create", "update"]):
