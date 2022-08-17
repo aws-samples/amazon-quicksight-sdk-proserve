@@ -1,0 +1,24 @@
+[
+    {
+        "TemplateId": "",
+        "DataSetReferences": [
+            {
+                "DataSetPlaceholder":"",
+                "DataSetArn":""
+            },
+            {
+                "DataSetPlaceholder":"",
+                "DataSetArn":""
+            },
+            {
+                "DataSetPlaceholder":"",
+                "DataSetArn":""
+            }
+        ],
+        "DashboardName": "",
+        "DashboardId": "",
+        "CreateFolderMembership": [""],
+        "RemoveFolderMembership": [],
+        "Delete": 0
+    }
+]

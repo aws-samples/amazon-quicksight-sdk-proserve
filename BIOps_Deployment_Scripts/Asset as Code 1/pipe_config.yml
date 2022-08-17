@@ -1,0 +1,22 @@
+---
+tags:
+- key: ApplicationID
+  value: 
+- key: ApplicationName
+  value: 
+- key: ProductOwnerEmail
+  value: 
+- key: AlternateEmail
+  value: 
+- key: ResourceCreator
+  value: 
+- key: isblackbird
+  value: 'true'
+- key: CountryCode
+  value: 'US'
+
+checks:
+- IpcheckCount: 10
+
+roles:
+- ServerlessRole

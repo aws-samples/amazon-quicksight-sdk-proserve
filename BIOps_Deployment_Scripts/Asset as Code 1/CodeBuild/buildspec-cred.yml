@@ -1,0 +1,57 @@
+version: 0.2
+proxy:
+  upload-artifacts: yes
+  logs: yes
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+    commands:
+      - echo Entered the install phase...
+  pre_build:
+    commands:
+      - echo Entered the pre_build phase...
+  build:
+    commands:
+      - DB_VERSION=1.1.2-g831876f-2022042513422479
+      - REPORTS_VERSION=1.0.9-583cdfc-20220422182707
+      - PARTITION=aws
+      - CRED_VERSION=1.0.0
+      - echo Building package with DB artifact $DB_VERSION
+      - echo Building package with QS Reports artifact $REPORTS_VERSION
+      - echo Entered the build phase...
+      # make the credential_build folder for zipping
+      - mkdir ./credential_build
+      - echo "QS $REPORTS_VERSION , DB $DB_VERSION" >> ./credential_build/artifact_versions.txt
+      # copy necessary credentialing scripts into the credential_build folder
+      - cp CodeBuild/Assets_as_Code/Deployment/initialization.py ./credential_build
+      - cp CodeBuild/Assets_as_Code/Deployment/infrastructure_setup.py ./credential_build
+      - cp CodeBuild/Assets_as_Code/Credentialing/credential.py ./credential_build
+      - cp CodeBuild/Assets_as_Code/Credentialing/dms.py ./credential_build
+      - cp CodeBuild/Assets_as_Code/Credentialing/amazon-trust-ca-bundle.crt ./credential_build
+      - cp CodeBuild/Assets_as_Code/Credentialing/config.yaml ./credential_build
+      - cp CodeBuild/Assets_as_Code/Credentialing/dw_mapping_rules.json ./credential_build
+      - cp CodeBuild/Assets_as_Code/Credentialing/shareddb_mapping_rules.json ./credential_build
+      - cp CodeBuild/Assets_as_Code/Credentialing/task_settings.json ./credential_build
+      - cp CodeBuild/Assets_as_Code/Credentialing/requirements.txt ./credential_build
+      - cp CodeBuild/boto3-1.20.32-py3-none-any.whl ./credential_build
+      - cp CodeBuild/botocore-1.23.32-py3-none-any.whl ./credential_build
+      # make functions subfolder
+      - mkdir -p ./credential_build/Assets_as_Code/src
+      - cp CodeBuild/Assets_as_Code/src/functions.py ./credential_build/Assets_as_Code/src
+      - cp CodeBuild/Assets_as_Code/src/supportive_functions.py ./credential_build/Assets_as_Code/src
+      # make mapping subfolder
+      - mkdir -p ./credential_build/Assets_as_Code/Deployment/Mapping
+      - cp CodeBuild/Assets_as_Code/Deployment/Mapping/folder_structure.json ./credential_build/Assets_as_Code/Deployment/Mapping
+      - cp CodeBuild/Assets_as_Code/Deployment/Mapping/group_to_folders.json ./credential_build/Assets_as_Code/Deployment/Mapping
+      # build package
+      - python CodeBuild/Assets_as_Code/Credentialing/build_credential_package.py --account ${ACCOUNT} --region ${AWS_REGION} --partition $PARTITION --db_version $DB_VERSION --reports_version $REPORTS_VERSION --commit ${CODEBUILD_RESOLVED_SOURCE_VERSION} --cred_version $CRED_VERSION
+      - echo Build started on `date`
+  post_build:
+    commands:
+      - echo Entered the post_build phase...
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - '**/*'

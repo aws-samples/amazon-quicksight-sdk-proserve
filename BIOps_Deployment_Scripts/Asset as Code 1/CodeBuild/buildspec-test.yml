@@ -1,0 +1,28 @@
+version: 0.2
+proxy:
+  upload-artifacts: yes
+  logs: yes
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - echo Entered the install phase...
+  pre_build:
+    commands:
+      - echo Entered the pre_build phase...
+      - cd CodeBuild
+      - pip install -r requirements.txt
+  build:
+    commands:
+      - echo Entered the build phase...
+      - pytest --cov
+      - echo Build started on `date`
+  post_build:
+    commands:
+      - echo Entered the post_build phase...
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - '**/*'

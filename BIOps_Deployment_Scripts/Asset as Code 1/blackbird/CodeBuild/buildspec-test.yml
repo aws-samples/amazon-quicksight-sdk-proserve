@@ -1,0 +1,39 @@
+version: 0.2
+proxy:
+  upload-artifacts: yes
+  logs: yes
+env:
+  variables:
+    EXAMPLE_VAR: "EXAMPLE_VALUE"
+
+phases:
+  install:
+    runtime-versions:
+      #docker: 18
+      #dotnet: 2.2
+      #golang: 1.12
+      #golang: 1.13
+      #nodejs: 10
+      #nodejs: 8
+      #java: corretto8
+      #java: corretto11
+      #php: 7.3
+      python: 3.7
+      #ruby: 2.6
+    commands:
+      - echo Entered the install phase...
+  pre_build:
+    commands:
+      - echo Entered the pre_build phase...
+  build:
+    commands:
+      - echo Entered the build phase...
+      - echo Build started on `date`
+      - cd $CODEBUILD_SRC_DIR_src
+  post_build:
+    commands:
+      - echo Entered the post_build phase...
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - '**/*'

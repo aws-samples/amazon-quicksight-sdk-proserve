@@ -1,0 +1,515 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Builds the Delivery CodePipeline components and creates an SNS Topic
+  for Manual Gate Approval. Built from Pipeline Factory.
+Parameters:
+  AppName:
+    Default: PNAME
+    Description: Name of the application.
+    MaxLength: '42'
+    MinLength: '2'
+    Type: String
+  BBCoreVersion:
+    Default: latest
+    Description: bbcore version
+    Type: String
+  BucketPrefix:
+    Description: Bucket prefix for the environment.
+    Type: String
+  CDRoleArn:
+    Description: Enterprise CD Role.
+    Type: String
+  CIRoleArn:
+    Description: Enterprise CI Role.
+    Type: String
+  CodePipelineRoleArn:
+    Default: arn:aws:iam::210431630011:role/Pipeline_Automation
+    Description: Enterprise CodePipeline Role.
+    Type: String
+  KmsKeyArn:
+    Description: Version of the Product Suite Builder and Test Provider.
+    Type: String
+  Namespace:
+    Description: Blackbird Namespace
+    Type: String
+  PipelineBucket:
+    Description: S3 Bucket that will be used for CodePipeline.
+    Type: String
+  PipelineName:
+    Description: Name of the pipeline.
+    Type: String
+  ProductCodeCommitBranchName:
+    Default: master
+    Description: Name of the Source Code repository branch that you want to pull from.
+    Type: String
+  ProductCodeCommitRepoName:
+    Default: PNAME
+    Description: Name of the Source Code repository. Not the Url.
+    Type: String
+  ProductIaCCodeCommitBranchName:
+    Default: master
+    Description: Name of the Infrastructure as Code repository branch that you want
+      to pull from.
+    Type: String
+  ProductIaCCodeCommitRepoName:
+    Default: PNAME_IAC
+    Description: Name of the Infrastructure as Code repository. Not the Url.
+    Type: String
+  ProductSuiteBuildProviderVersion:
+    Default: '1'
+    Description: Version of the Product Suite Builder and Test Provider.
+    Type: String
+  ProxyUrl:
+    Description: Proxy URL in the Tools Account.
+    Type: String
+  SecurityGroupId:
+    Default: sg-5b27942f
+    Description: SG in Tools account
+    Type: String
+  SubnetIdA:
+    Description: Subnet in Tools account
+    Type: String
+  SubnetIdB:
+    Description: Subnet in Tools account
+    Type: String
+  TeamName:
+    Description: Name of the ProductSuite.
+    MinLength: '2'
+    Type: String
+  Timestamp:
+    Description: Used to trigger a new CFN update, until we get versioning in place.
+    Type: String
+  ToolsEnv:
+    Description: Name of the tools environment.
+    Type: String
+  Version:
+    Description: Blackbird Version
+    Type: String
+  VpcId:
+    Description: VPCID in Tools account
+    Type: String
+Resources:
+  ApprovalSNSTopic:
+    Properties:
+      DisplayName: !Sub '${AppName}-deployment-approval'
+      TopicName: !Sub '${AppName}-deployment-approval'
+    Type: AWS::SNS::Topic
+  DeliveryPipeline:
+    Properties:
+      ArtifactStore:
+        EncryptionKey:
+          Id: !Ref 'KmsKeyArn'
+          Type: KMS
+        Location: !Ref 'PipelineBucket'
+        Type: S3
+      Name: !Ref 'AppName'
+      RoleArn: !Ref 'CodePipelineRoleArn'
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeCommit
+                Version: '1'
+              Configuration:
+                BranchName: !Ref 'ProductCodeCommitBranchName'
+                PollForSourceChanges: false
+                RepositoryName: !Ref 'ProductCodeCommitRepoName'
+              Name: ApplicationSource
+              OutputArtifacts:
+                - Name: src
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeCommit
+                Version: '1'
+              Configuration:
+                BranchName: !Ref 'ProductIaCCodeCommitBranchName'
+                PollForSourceChanges: false
+                RepositoryName: !Ref 'ProductIaCCodeCommitRepoName'
+              Name: ApplicationIaCSource
+              OutputArtifacts:
+                - Name: iac
+              RunOrder: 1
+          Name: Source
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-pr-cb-seed'
+              InputArtifacts:
+                - Name: iac
+              Name: CbSeed
+              RunOrder: 1
+          Name: Configure
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-pr-cfn-nag'
+              InputArtifacts:
+                - Name: iac
+              Name: CfnNag
+              OutputArtifacts:
+                - Name: nag
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-pr-bblint'
+              InputArtifacts:
+                - Name: iac
+              Name: BBLint
+              OutputArtifacts:
+                - Name: bblint
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-build-ci-build'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: ApplicationBuild
+              OutputArtifacts:
+                - Name: bld
+              RunOrder: 1
+          Name: BuildAndPackage
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-rd-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployTord
+              OutputArtifacts:
+                - Name: rd
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-rd-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 2
+          Name: rd
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                NotificationArn: !Ref 'ApprovalSNSTopic'
+              Name: CRBoardApproval
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-di-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployTodi
+              OutputArtifacts:
+                - Name: di
+              RunOrder: 2
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-di-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 3
+          Name: di
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                NotificationArn: !Ref 'ApprovalSNSTopic'
+              Name: CRBoardApproval
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-qa-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployToqa
+              OutputArtifacts:
+                - Name: qa
+              RunOrder: 2
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-qa-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 3
+          Name: qa
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                NotificationArn: !Ref 'ApprovalSNSTopic'
+              Name: CRBoardApproval
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-ct-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployToct
+              OutputArtifacts:
+                - Name: ct
+              RunOrder: 2
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-ct-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 3
+          Name: ct
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                NotificationArn: !Ref 'ApprovalSNSTopic'
+              Name: CRBoardApproval
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-pr-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployTopr
+              OutputArtifacts:
+                - Name: pr
+              RunOrder: 2
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-pr-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 3
+          Name: pr
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                NotificationArn: !Ref 'ApprovalSNSTopic'
+              Name: CRBoardApproval
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-u3npnp-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployTou3npnp
+              OutputArtifacts:
+                - Name: u3npnp
+              RunOrder: 2
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-u3npnp-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 3
+          Name: u3npnp
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                NotificationArn: !Ref 'ApprovalSNSTopic'
+              Name: CRBoardApproval
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-u3dnpnp2-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployTou3dnpnp2
+              OutputArtifacts:
+                - Name: u3dnpnp2
+              RunOrder: 2
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-u3dnpnp2-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 3
+          Name: u3dnpnp2
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                NotificationArn: !Ref 'ApprovalSNSTopic'
+              Name: CRBoardApproval
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-u3cnpp-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployTou3cnpp
+              OutputArtifacts:
+                - Name: u3cnpp
+              RunOrder: 2
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-u3cnpp-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 3
+          Name: u3cnpp
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                NotificationArn: !Ref 'ApprovalSNSTopic'
+              Name: CRBoardApproval
+              RunOrder: 1
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub '${TeamName}-${PipelineName}-u3ppp-cfn-launch'
+              InputArtifacts:
+                - Name: iac
+              Name: DeployTou3ppp
+              OutputArtifacts:
+                - Name: u3ppp
+              RunOrder: 2
+            - ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                PrimarySource: iac
+                ProjectName: !Sub '${TeamName}-${PipelineName}-u3ppp-app-test'
+              InputArtifacts:
+                - Name: iac
+                - Name: src
+              Name: TestValidateApp
+              RunOrder: 3
+          Name: u3ppp
+    Type: AWS::CodePipeline::Pipeline

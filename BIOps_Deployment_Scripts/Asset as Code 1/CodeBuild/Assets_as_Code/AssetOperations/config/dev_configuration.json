@@ -1,0 +1,8 @@
+{"aws_account_number" : "",
+"role_name" : "",
+"aws_region" : "us-east-1",
+"assets_owner": "",
+"dev_folder": "",
+"qa_folder": "",
+"prod_folder": ""
+}

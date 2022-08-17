@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create Parameters for pipeline
+Parameters:
+  Environment:
+    Description: Name of the Environment e.g. DevBuilder
+    Type: String
+  PipelineNamespace:
+    Description: Team Name
+    Type: String
+    Default: "biat.content"
+  CommonNamespace:
+    Description: Team Name
+    Type: String
+    Default: "biat._common"
+  ExampleParamValue:
+    Type: String
+    Default: "hello"
+  ProductIdentifier:
+    Description: Tag for the name of the product
+    Type: String
+    Default: biat-content
+Resources:
+  ExampleParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${Environment}.${ProductIdentifier}.example-param"
+      Description: This is an example pipeline parameter
+      Type: String
+      Value: !Ref ExampleParamValue

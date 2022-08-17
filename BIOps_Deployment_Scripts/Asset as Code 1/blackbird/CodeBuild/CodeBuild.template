@@ -1,0 +1,463 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Builds the Delivery CodePipeline components and creates an SNS Topic
+  for Manual Gate Approval. Built from Pipeline Factory.
+Parameters:
+  PipelineName:
+    Description: Name of the pipeline.
+    Type: String
+    Default: 'content'
+  TeamName:
+    Description: Name of the ProductSuite.
+    MinLength: '2'
+    Type: String
+    Default: 'biat'
+  CIRoleArn:
+    Default: pr.biat._blackbird.roles.CI
+    Description: Enterprise CI Role.
+    Type: AWS::SSM::Parameter::Value<String>
+  KmsKeyArn:
+    Default: pr.biat._blackbird.keys.Pipeline
+    Description: Version of the Product Suite Builder and Test Provider.
+    Type: AWS::SSM::Parameter::Value<String>
+  SubnetIdA:
+    Description: Subnet in Tools account
+    Type: String
+    Default: subnet-c8ea5ee6
+  SubnetIdB:
+    Description: Subnet in Tools account
+    Type: String
+    Default: subnet-19c2bc53
+  VpcId:
+    Description: VPCID in Tools account
+    Type: String
+    Default: vpc-54190b32
+  ProxyUrl:
+    Description: proxy in Tools account
+    Type: String
+    Default: http://prxy-lb.soa-pr.aws.3mhis.net:3128
+  NoProxy:
+    Description: List of URLS to exclude from the proxy
+    Type: String
+    Default: checkmarx.3mhis.net,.aws.3mhis.net,169.254.169.254,169.254.170.2,ec2.internal,compute.internal,s3.amazonaws.com,.s3.us-east-1.amazonaws.com,logs.us-east-1.amazonaws.com
+  CodeBuildBaseImage:
+    Default: pr.biat.content._blackbird.codebuild.base
+    Description: CodeBuild base image
+    Type: AWS::SSM::Parameter::Value<String>
+Resources:
+  CodeBuildSecurityGroup:
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: '-1'
+      VpcId: !Ref 'VpcId'
+    Type: AWS::EC2::SecurityGroup
+  BuildJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-build-ci-build'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-build.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-build-ci-build'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  RdTestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-rd-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-rd-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  DiTestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-di-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-di-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  QaTestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-qa-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-qa-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  CtTestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-ct-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-ct-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  PrTestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-pr-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-pr-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  U3npnpTestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-u3npnp-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-u3npnp-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  U3dnpnp2TestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-u3dnpnp2-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-u3dnpnp2-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  U3cnppTestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-u3cnpp-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-u3cnpp-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project
+
+  U3pppTestJob:
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      BadgeEnabled: 'false'
+      Cache:
+        Type: NO_CACHE
+      Description: !Sub 'CodeBuild project for ${TeamName} ${PipelineName}'
+      EncryptionKey: !Ref 'KmsKeyArn'
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: !Ref CodeBuildBaseImage
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: HTTP_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: HTTPS_PROXY
+            Type: PLAINTEXT
+            Value: !Ref ProxyUrl
+          - Name: NO_PROXY
+            Type: PLAINTEXT
+            Value: !Ref NoProxy
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref 'CodeBuildSecurityGroup'
+        Subnets:
+          - !Ref 'SubnetIdA'
+          - !Ref 'SubnetIdB'
+        VpcId: !Ref 'VpcId'
+      Name: !Sub '${TeamName}-${PipelineName}-u3ppp-app-test'
+      ServiceRole: !Ref 'CIRoleArn'
+      Source:
+        BuildSpec: blackbird/CodeBuild/buildspec-test.yml
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-${PipelineName}-u3ppp-app-test'
+      TimeoutInMinutes: 60
+    Type: AWS::CodeBuild::Project

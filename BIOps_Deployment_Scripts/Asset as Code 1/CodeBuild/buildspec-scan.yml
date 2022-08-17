@@ -1,0 +1,39 @@
+version: 0.2
+env:
+  variables:
+    CHECKMARX_FOLDER: 'checkmark'
+    CHECKMARX_NEXUS_URL: 'https://nexus.ci.soa-pr.aws.3mhis.net/repository/3m-secadmin-assets/'
+    CHECKMARX_NEXUS_FILE: 'CxConsolePlugin.zip'
+    CHECKMARX_SERVER: 'https://checkmarx.3mhis.net/'
+    CHECKMARX_PROJECT: 'CxServer\SP\3MHIS\BIA-Code-Security\bb-biat-390-content_IaC'
+    CHECKMARX_DEFAULT: 'Checkmarx Default'
+    CHECKMARX_TOKEN: '9e417e942926c8b2b03f11b304db886ead20bff068c4c8254555866964e2a036'
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - echo Entered the install phase...
+  pre_build:
+    commands:
+      - echo Entered the pre_build phase...
+  build:
+    commands:
+      - echo Entered the build phase...
+      - echo Build started on `date`
+  post_build:
+    commands:
+      - echo Entered the post_build phase...
+      - echo Entered Checkmarx phase...
+      - mkdir ${CHECKMARX_FOLDER}
+      - wget -P $HOME/${CHECKMARX_FOLDER} ${CHECKMARX_NEXUS_URL}${CHECKMARX_NEXUS_FILE}
+      - unzip -d $HOME/${CHECKMARX_FOLDER} $HOME/${CHECKMARX_FOLDER}/${CHECKMARX_NEXUS_FILE}
+      - find $HOME/${CHECKMARX_FOLDER}/ -maxdepth 1 -iname \*.jar > runnable_jar_file.txt
+      - java -Xmx1024m -jar $(<runnable_jar_file.txt) Scan -ProjectName "${CHECKMARX_PROJECT}" -CxServer "${CHECKMARX_SERVER}" -cxToken "${CHECKMARX_TOKEN}" -locationType folder -locationPath "$CODEBUILD_SRC_DIR" -preset "${CHECKMARX_DEFAULT}" -v > $HOME/checkmark_execution.log
+      - more $HOME/checkmark_execution.log | grep "High severity results:.*"
+      - more $HOME/checkmark_execution.log | grep "Medium severity results:.*"
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - '**/*'

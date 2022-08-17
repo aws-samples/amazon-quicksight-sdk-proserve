@@ -1,0 +1,566 @@
+{
+  "Summary": {
+    "SheetId": "Summary",
+    "Name": "Summary",
+    "FilterControls": [
+      {
+        "Dropdown": {
+          "FilterControlId": "741f43f4-333d-4aed-885a-30c6094c349e",
+          "Title": "country equals",
+          "SourceFilterId": "fe50ce8e-1b58-42bb-a18e-daf87cd96978",
+          "DisplayOptions": {
+            "AllOptions": {
+              "Visibility": "VISIBLE"
+            }
+          },
+          "Type": "MULTI_SELECT"
+        }
+      }
+    ],
+    "Visuals": [
+      {
+        "BarChartVisual": {
+          "VisualId": "84a94953-e995-48c8-af11-d1c449ebd858",
+          "QueryProperties": {
+            "FieldWells": {
+              "BarChartAggregatedFieldWells": {
+                "Category": [
+                  {
+                    "CategoricalField": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.country.1.1637266444780",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "country"
+                      }
+                    }
+                  }
+                ],
+                "Value": [
+                  {
+                    "NumericalMetric": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.recovered.1.1637266449703",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "recovered"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "SUM"
+                      }
+                    }
+                  }
+                ],
+                "Subcategory": [
+                ]
+              }
+            },
+            "SortConfiguration": {
+              "CategorySort": [
+                {
+                  "FieldSort": {
+                    "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.recovered.1.1637266449703",
+                    "Direction": "DESC"
+                  }
+                }
+              ]
+            }
+          },
+          "DisplayProperties": {
+            "Orientation": "VERTICAL",
+            "BarsArrangement": "CLUSTERED"
+          }
+        }
+      },
+      {
+        "KPIVisual": {
+          "VisualId": "9fe5cbfc-9437-4698-b39d-262b3b81fdfd",
+          "QueryProperties": {
+            "FieldWells": {
+              "Values": [
+                {
+                  "NumericalMetric": {
+                    "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.confirmed.1.1637266315383",
+                    "Column": {
+                      "DataSetIdentifier": "ds_assets_as_code",
+                      "ColumnName": "confirmed"
+                    },
+                    "AggregationFunction": {
+                      "SimpleNumericalAggregation": "SUM"
+                    }
+                  }
+                }
+              ],
+              "TargetValues": [
+              ],
+              "TrendGroups": [
+              ]
+            },
+            "SortConfiguration": {
+            }
+          },
+          "DisplayProperties": {
+            "TitleOptions": {
+              "TitleOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "SubTitleOptions": {
+                "Visibility": "VISIBLE"
+              }
+            },
+            "KPIOptions": {
+              "ProgressBar": {
+              },
+              "TrendArrows": {
+              },
+              "SecondaryValue": {
+              },
+              "Comparison": {
+              },
+              "PrimaryValueFontSize": {
+                "FontSize": {
+                }
+              },
+              "SecondaryValueFontSize": {
+                "FontSize": {
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "GeospatialMapVisual": {
+          "VisualId": "a9438a5f-84dc-4b34-9055-5a14da9a5de9",
+          "QueryProperties": {
+            "FieldWells": {
+              "GeospatialMapAggregatedFieldWells": {
+                "Geospatial": [
+                  {
+                    "CategoricalField": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.country.4.1637266315383",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "country"
+                      }
+                    }
+                  }
+                ],
+                "Value": [
+                  {
+                    "NumericalMetric": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.confirmed.1.1637266315383",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "confirmed"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "SUM"
+                      }
+                    }
+                  }
+                ],
+                "Subcategory": [
+                  {
+                    "CategoricalField": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.state.3.1637266315383",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "state"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "DisplayProperties": {
+            "TitleOptions": {
+              "TitleOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "SubTitleOptions": {
+                "Visibility": "VISIBLE"
+              }
+            },
+            "Tooltip": {
+              "TooltipVisibility": "VISIBLE",
+              "FieldBasedTooltip": {
+                "AggregationVisibility": "HIDDEN",
+                "TooltipTitleType": "PRIMARY_VALUE",
+                "TooltipFields": [
+                  {
+                    "FieldTooltipItem": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.country.4.1637266315383",
+                      "Visibility": "VISIBLE"
+                    }
+                  },
+                  {
+                    "FieldTooltipItem": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.state.3.1637266315383",
+                      "Visibility": "VISIBLE"
+                    }
+                  },
+                  {
+                    "FieldTooltipItem": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.confirmed.1.1637266315383",
+                      "Visibility": "VISIBLE"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "Layouts": [
+      {
+        "Configuration": {
+          "GridLayout": {
+            "Elements": [
+              {
+                "ElementId": "a9438a5f-84dc-4b34-9055-5a14da9a5de9",
+                "ElementType": "VISUAL",
+                "ColumnIndex": 0,
+                "ColumnSpan": 18,
+                "RowIndex": 0,
+                "RowSpan": 12
+              },
+              {
+                "ElementId": "9fe5cbfc-9437-4698-b39d-262b3b81fdfd",
+                "ElementType": "VISUAL",
+                "ColumnIndex": 0,
+                "ColumnSpan": 18,
+                "RowIndex": 0,
+                "RowSpan": 12
+              },
+              {
+                "ElementId": "84a94953-e995-48c8-af11-d1c449ebd858",
+                "ElementType": "VISUAL",
+                "ColumnIndex": 0,
+                "ColumnSpan": 18,
+                "RowIndex": 0,
+                "RowSpan": 12
+              }
+            ],
+            "NumColumns": 36
+          }
+        }
+      }
+    ]
+  },
+  "Details": {
+    "SheetId": "Details",
+    "Name": "Details",
+    "Visuals": [
+      {
+        "PivotTableVisual": {
+          "VisualId": "e36d678d-c6da-49ab-9a11-8be723390550",
+          "QueryProperties": {
+            "FieldWells": {
+              "PivotTableAggregatedFieldWells": {
+                "Rows": [
+                  {
+                    "CategoricalField": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.country.4.1637266315383",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "country"
+                      }
+                    }
+                  },
+                  {
+                    "CategoricalField": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.state.3.1637266315383",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "state"
+                      }
+                    }
+                  }
+                ],
+                "Columns": [
+                ],
+                "Values": [
+                  {
+                    "NumericalMetric": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.confirmed.1.1637266315383",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "confirmed"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "SUM"
+                      }
+                    }
+                  },
+                  {
+                    "NumericalMetric": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.recovered.2.1637266315383",
+                      "Column": {
+                        "DataSetIdentifier": "ds_assets_as_code",
+                        "ColumnName": "recovered"
+                      },
+                      "AggregationFunction": {
+                        "SimpleNumericalAggregation": "SUM"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "SortConfiguration": {
+              "FieldSortOptions": [
+              ]
+            }
+          },
+          "DisplayProperties": {
+            "TitleOptions": {
+              "TitleOptions": {
+                "Visibility": "VISIBLE"
+              },
+              "SubTitleOptions": {
+                "Visibility": "VISIBLE"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "Layouts": [
+      {
+        "Configuration": {
+          "GridLayout": {
+            "Elements": [
+              {
+                "ElementId": "e36d678d-c6da-49ab-9a11-8be723390550",
+                "ElementType": "VISUAL",
+                "ColumnIndex": 0,
+                "ColumnSpan": 18,
+                "RowIndex": 0,
+                "RowSpan": 12
+              }
+            ],
+            "NumColumns": 36
+          }
+        }
+      }
+    ]
+  },
+  "Pie":
+    {
+      "SheetId": "82ab117e-eb2a-40d8-bb29-7bc9a611efe1",
+      "Name": "Pie",
+      "Visuals": [
+        {
+          "PieChartVisual": {
+            "VisualId": "e27f00d6-05cd-4a26-bf4a-b7945299c5fb",
+            "QueryProperties": {
+              "FieldWells": {
+                "PieChartAggregatedFieldWells": {
+                  "Category": [
+                    {
+                      "CategoricalField": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.country.1.1637266444780",
+                        "Column": {
+                          "DataSetIdentifier": "ds_assets_as_code",
+                          "ColumnName": "country"
+                        }
+                      }
+                    }
+                  ],
+                  "Value": [
+                    {
+                      "NumericalMetric": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.recovered.1.1637266449703",
+                        "Column": {
+                          "DataSetIdentifier": "ds_assets_as_code",
+                          "ColumnName": "recovered"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {
+                "CategorySort": [
+                  {
+                    "FieldSort": {
+                      "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.recovered.1.1637266449703",
+                      "Direction": "DESC"
+                    }
+                  }
+                ]
+              }
+            },
+            "DisplayProperties": {
+              "SliceStyle": "WHOLE",
+              "DataLabels": {
+                "Visibility": "VISIBLE",
+                "Overlap": "DISABLE_OVERLAP"
+              },
+              "Tooltip": {
+                "TooltipVisibility": "VISIBLE",
+                "FieldBasedTooltip": {
+                  "AggregationVisibility": "HIDDEN",
+                  "TooltipTitleType": "PRIMARY_VALUE",
+                  "TooltipFields": [
+                    {
+                      "FieldTooltipItem": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.country.1.1637266444780",
+                        "Visibility": "VISIBLE"
+                      }
+                    },
+                    {
+                      "FieldTooltipItem": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.recovered.1.1637266449703",
+                        "Visibility": "VISIBLE"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "Layouts": [
+        {
+          "Configuration": {
+            "GridLayout": {
+              "Elements": [
+                {
+                  "ElementId": "e27f00d6-05cd-4a26-bf4a-b7945299c5fb",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 18,
+                  "RowIndex": 0,
+                  "RowSpan": 12
+                }
+              ],
+              "NumColumns": 36
+            }
+          }
+        }
+      ]
+    },
+  "Table":
+  {
+      "SheetId": "Table",
+      "Name": "ae3845c1-231a-48dd-8132-e69d48b3758c",
+      "Visuals": [
+        {
+          "TableVisual": {
+            "VisualId": "18f5e235-d514-4e83-8dd3-e2d8e2294320",
+            "QueryProperties": {
+              "FieldWells": {
+                "TableAggregatedFieldWells": {
+                  "GroupBy": [
+                    {
+                      "CategoricalField": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.country.4.1637266315383",
+                        "Column": {
+                          "DataSetIdentifier": "ds_assets_as_code",
+                          "ColumnName": "country"
+                        }
+                      }
+                    },
+                    {
+                      "CategoricalField": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.state.3.1637266315383",
+                        "Column": {
+                          "DataSetIdentifier": "ds_assets_as_code",
+                          "ColumnName": "state"
+                        }
+                      }
+                    },
+                    {
+                      "DateField": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.date_time.0.1637266315383",
+                        "Column": {
+                          "DataSetIdentifier": "ds_assets_as_code",
+                          "ColumnName": "date_time"
+                        }
+                      }
+                    }
+                  ],
+                  "Value": [
+                    {
+                      "NumericalMetric": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.confirmed.1.1637266315383",
+                        "Column": {
+                          "DataSetIdentifier": "ds_assets_as_code",
+                          "ColumnName": "confirmed"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMetric": {
+                        "FieldId": "507b83ce-2783-47ad-8ef8-cae17a86cb4b.recovered.2.1637266315383",
+                        "Column": {
+                          "DataSetIdentifier": "ds_assets_as_code",
+                          "ColumnName": "recovered"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    },
+                    {
+                      "NumericalMetric": {
+                        "FieldId": "2e322296-083e-404b-9d09-60d44cb849a9.5.1637284602118",
+                        "Column": {
+                          "DataSetIdentifier": "ds_assets_as_code",
+                          "ColumnName": "active"
+                        },
+                        "AggregationFunction": {
+                          "SimpleNumericalAggregation": "SUM"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "SortConfiguration": {
+                "Limit": 0
+              }
+            },
+            "DisplayProperties": {
+              "TitleOptions": {
+                "TitleOptions": {
+                  "Visibility": "VISIBLE"
+                },
+                "SubTitleOptions": {
+                  "Visibility": "VISIBLE"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "Layouts": [
+        {
+          "Configuration": {
+            "GridLayout": {
+              "Elements": [
+                {
+                  "ElementId": "18f5e235-d514-4e83-8dd3-e2d8e2294320",
+                  "ElementType": "VISUAL",
+                  "ColumnIndex": 0,
+                  "ColumnSpan": 18,
+                  "RowIndex": 0,
+                  "RowSpan": 12
+                }
+              ],
+              "NumColumns": 36
+            }
+          }
+        }
+      ]
+    }
+}

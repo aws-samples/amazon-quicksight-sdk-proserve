@@ -1,0 +1,32 @@
+version: 0.2
+proxy:
+  upload-artifacts: yes
+  logs: yes
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - echo Entered the install phase...
+  pre_build:
+    commands:
+      - echo Entered the pre_build phase...
+      - cd CodeBuild
+      - pip install boto3-1.20.32-py3-none-any.whl
+      - pip install botocore-1.23.32-py3-none-any.whl
+  build:
+    commands:
+      - echo Entered the build phase...
+      - echo Build started on `date`
+      - echo Starting incremental deployment
+      - python -m Assets_as_Code.Deployment.incremental_deployment --account ${ACCOUNT} --region ${AWS_REGION} --env ${ENV}
+      - echo Starting dashboard deployment
+      - python -m Assets_as_Code.Deployment.deploy_dashboards --account ${ACCOUNT} --region ${AWS_REGION} --env ${ENV}
+  post_build:
+    commands:
+      - echo Entered the post_build phase...
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - '**/*'

@@ -1,0 +1,21 @@
+{
+    "AwsAccountId": "",
+    "FolderId": "",
+    "Name": "",
+    "FolderType": "SHARED",
+    "ParentFolderArn": "",
+    "Permissions": [
+        {
+            "Principal": "",
+            "Actions": [
+                ""
+            ]
+        }
+    ],
+    "Tags": [
+        {
+            "Key": "",
+            "Value": ""
+        }
+    ]
+}
