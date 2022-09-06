@@ -19,6 +19,11 @@ from typing import Any, Dict, List, Optional
 
 from datetime import date, datetime
 
+
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 """
 list functions to get list of qs objects
 """
@@ -181,22 +186,34 @@ desc functions to get contents of an asset
 
 
 def describe_data_source(session, DSID):
-    qs = session.client('quicksight')
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
-    response = qs.describe_data_source(
-        AwsAccountId=AccountId,
-        DataSourceId=DSID)
+    account_id = sts_client.get_caller_identity()["Account"]
+    try:
+        response = qs_client.describe_data_source(
+            AwsAccountId=account_id,
+            DataSourceId=DSID
+        )
+    except ClientError as exc:
+        logger.error("Failed to describe data source %s", DSID)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
 def describe_data_set(session, DSID):
-    qs = session.client('quicksight')
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
-    response = qs.describe_data_set(
-        AwsAccountId=AccountId,
-        DataSetId=DSID)
+    account_id = sts_client.get_caller_identity()["Account"]
+    try:
+        response = qs_client.describe_data_set(
+            AwsAccountId=account_id,
+            DataSetId=DSID
+        )
+    except ClientError as exc:
+        logger.error("Failed to describe data set %s", DSID)
+        logger.error(exc.response['Error']['Message'])
+        print(exc)
+        raise exc
     return response
 
 
@@ -209,18 +226,38 @@ def describe_dashboard(session, dashboard):
             AwsAccountId=account_id,
             DashboardId=dashboard)
     except Exception as e:
-        return ('Faild to describe dashboard: ' + str(e))
+        return ('Failed to describe dashboard: ' + str(e))
     else:
         return response
 
 
 def describe_template(session, tid):
-    qs = session.client('quicksight')
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.describe_template(
-        AwsAccountId=account_id,
-        TemplateId=tid)
+    try:
+        response = qs_client.describe_template(
+            AwsAccountId=account_id,
+            TemplateId=tid
+        )
+    except ClientError as exc:
+        logger.error("Failed to describe template %s", tid)
+        logger.error(exc.response['Error']['Message'])
+        return False
+    return response
+
+def describe_template_permissions(session, template_id):
+    qs_client = session.client('quicksight')
+    sts_client = session.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    try:
+        response = qs_client.describe_template_permissions(
+            AwsAccountId=account_id,
+            TemplateId=template_id
+        )
+    except ClientError as exc:
+        logger.error("Failed to describe template %s", template_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -233,18 +270,23 @@ def describe_analysis(session, analysis):
             AwsAccountId=account_id,
             AnalysisId=analysis)
     except Exception as e:
-        return ('Faild to describe analysis: ' + str(e))
+        return ('Failed to describe analysis: ' + str(e))
     else:
         return response
 
 
-def describe_theme(session, THEMEID):
-    qs = session.client('quicksight')
+def describe_theme(session, theme_id):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
-    response = qs.describe_theme(
-        AwsAccountId=AccountId,
-        ThemeId=THEMEID)
+    account_id = sts_client.get_caller_identity()["Account"]
+    try:
+        response = qs_client.describe_theme(
+            AwsAccountId=account_id,
+            ThemeId=theme_id
+        )
+    except ClientError as exc:
+        logger.error("Failed to describe theme %s", theme_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -425,27 +467,44 @@ def create_data_source(source, session, target):
 
 # AccountId string; DataSetId string; Name string; Physical: json; Logical: json; Mode: string;
 # ColumnGroups: json array; Permissions: json array; RLS: json; Tags: json array
-def create_data_set(session, DataSetId, Name, Physical, Logical, Mode, ColumnGroups=None,
-                    FieldFolders=None):
-    qs = session.client('quicksight')
+def create_dataset(session, dataset_id, name, physical, logical, 
+                    mode, permissions, column_groups=None,
+                   RowLevelPermissionDataSet=None, RowLevelPermissionTagConfiguration=None,
+                   FieldFolders=None, ColumnLevelPermissionRules=None, DataSetUsageConfiguration=None):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
+    account_id = sts_client.get_caller_identity()["Account"]
+    logger.info('account_id is: %s', account_id)
     args: Dict[str, Any] = {
-        "AwsAccountId": AccountId,
-        "DataSetId": DataSetId,
-        "Name": Name,
-        "PhysicalTableMap": Physical,
-        "LogicalTableMap": Logical,
-        "ImportMode": Mode
+        "AwsAccountId": account_id,
+        "DataSetId": dataset_id,
+        "Name": name,
+        "PhysicalTableMap": physical,
+        "LogicalTableMap": logical,
+        "ImportMode": mode,
+        "Permissions": permissions,
     }
-    if ColumnGroups:
-        args["ColumnGroups"] = ColumnGroups
+    if column_groups:
+        args["ColumnGroups"] = column_groups
+    if RowLevelPermissionDataSet:
+        args["RowLevelPermissionDataSet"] = RowLevelPermissionDataSet
+    if RowLevelPermissionTagConfiguration:
+        args["RowLevelPermissionTagConfiguration"] = RowLevelPermissionTagConfiguration
     if FieldFolders:
         args["FieldFolders"] = FieldFolders
-    response = qs.create_data_set(**args)
+    if ColumnLevelPermissionRules:
+        args["ColumnLevelPermissionRules"] = ColumnLevelPermissionRules
+    if DataSetUsageConfiguration:
+        args["DataSetUsageConfiguration"] = DataSetUsageConfiguration
+
+    try:
+        response = qs_client.create_data_set(**args)
+    except ClientError as exc:
+        logger.error("Failed to create data set %s", dataset_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
-
+#check again
 def create_template(session, TemplateId, tname, dsref, sourceanalysis, version):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
@@ -470,7 +529,7 @@ def create_template(session, TemplateId, tname, dsref, sourceanalysis, version):
         )
         return response
 
-
+#check again
 def create_dashboard(session, dashboard_id, source_id, name, source, filter='ENABLED',
                      csv='ENABLED', sheetcontrol='EXPANDED', *components):
     qs = session.client('quicksight')
@@ -524,7 +583,7 @@ def create_dashboard(session, dashboard_id, source_id, name, source, filter='ENA
     response = qs.create_dashboard(**args)
     return response
 
-
+#check again
 def create_analysis(session, analysis_id, name, source, *components):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
@@ -556,7 +615,7 @@ def create_analysis(session, analysis_id, name, source, *components):
     response = qs.create_analysis(**args)
     return response
 
-
+#check again
 def create_theme(session, THEMEID, Name, BaseThemeId, Configuration):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
@@ -571,16 +630,20 @@ def create_theme(session, THEMEID, Name, BaseThemeId, Configuration):
     return response
 
 
-def create_folder_membership(session, folderID, memberID, memberType):
-    qs = session.client('quicksight')
+def create_folder_membership(session, folderid, objectid, objecttype):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.create_folder_membership(
-        AwsAccountId=account_id,
-        FolderId=folderID,
-        MemberId=memberID,
-        MemberType=memberType
-    )
+    try:
+        response = qs_client.create_folder_membership(
+            AwsAccountId = account_id,
+            FolderId=folderid,
+            MemberId=objectid,
+            MemberType=objecttype
+        )
+    except ClientError as exc:
+        logger.error("Failed to create folder membership with folder id: %s, object_id: %s", folderid, objectid)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -588,7 +651,7 @@ def create_folder_membership(session, folderID, memberID, memberType):
 copy functions
 """
 
-
+#check again
 def copy_template(session, TemplateId, tname, SourceTemplatearn):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
@@ -688,24 +751,41 @@ update functions to update an asset
 
 # AccountId string; DataSetId string; Name string; Physical: json; Logical: json; Mode: string;
 # ColumnGroups: json array; Permissions: json array; RLS: json; Tags: json array
-def update_dataset(session, DataSetId, Name, Physical, Logical, Mode, ColumnGroups=None):
-    qs = session.client('quicksight')
+def update_dataset(session, dataset_id, name, physical, logical, mode,
+                   column_groups=None, RowLevelPermissionDataSet=None, RowLevelPermissionTagConfiguration=None,
+                   FieldFolders=None, ColumnLevelPermissionRules=None, DataSetUsageConfiguration=None):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
+    account_id = sts_client.get_caller_identity()["Account"]
     args: Dict[str, Any] = {
-        "AwsAccountId": AccountId,
-        "DataSetId": DataSetId,
-        "Name": Name,
-        "PhysicalTableMap": Physical,
-        "LogicalTableMap": Logical,
-        "ImportMode": Mode
+        "AwsAccountId": account_id,
+        "DataSetId": dataset_id,
+        "Name": name,
+        "PhysicalTableMap": physical,
+        "LogicalTableMap": logical,
+        "ImportMode": mode,
     }
-    if ColumnGroups:
-        args["ColumnGroups"] = ColumnGroups
-    response = qs.update_data_set(**args)
+    if column_groups:
+        args["ColumnGroups"] = column_groups
+    if RowLevelPermissionDataSet:
+        args["RowLevelPermissionDataSet"] = RowLevelPermissionDataSet
+    if RowLevelPermissionTagConfiguration:
+        args["RowLevelPermissionTagConfiguration"] = RowLevelPermissionTagConfiguration
+    if FieldFolders:
+        args["FieldFolders"] = FieldFolders
+    if ColumnLevelPermissionRules:
+        args["ColumnLevelPermissionRules"] = ColumnLevelPermissionRules
+    if DataSetUsageConfiguration:
+        args["DataSetUsageConfiguration"] = DataSetUsageConfiguration
+
+    try:
+        response = qs_client.update_data_set(**args)
+    except ClientError as exc:
+        logger.error("Failed to update data set %s", dataset_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
-
+#check again
 def update_template_permission(session, TemplateId, Principal):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
@@ -725,31 +805,34 @@ def update_template_permission(session, TemplateId, Principal):
     return response
 
 
-def update_dashboard(session, dashboard, name, SourceEntity, version, filter='ENABLED', csv='ENABLED',
-                     sheetcontrol='EXPANDED'):
-    qs = session.client('quicksight')
+def update_dashboard(session, dashboard, name, source_entity, version, 
+                        filter='ENABLED',csv='ENABLED', sheetcontrol='EXPANDED'):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    args: Dict[str, Any] = {
-        "AwsAccountId": account_id,
-        "DashboardId": dashboard,
-        "Name": name,
-        "SourceEntity": SourceEntity,
-        "VersionDescription": version,
-        "DashboardPublishOptions": {
-            'AdHocFilteringOption': {
-                'AvailabilityStatus': filter
-            },
-            'ExportToCSVOption': {
-                'AvailabilityStatus': csv
-            },
-            'SheetControlsOption': {
-                'VisibilityState': sheetcontrol
-            }
-        }
-    }
-    response = qs.update_dashboard(**args)
 
+    try:
+        response = qs_client.update_dashboard(
+            AwsAccountId=account_id,
+            DashboardId=dashboard,
+            Name=name,
+            SourceEntity=source_entity,
+            VersionDescription=version,
+            DashboardPublishOptions={
+                'AdHocFilteringOption': {
+                    'AvailabilityStatus': filter
+                },
+                'ExportToCSVOption': {
+                    'AvailabilityStatus': csv
+                },
+                'SheetControlsOption': {
+                    'VisibilityState': sheetcontrol
+                }
+            }
+        )
+    except ClientError as exc:
+        logger.error("Failed to update dashboard %s", dashboard)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -767,51 +850,65 @@ def update_dashboards_published_version(session, dashboard, version):
     return response
 
 
-def update_data_source_permissions(session, datasourceid, Principal):
-    qs = session.client('quicksight')
+def update_data_source_permissions(session, datasourceid, principal):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.update_data_source_permissions(
-        AwsAccountId=account_id,
-        DataSourceId=datasourceid,
-        GrantPermissions=[
-            {
-                'Principal': Principal,
-                'Actions': ["quicksight:DescribeDataSource",
-                            "quicksight:DescribeDataSourcePermissions",
-                            "quicksight:PassDataSource",
-                            "quicksight:UpdateDataSource",
-                            "quicksight:DeleteDataSource",
-                            "quicksight:UpdateDataSourcePermissions"]
-            },
-        ]
-    )
+
+    try:
+        response = qs_client.update_data_source_permissions(
+                        AwsAccountId=account_id,
+                        DataSourceId=datasourceid,
+                        GrantPermissions=[
+                            {
+                                'Principal': principal,
+                                'Actions':[
+                                    "quicksight:DescribeDataSource",
+                                    "quicksight:DescribeDataSourcePermissions",
+                                    "quicksight:PassDataSource",
+                                    "quicksight:UpdateDataSource",
+                                    "quicksight:DeleteDataSource",
+                                    "quicksight:UpdateDataSourcePermissions"
+                                ]
+                            }
+                        ]
+                    )
+    except ClientError as exc:
+        logger.error("Failed to update data source permissions %s", datasourceid)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
-def update_data_set_permissions(session, datasetid, Principal):
-    qs = session.client('quicksight')
+def update_data_set_permissions(session, datasetid, principal):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.update_data_set_permissions(
-        AwsAccountId=account_id,
-        DataSetId=datasetid,
-        GrantPermissions=[
-            {
-                'Principal': Principal,
-                'Actions': ['quicksight:UpdateDataSetPermissions',
-                            'quicksight:DescribeDataSet',
-                            'quicksight:DescribeDataSetPermissions',
-                            'quicksight:PassDataSet',
-                            'quicksight:DescribeIngestion',
-                            'quicksight:ListIngestions',
-                            'quicksight:UpdateDataSet',
-                            'quicksight:DeleteDataSet',
-                            'quicksight:CreateIngestion',
-                            'quicksight:CancelIngestion']
-            },
-        ]
-    )
+
+    try:
+        response = qs_client.update_data_set_permissions(
+                        AwsAccountId=account_id,
+                        DataSetId=datasetid,
+                        GrantPermissions=[
+                            {
+                                'Principal': principal,
+                                'Actions':[
+                                    'quicksight:UpdateDataSetPermissions',
+                                    'quicksight:DescribeDataSet',
+                                    'quicksight:DescribeDataSetPermissions',
+                                    'quicksight:PassDataSet',
+                                    'quicksight:DescribeIngestion',
+                                    'quicksight:ListIngestions',
+                                    'quicksight:UpdateDataSet',
+                                    'quicksight:DeleteDataSet',
+                                    'quicksight:CreateIngestion',
+                                    'quicksight:CancelIngestion'
+                                ]
+                            }
+                        ]
+                    )
+    except ClientError as exc:
+        logger.error("Failed to update data set permissions %s", datasetid)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -877,68 +974,94 @@ delete functions to delete an asset
 """
 
 
-def delete_source(session, DataSourceId):
-    qs = session.client('quicksight')
+def delete_source(session, data_source_id):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
-    delsource = qs.delete_data_source(
-        AwsAccountId=AccountId,
-        DataSourceId=DataSourceId)
+    account_id = sts_client.get_caller_identity()["Account"]
+    try:
+        delsource = qs_client.delete_data_source(
+            AwsAccountId=account_id,
+            DataSourceId=data_source_id
+        )
+    except ClientError as exc:
+        logger.error("Failed to delete data source %s", data_source_id)
+        logger.error(exc.response['Error']['Message'])
     return delsource
 
 
-def delete_dataset(session, DataSetId):
-    qs = session.client('quicksight')
+def delete_dataset(session, dataset_id):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
-    response = qs.delete_data_set(
-        AwsAccountId=AccountId,
-        DataSetId=DataSetId)
+    account_id = sts_client.get_caller_identity()["Account"]
+    try:
+        response = qs_client.delete_data_set(
+            AwsAccountId=account_id,
+            DataSetId=dataset_id
+        )
+    except ClientError as exc:
+        logger.error("Failed to delete data set %s", dataset_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
 def delete_template(session, tid, version=None):
-    qs = session.client('quicksight')
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
+    account_id = sts_client.get_caller_identity()["Account"]
     args: Dict[str, Any] = {
-        "AwsAccountId": AccountId,
+        "AwsAccountId": account_id,
         "TemplateId": tid,
     }
     if version:
         args["VersionNumber"] = version
-
-    response = qs.delete_template(**args)
+    try:
+        response = qs_client.delete_template(**args)
+    except ClientError as exc:
+        logger.error("Failed to delete template %s", tid)
+        logger.error(exc.response['Error']['Message'])
     return response
 
-
 def delete_dashboard(session, did):
-    qs = session.client('quicksight')
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.delete_dashboard(
-        AwsAccountId=account_id,
-        DashboardId=did)
+    try:
+        response = qs_client.delete_dashboard(
+            AwsAccountId=account_id,
+            DashboardId=did
+        )
+    except ClientError as exc:
+        logger.error("Failed to delete dashboard %s", did)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
 def delete_analysis(session, did):
-    qs = session.client('quicksight')
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.delete_analysis(
-        AwsAccountId=account_id,
-        AnalysisId=did)
+    try:
+        response = qs_client.delete_analysis(
+            AwsAccountId=account_id,
+            AnalysisId=did
+        )
+    except ClientError as exc:
+        logger.error("Failed to delete analysis %s", did)
+        logger.error(exc.response['Error']['Message'])
     return response
 
-
-def delete_theme(session, THEMEID):
-    qs = session.client('quicksight')
+def delete_theme(session, theme_id):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
-    response = qs.delete_theme(
-        AwsAccountId=AccountId,
-        ThemeId=THEMEID)
+    account_id = sts_client.get_caller_identity()["Account"]
+    try:
+        response = qs_client.delete_theme(
+            AwsAccountId=account_id,
+            ThemeId=theme_id
+        )
+    except ClientError as exc:
+        logger.error("Failed to delete theme %s", theme_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -1220,6 +1343,19 @@ def data_sources_ls_of_analysis(analysis, sourcesession):
                     sourcedsref.append(dsname)
     return sourcedsref
 
+def get_data_source_migration_list(sourcesession,source_migrate_list):
+    datasources = data_sources(sourcesession)  #get data source details with listdatasource API
+
+    migration_list=[]
+    for newsource in source_migrate_list:
+        ids = get_datasource_ids(newsource, sourcesession) #Get id of data sources migration list
+        for datasource in datasources:
+            if ids[0] == datasource["DataSourceId"]:
+                # migration_list is an array containing data source connection information and etc
+                migration_list.append(datasource)
+
+    return migration_list
+
 
 # get object ids from name, or get object name from id
 def get_dashboard_ids(name: str, session) -> List[str]:
@@ -1307,6 +1443,148 @@ def get_datasource_ids(name: str, session) -> List[str]:
             ids.append(datasource["DataSourceId"])
     return ids
 
+#List current Data sources/datasets
+def data_sources(session):
+    qs_client = session.client('quicksight')
+    sts_client = session.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    datasources = []
+    try:
+        response = qs_client.list_data_sources(AwsAccountId=account_id)
+    except ClientError as exc:
+        logger.error("Failed to list data sources")
+        logger.error(exc.response['Error']['Message'])
+    next_token: str = response.get("NextToken", None)
+    datasources += response["DataSources"]
+    while next_token is not None:
+        try:
+            response = qs_client.list_data_sources(AwsAccountId=account_id, NextToken=next_token)
+        except ClientError as exc:
+            logger.error("Failed to list data sources")
+            logger.error(exc.response['Error']['Message'])
+        next_token = response.get("NextToken", None)
+        datasources += response["DataSources"]
+    return datasources
+
+def data_sets(session):
+    qs_client = session.client('quicksight')
+    sts_client = session.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    datasets = []
+    try:
+        response = qs_client.list_data_sets(AwsAccountId=account_id)
+    except ClientError as exc:
+        logger.error("Failed to list data sets")
+        logger.error(exc.response['Error']['Message'])
+    next_token: str = response.get("NextToken", None)
+    datasets += response["DataSetSummaries"]
+    while next_token is not None:
+        try:
+            response = qs_client.list_data_sets(AwsAccountId=account_id, NextToken=next_token)
+        except ClientError as exc:
+            logger.error("Failed to list data sets")
+            logger.error(exc.response['Error']['Message'])
+        next_token = response.get("NextToken", None)
+        datasets += response["DataSetSummaries"]
+    return datasets
+
+def templates(session):
+    qs_client = session.client('quicksight')
+    sts_client = session.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    token=None
+
+    args: Dict[str, Any] = {
+        "AwsAccountId": account_id,
+        "MaxResults": 100,
+    }
+    try:
+        tlist = qs_client.list_templates(**args)
+    except ClientError as exc:
+        logger.error("Failed to list templates")
+        logger.error(exc.response['Error']['Message'])
+    templates=tlist['TemplateSummaryList']
+
+    if 'NextToken' in tlist:
+        token=tlist['NextToken']
+        while token is not None:
+            args["NextToken"] = token
+            try:
+                tlist=qs_client.list_templates(**args)
+            except ClientError as exc:
+                logger.error("Failed to list templates")
+                logger.error(exc.response['Error']['Message'])
+            templates.append(tlist['TemplateSummaryList'])
+            token = tlist.get("NextToken", None)
+    else:
+        pass
+    return templates
+
+def dashboards(session)-> List[Dict[str, Any]]:
+    qs_client = session.client('quicksight')
+    sts_client = session.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    dashboards = []
+    try:
+        response = qs_client.list_dashboards(AwsAccountId=account_id)
+    except ClientError as exc:
+        logger.error("Failed to list dashboards")
+        logger.error(exc.response['Error']['Message'])
+    next_token: str = response.get("NextToken", None)
+    dashboards += response["DashboardSummaryList"]
+    while next_token is not None:
+        try:
+            response = qs_client.list_dashboards(AwsAccountId=account_id, NextToken=next_token)
+        except ClientError as exc:
+            logger.error("Failed to list dashboards")
+            logger.error(exc.response['Error']['Message'])
+        next_token = response.get("NextToken", None)
+        dashboards += response["DashboardSummaryList"]
+    return dashboards
+
+def analysis(session):
+    qs_client = session.client('quicksight')
+    sts_client = session.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    analysis = []
+    try:
+        response = qs_client.list_analyses(AwsAccountId=account_id)
+    except ClientError as exc:
+        logger.error("Failed to list analyses")
+        logger.error(exc.response['Error']['Message'])
+    next_token: str = response.get("NextToken", None)
+    analysis += response["AnalysisSummaryList"]
+    while next_token is not None:
+        try:
+            response = qs_client.list_analyses(AwsAccountId=account_id, NextToken=next_token)
+        except ClientError as exc:
+            logger.error("Failed to list analyses")
+            logger.error(exc.response['Error']['Message'])
+        next_token = response.get("NextToken", None)
+        analysis += response["AnalysisSummaryList"]
+    return analysis
+
+def themes(session):
+    qs_client = session.client('quicksight')
+    sts_client = session.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    themes = []
+    try:
+        response = qs_client.list_themes(AwsAccountId=account_id)
+    except ClientError as exc:
+        logger.error("Failed to list themes")
+        logger.error(exc.response['Error']['Message'])
+    next_token: str = response.get("NextToken", None)
+    themes += response["ThemeSummaryList"]
+    while next_token is not None:
+        try:
+            response = qs_client.list_themes(AwsAccountId=account_id, NextToken=next_token)
+        except ClientError as exc:
+            logger.error("Failed to list themes")
+            logger.error(exc.response['Error']['Message'])
+        next_token = response.get("NextToken", None)
+        themes += response["ThemeSummaryList"]
+    return themes
 
 # load data set input pieces
 def loaddsinput(file, part):
