@@ -8,6 +8,7 @@ import traceback
 import boto3
 import botocore.exceptions
 import botocore.session
+from botocore.exceptions import ClientError
 import gzip, json
 import time
 import logging
@@ -24,6 +25,155 @@ logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+def default_botocore_config() -> botocore.config.Config:
+    """Botocore configuration."""
+    retries_config: Dict[str, Union[str, int]] = {
+        "max_attempts": int(os.getenv("AWS_MAX_ATTEMPTS", "5")),
+    }
+    mode: Optional[str] = os.getenv("AWS_RETRY_MODE")
+    if mode:
+        retries_config["mode"] = mode
+    return botocore.config.Config(
+        retries=retries_config,
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"qs_sdk_BIOps",
+    )
+
+
+def assume_role(aws_account_number, role_name, aws_region):
+    sts_client = boto3.client('sts', region_name=aws_region,
+                          endpoint_url=f'https://sts.{aws_region}.amazonaws.com', config=default_botocore_config())
+    response = sts_client.assume_role(
+        RoleArn=f'arn:aws:iam::{aws_account_number}:role/{role_name}',
+        RoleSessionName='quicksight'
+    )
+    # Storing STS credentials
+    session = boto3.Session(
+        aws_access_key_id=response['Credentials']['AccessKeyId'],
+        aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+        aws_session_token=response['Credentials']['SessionToken'],
+        region_name=aws_region
+    )
+    return session
+
+def get_ssm_parameters(session, ssm_string):
+    ssm_client = session.client("ssm")
+    config_str = ssm_client.get_parameter(
+        Name=ssm_string
+    )['Parameter']['Value']
+    return json.loads(config_str)
+
+def get_secret(session, secret_name):
+    """Get the object from Secrets Manager"""
+
+    # Create a Secrets Manager client
+    client = session.client(
+        service_name='secretsmanager'
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as ex:
+        if ex.response['Error']['Code'] == 'DecryptionFailureException':
+            raise ex
+        elif ex.response['Error']['Code'] == 'InternalServiceErrorException':
+            raise ex
+        elif ex.response['Error']['Code'] == 'InvalidParameterException':
+            raise ex
+        elif ex.response['Error']['Code'] == 'InvalidRequestException':
+            raise ex
+        elif ex.response['Error']['Code'] == 'ResourceNotFoundException':
+            raise ex
+    else:
+        # Decrypts secret using the associated KMS CMK.
+        # Depending on whether the secret is a string or binary,
+        # one of these fields will be populated.
+        if 'SecretString' in get_secret_value_response:
+            secret = json.loads(get_secret_value_response['SecretString'])
+            return secret['password']
+        else:
+            decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
+            return decoded_binary_secret
+
+def get_user_arn(session, username, region='us-east-1', namespace='default'):
+    sts_client = session.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    if username == 'root':
+        arn = f"arn:aws:iam::{account_id}:{username}"
+    else:
+        arn = f"arn:aws:quicksight:{region}:{account_id}:user/{namespace}/{username}"
+    return arn
+
+def get_target(
+    targetsession, rds, redshift, s3Bucket, s3Key, vpc, tag, targetadmin,
+    rdscredential,redshiftcredential, region='us-east-1', namespace='default',
+    version='1'):
+    sts_client = targetsession.client("sts")
+    account_id = sts_client.get_caller_identity()["Account"]
+    target: Dict[str, Any] = {
+        "rds": {"rdsinstanceid": ''},
+        "s3":{"manifestBucket": '',
+        "manifestkey": ''},
+        "vpc": '',
+        "tag": '',
+        "credential": {
+            "rdscredential": rdscredential,
+            "redshiftcredential": redshiftcredential
+        },
+        "datasourcepermission": [
+            {
+                'Principal': targetadmin,
+                'Actions': [
+                    "quicksight:DescribeDataSource",
+                    "quicksight:DescribeDataSourcePermissions",
+                    "quicksight:PassDataSource",
+                    "quicksight:UpdateDataSource",
+                    "quicksight:DeleteDataSource",
+                    "quicksight:UpdateDataSourcePermissions"
+                ]
+            }
+        ],
+        "datasetpermission": [
+            {
+                'Principal': targetadmin,
+                'Actions': [
+                    'quicksight:UpdateDataSetPermissions',
+                    'quicksight:DescribeDataSet',
+                    'quicksight:DescribeDataSetPermissions',
+                    'quicksight:PassDataSet',
+                    'quicksight:DescribeIngestion',
+                    'quicksight:ListIngestions',
+                    'quicksight:UpdateDataSet',
+                    'quicksight:DeleteDataSet',
+                    'quicksight:CreateIngestion',
+                    'quicksight:CancelIngestion'
+                ]
+            }
+        ],
+        "version": '1'
+    }
+
+    if rds:
+        target["rds"]["rdsinstanceid"] = rds
+    if redshift:
+        target["redshift"] = redshift
+    if s3Bucket:
+        target["s3"]["manifestBucket"] = s3Bucket
+        target["s3"]["manifestkey"]=s3Key
+    if vpc:
+        target["vpc"] = "arn:aws:quicksight:"+region+":"+account_id+":vpcConnection/"+vpc
+    if tag:
+        target["tag"]=tag
+    if rdscredential:
+        target["credential"]["rdscredential"]=rdscredential
+    if redshiftcredential:
+        target["credential"]["redshiftcredential"]=redshiftcredential
+    return target
+
+    
 """
 list functions to get list of qs objects
 """
@@ -329,29 +479,33 @@ def describe_dashboard_definition(session, id):
         return response
 
 
-def describe_analysis_permissions(session, analysis):
+def describe_analysis_permissions(session, analysis_id):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
     try:
         response = qs.describe_analysis_permissions(
             AwsAccountId=account_id,
-            AnalysisId=analysis)
+            AnalysisId=analysis_id)
     except Exception as e:
         return ('Failed to describe analysis: ' + str(e))
     else:
         return response
 
 
-def describe_theme_permissions(session, THEMEID):
-    qs = session.client('quicksight')
+def describe_theme_permissions(session, theme_id):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
 
-    response = qs.describe_theme_permissions(
-        AwsAccountId=account_id,
-        ThemeId=THEMEID
-    )
+    try:
+        response = qs_client.describe_theme_permissions(
+            AwsAccountId=account_id,
+            ThemeId=theme_id
+        )
+    except ClientError as exc:
+        logger.error("Failed to describe theme permissions %s", theme_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 def describe_namespace(session, namespace):
@@ -504,7 +658,7 @@ def create_dataset(session, dataset_id, name, physical, logical,
         logger.error(exc.response['Error']['Message'])
     return response
 
-#check again
+
 def create_template(session, TemplateId, tname, dsref, sourceanalysis, version):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
@@ -530,7 +684,7 @@ def create_template(session, TemplateId, tname, dsref, sourceanalysis, version):
         return response
 
 #check again
-def create_dashboard(session, dashboard_id, source_id, name, source, filter='ENABLED',
+def create_dashboard(session, dashboard_id, source_id, name, principal, source, version, filter='ENABLED',
                      csv='ENABLED', sheetcontrol='EXPANDED', *components):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
@@ -539,11 +693,27 @@ def create_dashboard(session, dashboard_id, source_id, name, source, filter='ENA
         "AwsAccountId": account_id,
         "DashboardId": dashboard_id,
         "Name": name,
+        "Permissions":[
+                    {
+                        'Principal': principal,
+                        'Actions': [
+                            'quicksight:DescribeDashboard',
+                            'quicksight:ListDashboardVersions',
+                            'quicksight:UpdateDashboardPermissions',
+                            'quicksight:QueryDashboard',
+                            'quicksight:UpdateDashboard',
+                            'quicksight:DeleteDashboard',
+                            'quicksight:DescribeDashboardPermissions',
+                            'quicksight:UpdateDashboardPublishedVersion'
+                        ]
+                    },
+                ],
         "SourceEntity": {
             "Definition": {
                 "DataSetIdentifierDeclarations": source['Definition']['DataSetIdentifierDeclarations']
             }
         },
+        "VersionDescription":version,
         "DashboardPublishOptions": {
             'AdHocFilteringOption': {
                 'AvailabilityStatus': filter
@@ -580,11 +750,15 @@ def create_dashboard(session, dashboard_id, source_id, name, source, filter='ENA
     # Edit these values from DashboardId_GUID -> GUID
     args_str = json.dumps(args)
     args = json.loads(args_str.replace(source_id + '_', ''))
-    response = qs.create_dashboard(**args)
+    try:
+        response = qs.create_dashboard(**args)
+    except ClientError as exc:
+        logger.error("Failed to create dashboard %s", dashboard_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 #check again
-def create_analysis(session, analysis_id, name, source, *components):
+def create_analysis(session, analysis_id, name, principal, source, *components):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
@@ -592,6 +766,20 @@ def create_analysis(session, analysis_id, name, source, *components):
         "AwsAccountId": account_id,
         "AnalysisId": analysis_id,
         "Name": name,
+        "Permissions":[
+                {
+                    'Principal': principal,
+                    'Actions': [
+                        'quicksight:RestoreAnalysis',
+                        'quicksight:UpdateAnalysisPermissions',
+                        'quicksight:DeleteAnalysis',
+                        'quicksight:QueryAnalysis',
+                        'quicksight:DescribeAnalysisPermissions',
+                        'quicksight:DescribeAnalysis',
+                        'quicksight:UpdateAnalysis'
+                    ]
+                }
+            ],
         "SourceEntity": {
             "Definition": {
                 "DataSetIdentifierDeclarations": source['Definition']['DataSetIdentifierDeclarations']
@@ -612,21 +800,30 @@ def create_analysis(session, analysis_id, name, source, *components):
             args['Parameters'] = component[1]
         if component[0] == 'Tags':
             args['Tags'] = component[1]
-    response = qs.create_analysis(**args)
+    try: 
+        response = qs.create_analysis(**args)
+    except ClientError as exc:
+        logger.error("Failed to create analysis %s", analysis_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
-#check again
-def create_theme(session, THEMEID, Name, BaseThemeId, Configuration):
-    qs = session.client('quicksight')
+
+def create_theme(session, theme_id, name, base_theme_id, configuration):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
-    AccountId = sts_client.get_caller_identity()["Account"]
-    response = qs.create_theme(
-        AwsAccountId=AccountId,
-        ThemeId=THEMEID,
-        Name=Name,
-        BaseThemeId=BaseThemeId,
-        Configuration=Configuration
-    )
+    account_id = sts_client.get_caller_identity()["Account"]
+
+    try:
+        response = qs_client.create_theme(
+            AwsAccountId=account_id,
+            ThemeId=theme_id,
+            Name=name,
+            BaseThemeId=base_theme_id,
+            Configuration=configuration
+        )
+    except ClientError as exc:
+        logger.error("Failed to create theme %s", theme_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -651,29 +848,30 @@ def create_folder_membership(session, folderid, objectid, objecttype):
 copy functions
 """
 
-#check again
-def copy_template(session, TemplateId, tname, SourceTemplatearn):
-    qs = session.client('quicksight')
+
+def copy_template(session, template_id, tname, source_template_arn):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
+    template_exists = describe_template(session, template_id)
+    if template_exists:
+        delete_template(session, template_id)
     try:
-        delete_template(session, TemplateId)
-    except Exception:
-        print(traceback.format_exc())
-    # assert isinstance(TemplateId, int), ''
-    finally:
-        response = qs.create_template(
+        response = qs_client.create_template(
             AwsAccountId=account_id,
-            TemplateId=TemplateId,
+            TemplateId=template_id,
             Name=tname,
             SourceEntity={
                 'SourceTemplate': {
-                    'Arn': SourceTemplatearn
+                    'Arn': source_template_arn
                 }
             },
             VersionDescription='1'
         )
-        return response
+    except ClientError as exc:
+        logger.error("Failed to create template %s", template_id)
+        logger.error(exc.response['Error']['Message'])
+    return response
 
 
 # RG ADDED - NEED TO REVISIT
@@ -785,23 +983,31 @@ def update_dataset(session, dataset_id, name, physical, logical, mode,
         logger.error(exc.response['Error']['Message'])
     return response
 
-#check again
-def update_template_permission(session, TemplateId, Principal):
-    qs = session.client('quicksight')
+
+def update_template_permission(session, template_id, principal):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.update_template_permissions(
-        AwsAccountId=account_id,
-        TemplateId=TemplateId,
-        GrantPermissions=[
-            {
-                'Principal': Principal,
-                'Actions': [
-                    'quicksight:DescribeTemplate',
-                ]
-            }
-        ]
-    )
+
+    target_account_id = principal.split("/")[0].split(":")[-2]
+    principal = f"arn:aws:iam::{target_account_id}:root"
+
+    try:
+        response = qs_client.update_template_permissions(
+            AwsAccountId=account_id,
+            TemplateId=template_id,
+            GrantPermissions=[
+                {
+                    'Principal': principal,
+                    'Actions': [
+                        'quicksight:DescribeTemplate',
+                    ]
+                }
+            ]
+        )
+    except ClientError as exc:
+        logger.error("Failed to update template permissions")
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -911,7 +1117,7 @@ def update_data_set_permissions(session, datasetid, principal):
         logger.error(exc.response['Error']['Message'])
     return response
 
-
+#check again
 def update_analysis(session, id, name, source, *components):
     qs = session.client('quicksight')
     sts_client = session.client("sts")
@@ -939,33 +1145,64 @@ def update_analysis(session, id, name, source, *components):
             args["ThemeArn"] = component[1]
         else:
             args["SourceEntity"]["Definition"][component[0]].append(component[1])
-    response = qs.update_analysis(**args)
+    try:
+        response = qs.update_analysis(**args)
+    except ClientError as exc:
+        logger.error("Failed to update analysis %s", id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
-def update_theme(session, THEMEID, name, BaseThemeId, Configuration=None):
-    qs = session.client('quicksight')
+def update_theme(session, theme_id, name, base_theme_id, configuration=None):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
 
-    response = qs.update_theme(
-        AwsAccountId=account_id,
-        ThemeId=THEMEID,
-        Name=name,
-        BaseThemeId=BaseThemeId,
-        Configuration=Configuration
-    )
+    try:
+        response = qs_client.update_theme(
+            AwsAccountId=account_id,
+            ThemeId=theme_id,
+            Name=name,
+            BaseThemeId=base_theme_id,
+            Configuration=configuration
+        )
+    except ClientError as exc:
+        logger.error("Failed to update theme %s", theme_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
-def update_theme_permissions(session, THEMEID):
-    qs = session.client('quicksight')
+def update_theme_permissions(session, theme_id, principal):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.update_theme_permissions(
-        AwsAccountId=account_id,
-        ThemeId=THEMEID
-    )
+
+    try:
+        response = qs_client.update_theme_permissions(
+                        AwsAccountId=account_id,
+                        ThemeId=theme_id,
+                        GrantPermissions=[
+                            {
+                                'Principal': principal,
+                                'Actions':[
+                                    'quicksight:ListThemeVersions',
+                                    'quicksight:UpdateThemeAlias',
+                                    'quicksight:UpdateThemePermissions',
+                                    'quicksight:DescribeThemeAlias',
+                                    'quicksight:DeleteThemeAlias',
+                                    'quicksight:DeleteTheme',
+                                    'quicksight:ListThemeAliases',
+                                    'quicksight:DescribeTheme',
+                                    'quicksight:CreateThemeAlias',
+                                    'quicksight:UpdateTheme',
+                                    'quicksight:DescribeThemePermissions'
+                                ]
+                            }
+                        ]
+                    )
+    except ClientError as exc:
+        logger.error("Failed to update theme permissions %s", theme_id)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
@@ -1065,16 +1302,20 @@ def delete_theme(session, theme_id):
     return response
 
 
-def delete_folder_membership(session, folderID, memberID, memberType):
-    qs = session.client('quicksight')
+def delete_folder_membership(session, folderid, objectid, objecttype):
+    qs_client = session.client('quicksight')
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
-    response = qs.delete_folder_membership(
-        AwsAccountId=account_id,
-        FolderId=folderID,
-        MemberId=memberID,
-        MemberType=memberType
-    )
+    try:
+        response = qs_client.delete_folder_membership(
+            AwsAccountId=account_id,
+            FolderId=folderid,
+            MemberId=objectid,
+            MemberType=objecttype
+        )
+    except ClientError as exc:
+        logger.error("Failed to create folder membership with folder id: %s, object_id: %s", folderid, objectid)
+        logger.error(exc.response['Error']['Message'])
     return response
 
 
