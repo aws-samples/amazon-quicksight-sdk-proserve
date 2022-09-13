@@ -14,6 +14,12 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import quicksight_utils as qu
+
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+logger = logging.getLogger('deployment_utils')
+logger.setLevel(logging.INFO)
+
+
 """
 Deployment functions
 """
@@ -47,7 +53,7 @@ def validate_folder_hierarchy(now, dic, package, namespace, folderID, region, ac
         folderID = folderID.replace('-' + folder, "")
     return faillist
 
-
+'''
 def migrate_data_sets(now, account_id, package, target_session, region, dir, namespace, namespace_name, logs,
                       log_group, error_log, success_log):
     faillist = []
@@ -199,6 +205,121 @@ def migrate_data_sets(now, account_id, package, target_session, region, dir, nam
     except:
         print('No child datasets')
     return faillist
+'''
+
+
+def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config):
+    # Todo: handle parent child relationship
+    # Todo: handle column folder during migration
+    logger.info('Migrating dataset: from %s to %s', source_dataset_ID, deployment_config["get_target_id_func"](source_dataset_ID))
+    try:
+        res = qu.describe_dataset(source_ses, source_dataset_ID)
+        # res = dd(source_ses, 'Admin-Console-Object-Access')
+        # print(res)
+    except Exception:
+        # print(Exception)
+        deployment_config['dataset_fail_list'].append({"Dataset": source_dataset_ID, "Error": Exception})
+        return
+
+    if 'RowLevelPermissionDataSet' in res['DataSet']:
+        rls_flag = True
+        rls_arn = res['DataSet']['RowLevelPermissionDataSet']['Arn']
+        # print('rls data set exists: ' + rls_arn)
+        rls_id = rls_arn.split('/')[1]
+
+        try:
+            rls_res = qu.describe_dataset(source_ses, rls_id)
+        except Exception:
+            deployment_config['dataset_fail_list'].append({"Dataset": source_dataset_ID, "RLS": rls_id, "Error": str(Exception)})
+            return
+
+        # migrate the rls dataset to target
+        migrate_dataset(rls_id, source_ses, target_ses)
+        deployment_config['already_migrated_dataset'].append(deployment_config["get_target_id_func"](rls_id))
+
+        RowLevelPermissionDataSet = res['DataSet']['RowLevelPermissionDataSet']
+        RowLevelPermissionDataSet['Arn'] = deployment_config["get_target_id_func"](RowLevelPermissionDataSet['Arn']).\
+            replace(deployment_config["source_account_id"], deployment_config["target_account_id"])
+        RowLevelPermissionDataSet['Status'] = 'ENABLED'
+
+    else:
+        rls_flag = False
+        RowLevelPermissionDataSet = None
+
+    name = res['DataSet']['Name']
+
+    PT = res['DataSet']['PhysicalTableMap']
+    try:
+        for key, value in PT.items():
+            for k, v in value.items():
+                data_source_id = v['DataSourceArn'].split("/")[1]
+                v['DataSourceArn'] = 'arn:aws:quicksight:us-east-1:' + deployment_config["target_account_id"] + ':datasource/' + deployment_config["get_target_data_source_id_func"](data_source_id)
+    except Exception as e:
+        deployment_config['dataset_fail_list'].append({"DataSetId": source_dataset_ID,
+                         "Name": name,
+                         "Error": str(e)})
+        return
+
+    LT = res['DataSet']['LogicalTableMap']
+
+    if 'ColumnGroups' in res['DataSet']:
+        ColumnGroups = res['DataSet']['ColumnGroups']
+    else:
+        ColumnGroups = None
+
+
+    if 'RowLevelPermissionTagConfiguration' in res['DataSet']:
+        RowLevelPermissionTagConfiguration = res['DataSet']['RowLevelPermissionTagConfiguration']
+    else:
+        RowLevelPermissionTagConfiguration = None
+
+    if 'FieldFolders' in res['DataSet']:
+        FieldFolders = res['DataSet']['FieldFolders']
+    else:
+        FieldFolders = None
+
+    if 'ColumnLevelPermissionRules' in res['DataSet']:
+        ColumnLevelPermissionRules = res['DataSet']['ColumnLevelPermissionRules']
+    else:
+        ColumnLevelPermissionRules = None
+
+    if 'DataSetUsageConfiguration' in res['DataSet']:
+        DataSetUsageConfiguration = res['DataSet']['DataSetUsageConfiguration']
+    else:
+        DataSetUsageConfiguration = None
+
+    # print(already_migrated)
+    # print(get_target_id(source_dataset_ID))
+
+    if deployment_config["get_target_id_func"](source_dataset_ID) not in deployment_config['already_migrated_dataset']:
+        logger.info('creating new dataset: %s', deployment_config["get_target_id_func"](source_dataset_ID))
+        try:
+            newdataset = qu.create_dataset(target_ses, deployment_config["get_target_id_func"](source_dataset_ID), deployment_config["get_target_id_func"](name), PT, LT,
+                                        res['DataSet']['ImportMode'], deployment_config["target_permission"], ColumnGroups,
+                                        RowLevelPermissionDataSet, RowLevelPermissionTagConfiguration,
+                                           FieldFolders, ColumnLevelPermissionRules, DataSetUsageConfiguration)
+            # print("new dataset: ", newdataset)
+
+            deployment_config['dataset_new_list'].append(deployment_config["get_target_id_func"](source_dataset_ID))
+        except Exception as e:
+            # print('failed: ' + str(e))
+            deployment_config['dataset_fail_list'].append({"DataSetId": source_dataset_ID, "Name": name, "Error": str(e)})
+            return
+
+    if deployment_config["get_target_id_func"](source_dataset_ID) in deployment_config['already_migrated_dataset']:
+        logger.info('updating already migrated dataset: %s', deployment_config["get_target_id_func"](source_dataset_ID))
+        try:
+            newdataset = qu.update_dataset(target_ses, deployment_config["get_target_id_func"](source_dataset_ID), deployment_config["get_target_id_func"](name), PT, LT,
+                                        res['DataSet']['ImportMode'], ColumnGroups, RowLevelPermissionDataSet,
+                                           RowLevelPermissionTagConfiguration,
+                                           FieldFolders, ColumnLevelPermissionRules, DataSetUsageConfiguration)
+            # print("update dataset: ", newdataset)
+            deployment_config['dataset_new_list'].append(deployment_config["get_target_id_func"](source_dataset_ID))
+        except Exception as e:
+            # print('failed: ' + str(e))
+            deployment_config['dataset_fail_list'].append({"DataSetId": source_dataset_ID, "Name": name, "Error": str(e)})
+            return
+
 
 
 def migrate_themes(now, account_id, env, package, target_session, dir, logs, log_group, error_log, success_log):
