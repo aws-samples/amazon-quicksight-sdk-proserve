@@ -33,8 +33,8 @@ def validate_folder_hierarchy(now, dic, package, namespace, folderID, region, ac
         folderID += '-' + folder
         subfolders = dic[folder]
         try:
-            search_folders(target_session, folderarn + folderID)
-            log_events_to_cloudwatch(
+            qu.search_folders(target_session, folderarn + folderID)
+            qu.log_events_to_cloudwatch(
                 {"account_id": accountid, "package": package, "deployment_time": now, "namespace": namespace,
                  "folder_id": folderID,
                  "success": "FolderID: " + folderID + " exists"}, logs,
@@ -43,7 +43,7 @@ def validate_folder_hierarchy(now, dic, package, namespace, folderID, region, ac
             message = {"account_id": accountid, "package": package, "deployment_time": now, "namespace": namespace,
                        "folder_id": folderID, "error": str(e)}
             faillist.append(message)
-            log_events_to_cloudwatch(message, logs, log_group, error_log)
+            qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
             folderID = folderID.replace('-' + folder, "")
             continue
         if isinstance(subfolders, dict):
@@ -210,10 +210,10 @@ def migrate_data_sets(now, account_id, package, target_session, region, dir, nam
 
 def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config):
     # Todo: handle parent child relationship
-    # Todo: handle column folder during migration
+
     logger.info('Migrating dataset: from %s to %s', source_dataset_ID, deployment_config["get_target_id_func"](source_dataset_ID))
     try:
-        res = qu.describe_dataset(source_ses, source_dataset_ID)
+        res = qu.describe_data_set(source_ses, source_dataset_ID)
         # res = dd(source_ses, 'Admin-Console-Object-Access')
         # print(res)
     except Exception:
@@ -228,7 +228,7 @@ def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config
         rls_id = rls_arn.split('/')[1]
 
         try:
-            rls_res = qu.describe_dataset(source_ses, rls_id)
+            rls_res = qu.describe_data_set(source_ses, rls_id)
         except Exception:
             deployment_config['dataset_fail_list'].append({"Dataset": source_dataset_ID, "RLS": rls_id, "Error": str(Exception)})
             return
@@ -288,25 +288,31 @@ def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config
     else:
         DataSetUsageConfiguration = None
 
+    # get datasets in target account
+    targetds = qu.data_sets(target_ses)
+    # already_migrated record the datasets ids of target account
+    already_migrated_ds = []
+    for ds in targetds:
+        already_migrated_ds.append(ds['DataSetId'])
     # print(already_migrated)
     # print(get_target_id(source_dataset_ID))
 
-    if deployment_config["get_target_id_func"](source_dataset_ID) not in deployment_config['already_migrated_dataset']:
+    if deployment_config["get_target_id_func"](source_dataset_ID) not in already_migrated_ds:
         logger.info('creating new dataset: %s', deployment_config["get_target_id_func"](source_dataset_ID))
         try:
             newdataset = qu.create_dataset(target_ses, deployment_config["get_target_id_func"](source_dataset_ID), deployment_config["get_target_id_func"](name), PT, LT,
-                                        res['DataSet']['ImportMode'], deployment_config["target_permission"], ColumnGroups,
+                                        res['DataSet']['ImportMode'], deployment_config["target_permission"]["datasetpermission"], ColumnGroups,
                                         RowLevelPermissionDataSet, RowLevelPermissionTagConfiguration,
                                            FieldFolders, ColumnLevelPermissionRules, DataSetUsageConfiguration)
-            # print("new dataset: ", newdataset)
+            #print("new dataset: ", newdataset)
 
             deployment_config['dataset_new_list'].append(deployment_config["get_target_id_func"](source_dataset_ID))
         except Exception as e:
-            # print('failed: ' + str(e))
+            print('failed: ' + str(e))
             deployment_config['dataset_fail_list'].append({"DataSetId": source_dataset_ID, "Name": name, "Error": str(e)})
             return
 
-    if deployment_config["get_target_id_func"](source_dataset_ID) in deployment_config['already_migrated_dataset']:
+    if deployment_config["get_target_id_func"](source_dataset_ID) in already_migrated_ds:
         logger.info('updating already migrated dataset: %s', deployment_config["get_target_id_func"](source_dataset_ID))
         try:
             newdataset = qu.update_dataset(target_ses, deployment_config["get_target_id_func"](source_dataset_ID), deployment_config["get_target_id_func"](name), PT, LT,
@@ -326,7 +332,7 @@ def migrate_themes(now, account_id, env, package, target_session, dir, logs, log
     faillist = []
     newthemeslist = []
     # Get themes which already migrated
-    targetthemes = list_themes(target_session)
+    targetthemes = qu.list_themes(target_session)
     # already_migrated record the datasets ids of target account
     already_migrated = set({})
     for th in targetthemes:
@@ -339,13 +345,13 @@ def migrate_themes(now, account_id, env, package, target_session, dir, logs, log
                 res = json.load(f)
             message = {"account_id": account_id, "package": package, "deployment_time": now, "dir_file": theme_file,
                        "success": theme_file + " loaded successfully"}
-            log_events_to_cloudwatch(message, logs, log_group,
+            qu.log_events_to_cloudwatch(message, logs, log_group,
                                      success_log)
         except Exception:
             message = {"account_id": account_id, "package": package, "deployment_time": now, "dir_file": theme_file,
                        "error": str(Exception)}
             faillist.append(message)
-            log_events_to_cloudwatch(message, logs, log_group, error_log)
+            qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
             continue
 
         source_theme_id = res['Theme']['ThemeId']
@@ -360,9 +366,9 @@ def migrate_themes(now, account_id, env, package, target_session, dir, logs, log
 
         if target_theme_id not in already_migrated:
             try:
-                newtheme = create_theme(target_session, target_theme_id, Name, BaseThemeId, Configuration)
+                newtheme = qu.create_theme(target_session, target_theme_id, Name, BaseThemeId, Configuration)
                 newthemeslist.append(newtheme)
-                log_events_to_cloudwatch(
+                qu.log_events_to_cloudwatch(
                     {"account_id": account_id, "package": package, "deployment_time": now, "asset_type": "Themes",
                      "asset_guid": target_theme_id, "asset_name": Name,
                      "success": "Theme: " + Name + " is successfully migrated"}, logs, log_group, success_log)
@@ -370,13 +376,13 @@ def migrate_themes(now, account_id, env, package, target_session, dir, logs, log
                 message = {"account_id": account_id, "package": package, "deployment_time": now, "theme_id": target_theme_id,
                            "name": Name, "error": str(e)}
                 faillist.append(message)
-                log_events_to_cloudwatch(message, logs, log_group, error_log)
+                qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
                 continue
         elif target_theme_id in already_migrated:
             try:
-                newtheme = update_theme(target_session, target_theme_id, Name, BaseThemeId, Configuration)
+                newtheme = qu.update_theme(target_session, target_theme_id, Name, BaseThemeId, Configuration)
                 newthemeslist.append(newtheme)
-                log_events_to_cloudwatch(
+                qu.log_events_to_cloudwatch(
                     {"account_id": account_id, "package": package, "deployment_time": now, "asset_type": "Themes",
                      "asset_guid": target_theme_id, "asset_name": Name,
                      "success": "Theme " + target_theme_id + " is successfully updated"}, logs, log_group, success_log)
@@ -384,7 +390,7 @@ def migrate_themes(now, account_id, env, package, target_session, dir, logs, log
                 message = {"account_id": account_id, "package": package, "deployment_time": now, "theme_id": target_theme_id,
                            "name": Name, "error": str(e)}
                 faillist.append(message)
-                log_events_to_cloudwatch(message, logs, log_group, error_log)
+                qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
                 continue
 
     return faillist
@@ -401,13 +407,13 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                 res = json.load(f)
             message = {"account_id": account_id, "package": package, "deployment_time": now, "dir_file": dashboard_path,
                        "success": dashboard_path + " loaded successfully"}
-            log_events_to_cloudwatch(message, logs, log_group,
+            qu.log_events_to_cloudwatch(message, logs, log_group,
                                      success_log)
         except Exception:
             message = {"account_id": account_id, "package": package, "deployment_time": now, "dir_file": dashboard_path,
                        "error": str(Exception)}
             faillist.append(message)
-            log_events_to_cloudwatch(message, logs, log_group, error_log)
+            qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
             continue
 
         sourcedid = res['Dashboard']['DashboardId']
@@ -431,16 +437,16 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
             TargetThemeArn = 'arn:aws:quicksight:' + region + ':' + account_id + ':theme/' + \
                              SourceThemearn.split("/")[1]
 
-        dashboard = describe_dashboard_definition(target_session, targettid)
+        dashboard = qu.describe_dashboard_definition(target_session, targettid)
         if 'Failed to describe dashboard:' in dashboard:
             if 'dashboard/' + targettid + ' is not found' in dashboard:
                 try:
                     print('Creating Dashboard: ' + targettid)
-                    newdashboard = create_dashboard(target_session, targettid, sourcedid, targettname, res,
+                    newdashboard = qu.create_dashboard(target_session, targettid, sourcedid, targettname, res,
                                                     'ENABLED', 'ENABLED', 'COLLAPSED', ('VersionDescription', '1'),
                                                     ('ThemeArn', TargetThemeArn), namespace_name)
                     print(newdashboard)
-                    log_events_to_cloudwatch(
+                    qu.log_events_to_cloudwatch(
                         {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
                          "hashed_namespace": namespace_name, "asset_type": "Dashboards",
                          "asset_guid": targettid, "asset_name": targettname,
@@ -458,7 +464,7 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                                "asset_name": targettname,
                                "error": str(e)}
                     faillist.append(message)
-                    log_events_to_cloudwatch(message, logs, log_group, error_log)
+                    qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
                     continue
             else:
                 message = {"account_id": account_id,
@@ -472,16 +478,16 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                            "asset_name": targettname,
                            "error": str(dashboard)}
                 faillist.append(message)
-                log_events_to_cloudwatch(message, logs, log_group, error_log)
+                qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
                 continue
         elif dashboard['Dashboard']['Version']['Status'] == "CREATION_FAILED":
             try:
-                delete_dashboard(target_session, targettid)
+                qu.delete_dashboard(target_session, targettid)
                 print('Creating Dashboard: ' + targettid)
-                newdashboard = create_dashboard(target_session, targettid, sourcedid, targettname, res,
+                newdashboard = qu.create_dashboard(target_session, targettid, sourcedid, targettname, res,
                                                 'ENABLED', 'ENABLED', 'COLLAPSED', ('VersionDescription', '1'),
                                                 ('ThemeArn', TargetThemeArn), namespace_name)
-                log_events_to_cloudwatch(
+                qu.log_events_to_cloudwatch(
                     {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
                      "hashed_namespace": namespace_name, "asset_type": "Dashboards",
                      "asset_guid": targettid, "asset_name": targettname,
@@ -500,17 +506,17 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                     "asset_name": targettname,
                     "error": str(e)}
                 faillist.append(message)
-                log_events_to_cloudwatch(message, logs, log_group, error_log)
+                qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
                 continue
 
         else:
             print('Updating Dashboard: ' + targettid)
             try:
-                delete_dashboard(target_session, targettid)
-                newdashboard = create_dashboard(target_session, targettid, sourcedid, targettname, res,
+                qu.delete_dashboard(target_session, targettid)
+                newdashboard = qu.create_dashboard(target_session, targettid, sourcedid, targettname, res,
                                                 'ENABLED', 'ENABLED', 'COLLAPSED', ('VersionDescription', '1'),
                                                 ('ThemeArn', TargetThemeArn), namespace_name)
-                log_events_to_cloudwatch(
+                qu.log_events_to_cloudwatch(
                     {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
                      "hashed_namespace": namespace_name, "asset_type": "Dashboards",
                      "asset_guid": targettid, "asset_name": targettname,
@@ -530,12 +536,12 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                     "error": str(e)})
                 continue
 
-        res = describe_dashboard_definition(target_session, targettid)
+        res = qu.describe_dashboard_definition(target_session, targettid)
         if res['Status'] == 200:
             status = res['Dashboard']['Version']['Status']
             while 'PROGRESS' in status:
                 time.sleep(3)
-                res = describe_dashboard_definition(target_session, targettid)
+                res = qu.describe_dashboard_definition(target_session, targettid)
                 status = res['Dashboard']['Version']['Status']
             if 'SUCCESSFUL' in status:
                 success.append(res)
@@ -545,7 +551,7 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                            "namespace": namespace, "hashed_namespace": namespace_name, "asset_type": "Dashboards",
                            "error_type": "Dashboard Creation Status is not Successful", "dashboard": res}
                 faillist.append(message)
-                log_events_to_cloudwatch(message, logs, log_group, error_log)
+                qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
     return faillist
 
 
@@ -573,11 +579,11 @@ def results_output_location():
 
 # list data source of source account. This function could be removed
 def get_data_source_migration_list(sourcesession, source_migrate_list):
-    datasources = list_data_sources(sourcesession)  # get data source details with listdatasource API
+    datasources = qu.list_data_sources(sourcesession)  # get data source details with listdatasource API
 
     migration_list = []
     for newsource in source_migrate_list:
-        ids = get_datasource_ids(newsource, sourcesession)  # Get id of data sources migration list
+        ids = qu.get_datasource_ids(newsource, sourcesession)  # Get id of data sources migration list
         for datasource in datasources:
             if ids[0] == datasource["DataSourceId"]:
                 migration_list.append(
@@ -590,7 +596,7 @@ def migrate_analysis(source_session, target_session, id):
     # please provide the analysis name you would like to migrate to get the id
     faillist = []
     try:
-        analysisid = get_analysis_ids('analysis_name', source_session)
+        analysisid = qu.get_analysis_ids('analysis_name', source_session)
     except Exception as e:
         faillist.append({"object_id": 'id', "Name": 'name', "object_type": 'type',
                          "action": 'incremental_migration:get_source_analysis_id', "Error": str(e)})
@@ -603,17 +609,17 @@ def migrate_analysis(source_session, target_session, id):
 def process_migration_list(migrate_p, dashboard_migrate_list, analysis_migrate_list, dev_config):
     source_migrate_list = []
     dataset_migrate_list = []
-    source_session = s_func._assume_role(dev_config["aws_account_number"], dev_config["role_name"],
+    source_session = qu.assume_role(dev_config["aws_account_number"], dev_config["role_name"],
                                          dev_config["aws_region"])
 
     if migrate_p in ['dashboard']:
         for dashboard in dashboard_migrate_list:
             print(dashboard)
-            datasources = data_sources_ls_of_dashboard(dashboard, source_session)
+            datasources = qu.data_sources_ls_of_dashboard(dashboard, source_session)
             print(datasources)  # issue
             for datasource in datasources:
                 source_migrate_list.append(datasource)
-            datasets = data_sets_ls_of_dashboard(dashboard, source_session)
+            datasets = qu.data_sets_ls_of_dashboard(dashboard, source_session)
             print(datasets)
             for dataset in datasets:
                 dataset_migrate_list.append(dataset)
@@ -621,11 +627,11 @@ def process_migration_list(migrate_p, dashboard_migrate_list, analysis_migrate_l
     if migrate_p in ['analysis']:
         for analysis_name in analysis_migrate_list:
             print(analysis_name)
-            datasources = data_sources_ls_of_analysis(analysis_name, source_session)
+            datasources = qu.data_sources_ls_of_analysis(analysis_name, source_session)
             print(datasources)
             for datasource in datasources:
                 source_migrate_list.append(datasource)
-            datasets = data_sets_ls_of_analysis(analysis_name, source_session)
+            datasets = qu.data_sets_ls_of_analysis(analysis_name, source_session)
             print(datasets)
             for dataset in datasets:
                 dataset_migrate_list.append(dataset)
@@ -633,18 +639,18 @@ def process_migration_list(migrate_p, dashboard_migrate_list, analysis_migrate_l
 
     if migrate_p in ['all']:
         for dashboard in dashboard_migrate_list:
-            datasources = data_sources_ls_of_dashboard(dashboard, source_session)
+            datasources = qu.data_sources_ls_of_dashboard(dashboard, source_session)
             for datasource in datasources:
                 source_migrate_list.append(datasource)
-            datasets = data_sets_ls_of_dashboard(dashboard, source_session)
+            datasets = qu.data_sets_ls_of_dashboard(dashboard, source_session)
             for dataset in datasets:
                 dataset_migrate_list.append(dataset)
 
         for analysis_name in analysis_migrate_list:
-            datasources = data_sources_ls_of_analysis(analysis_name, source_session)
+            datasources = qu.data_sources_ls_of_analysis(analysis_name, source_session)
             for datasource in datasources:
                 source_migrate_list.append(datasource)
-            datasets = data_sets_ls_of_analysis(analysis_name, source_session)
+            datasets = qu.data_sets_ls_of_analysis(analysis_name, source_session)
             for dataset in datasets:
                 dataset_migrate_list.append(dataset)
     results = {"source_migrate_list": source_migrate_list, "dataset_migrate_list": dataset_migrate_list}
