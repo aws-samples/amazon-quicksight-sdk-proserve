@@ -24,6 +24,8 @@ logger.setLevel(logging.INFO)
 Deployment functions
 """
 
+default_themes = ['CLASSIC', 'MIDNIGHT', 'SEASIDE']
+
 # TODO: Create folder if missing
 def validate_folder_hierarchy(now, dic, package, namespace, folderID, region, accountid, target_session, faillist, logs,
                               log_group,
@@ -291,6 +293,7 @@ def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config
     # get datasets in target account
     targetds = qu.data_sets(target_ses)
     # already_migrated record the datasets ids of target account
+    # todo: move already_migrated_ds to deployment config
     already_migrated_ds = []
     for ds in targetds:
         already_migrated_ds.append(ds['DataSetId'])
@@ -326,8 +329,35 @@ def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config
             deployment_config['dataset_fail_list'].append({"DataSetId": source_dataset_ID, "Name": name, "Error": str(e)})
             return
 
+def migrate_theme(source_theme_ID, source_ses, target_ses, deployment_config):
+    if source_theme_ID in default_themes:
+        return
+    try:
+        res = qu.describe_theme(source_ses, source_theme_ID)
+    except Exception:
+        deployment_config['theme_fail_list'].append({"Theme": source_theme_ID, "Error": str(Exception)})
+        return
+    THEMEID = deployment_config['get_target_theme_id_func'](res['Theme']['ThemeId'])
+    Name = res['Theme']['Name']
+    BaseThemeId = res['Theme']['Version']['BaseThemeId']
+    Configuration = res['Theme']['Version']['Configuration']
+    try:
+        if source_theme_ID not in deployment_config['already_migrated_theme']:
+            newtheme = qu.create_theme(target_ses, THEMEID, Name, BaseThemeId, Configuration)
+        else:
+            newtheme = qu.update_theme(target_ses, THEMEID, Name, BaseThemeId, Configuration)
+        deployment_config['theme_new_list'].append(newtheme)
+    except Exception as e:
+        # print('failed: '+str(e))
+        deployment_config['theme_fail_list'].append({"ThemeID": THEMEID, "Name": Name, "Error": str(e)})
+        return
+    try:
+        qu.update_theme_permissions(target_ses, THEMEID, deployment_config['target_permission']['themepermission'][0]['Principal'])
+    except Exception as e:
+        # print('failed: '+str(e))
+        deployment_config['theme_fail_list'].append({"ThemeID": THEMEID, "Name": Name, "Error": str(e)})
 
-
+'''
 def migrate_themes(now, account_id, env, package, target_session, dir, logs, log_group, error_log, success_log):
     faillist = []
     newthemeslist = []
@@ -395,7 +425,7 @@ def migrate_themes(now, account_id, env, package, target_session, dir, logs, log
 
     return faillist
 
-
+'''
 def migrate_dashboards(now, account_id, package, target_session, region, dir, namespace, namespace_name, logs,
                        log_group, error_log, success_log):
     success = []

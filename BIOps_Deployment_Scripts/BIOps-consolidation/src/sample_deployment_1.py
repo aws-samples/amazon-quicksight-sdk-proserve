@@ -181,7 +181,13 @@ target_permission: Dict[str, Any] = {
                 'quicksight:CancelIngestion'
             ]
         }
+    ],
+    "themepermission": [
+        {
+            'Principal': targetadmin
+        }
     ]
+
 }
 
 ##############################################################################################################
@@ -284,12 +290,18 @@ def get_target_data_source_id(data_source_id):
         logger.error('Unable to find matching data source')
         raise
 
+
+def get_target_theme_id(source_theme_id):
+    target_theme_id = source_theme_id
+
+
 deployment_config = {
     "get_target_id_func": get_target_id,
     "get_target_dashboard_id_func": get_target_dashboard_id,
     "get_target_dashboard_name_func": get_target_dashboard_name,
     "get_target_placeholder_func": get_target_placeholder,
     "get_target_data_source_id_func": get_target_data_source_id,
+    "get_target_theme_id_func": get_target_theme_id,
     "target_permission": target_permission,
     "source_account_id": sourceaccountid,
     "target_account_id": targetaccountid
@@ -369,7 +381,7 @@ if same_account_migration is False:
     #get themes which already migrated
     targetthemes=qu.themes(targetsession)
     #already_migrated record the datasets ids of target account
-    already_migrated=[]
+    already_migrated = []
     for th in targetthemes:
         already_migrated.append(th['ThemeId'])
     #already_migrated
@@ -378,32 +390,14 @@ if same_account_migration is False:
     faillist=[]
     sts_client = targetsession.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
+
+    deployment_config['already_migrated_theme'] = already_migrated
+    deployment_config['theme_fail_list'] = faillist
+    deployment_config['theme_new_list'] = newthemeslist
+
     for themeID in theme_migrate_list:
-        try:
-            res = qu.describe_theme(sourcesession, themeID)
-        except Exception:
-            faillist.append({"Theme": themeID, "Error": str(Exception)})
-            continue
-        THEMEID=res['Theme']['ThemeId']
-        Name=res['Theme']['Name']
-        BaseThemeId=res['Theme']['Version']['BaseThemeId']
-        Configuration=res['Theme']['Version']['Configuration']
-        try:
-            if themeID not in already_migrated:
-                newtheme = qu.create_theme(targetsession,THEMEID, Name,BaseThemeId,Configuration)
-            else:
-                newtheme = qu.update_theme(targetsession, THEMEID, Name, BaseThemeId, Configuration)
-            newthemeslist.append(newtheme)
-        except Exception as e:
-            #print('failed: '+str(e))
-            faillist.append({"ThemeID": THEMEID, "Name": Name, "Error": str(e)})
-            continue
-        try:
-            qu.update_theme_permissions(targetsession, THEMEID, targetadmin)
-        except Exception as e:
-            #print('failed: '+str(e))
-            faillist.append({"ThemeID": THEMEID, "Name": Name, "Error": str(e)})
-            continue
+        du.migrate_theme(themeID, sourcesession, targetsession, deployment_config)
+        continue
 
     logger.info('Successfully migrated themes: %s', newthemeslist)
     logger.info('failed to migrate themes: %s', faillist)
