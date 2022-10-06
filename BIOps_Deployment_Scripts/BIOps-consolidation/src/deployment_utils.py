@@ -36,16 +36,16 @@ def validate_folder_hierarchy(now, dic, package, namespace, folderID, region, ac
         subfolders = dic[folder]
         try:
             qu.search_folders(target_session, folderarn + folderID)
-            qu.log_events_to_cloudwatch(
-                {"account_id": accountid, "package": package, "deployment_time": now, "namespace": namespace,
-                 "folder_id": folderID,
-                 "success": "FolderID: " + folderID + " exists"}, logs,
-                log_group, success_log)
+            # qu.log_events_to_cloudwatch(
+            #     {"account_id": accountid, "package": package, "deployment_time": now, "namespace": namespace,
+            #      "folder_id": folderID,
+            #      "success": "FolderID: " + folderID + " exists"}, logs,
+            #     log_group, success_log)
         except Exception as e:
             message = {"account_id": accountid, "package": package, "deployment_time": now, "namespace": namespace,
                        "folder_id": folderID, "error": str(e)}
             faillist.append(message)
-            qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
+            # qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
             folderID = folderID.replace('-' + folder, "")
             continue
         if isinstance(subfolders, dict):
@@ -236,8 +236,8 @@ def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config
             return
 
         # migrate the rls dataset to target
-        migrate_dataset(rls_id, source_ses, target_ses)
-        deployment_config['already_migrated_dataset'].append(deployment_config["get_target_id_func"](rls_id))
+        migrate_dataset(rls_id, source_ses, target_ses,deployment_config)
+        deployment_config['already_migrated_ds'].append(deployment_config["get_target_id_func"](rls_id))
 
         RowLevelPermissionDataSet = res['DataSet']['RowLevelPermissionDataSet']
         RowLevelPermissionDataSet['Arn'] = deployment_config["get_target_id_func"](RowLevelPermissionDataSet['Arn']).\
@@ -290,17 +290,7 @@ def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config
     else:
         DataSetUsageConfiguration = None
 
-    # get datasets in target account
-    targetds = qu.data_sets(target_ses)
-    # already_migrated record the datasets ids of target account
-    # todo: move already_migrated_ds to deployment config
-    already_migrated_ds = []
-    for ds in targetds:
-        already_migrated_ds.append(ds['DataSetId'])
-    # print(already_migrated)
-    # print(get_target_id(source_dataset_ID))
-
-    if deployment_config["get_target_id_func"](source_dataset_ID) not in already_migrated_ds:
+    if deployment_config["get_target_id_func"](source_dataset_ID) not in deployment_config["already_migrated_ds"]:
         logger.info('creating new dataset: %s', deployment_config["get_target_id_func"](source_dataset_ID))
         try:
             newdataset = qu.create_dataset(target_ses, deployment_config["get_target_id_func"](source_dataset_ID), deployment_config["get_target_id_func"](name), PT, LT,
@@ -315,17 +305,17 @@ def migrate_dataset(source_dataset_ID, source_ses, target_ses, deployment_config
             deployment_config['dataset_fail_list'].append({"DataSetId": source_dataset_ID, "Name": name, "Error": str(e)})
             return
 
-    if deployment_config["get_target_id_func"](source_dataset_ID) in already_migrated_ds:
+    if deployment_config["get_target_id_func"](source_dataset_ID) in deployment_config["already_migrated_ds"]:
         logger.info('updating already migrated dataset: %s', deployment_config["get_target_id_func"](source_dataset_ID))
         try:
             newdataset = qu.update_dataset(target_ses, deployment_config["get_target_id_func"](source_dataset_ID), deployment_config["get_target_id_func"](name), PT, LT,
                                         res['DataSet']['ImportMode'], ColumnGroups, RowLevelPermissionDataSet,
                                            RowLevelPermissionTagConfiguration,
                                            FieldFolders, ColumnLevelPermissionRules, DataSetUsageConfiguration)
-            # print("update dataset: ", newdataset)
+            print("update dataset: ", newdataset)
             deployment_config['dataset_new_list'].append(deployment_config["get_target_id_func"](source_dataset_ID))
         except Exception as e:
-            # print('failed: ' + str(e))
+            print('failed: ' + str(e))
             deployment_config['dataset_fail_list'].append({"DataSetId": source_dataset_ID, "Name": name, "Error": str(e)})
             return
 
@@ -437,13 +427,12 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                 res = json.load(f)
             message = {"account_id": account_id, "package": package, "deployment_time": now, "dir_file": dashboard_path,
                        "success": dashboard_path + " loaded successfully"}
-            qu.log_events_to_cloudwatch(message, logs, log_group,
-                                     success_log)
+            #qu.log_events_to_cloudwatch(message, logs, log_group,success_log)
         except Exception:
             message = {"account_id": account_id, "package": package, "deployment_time": now, "dir_file": dashboard_path,
                        "error": str(Exception)}
             faillist.append(message)
-            qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
+            #qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
             continue
 
         sourcedid = res['Dashboard']['DashboardId']
@@ -476,12 +465,12 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                                                     'ENABLED', 'ENABLED', 'COLLAPSED', ('VersionDescription', '1'),
                                                     ('ThemeArn', TargetThemeArn), namespace_name)
                     print(newdashboard)
-                    qu.log_events_to_cloudwatch(
-                        {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
-                         "hashed_namespace": namespace_name, "asset_type": "Dashboards",
-                         "asset_guid": targettid, "asset_name": targettname,
-                         "success": "Dashboard: " + targettid + " is successfully created"}, logs, log_group,
-                        success_log)
+                    # qu.log_events_to_cloudwatch(
+                    #     {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
+                    #      "hashed_namespace": namespace_name, "asset_type": "Dashboards",
+                    #      "asset_guid": targettid, "asset_name": targettname,
+                    #      "success": "Dashboard: " + targettid + " is successfully created"}, logs, log_group,
+                    #     success_log)
                 except Exception as e:
                     message = {"account_id": account_id,
                                "package": package,
@@ -494,7 +483,7 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                                "asset_name": targettname,
                                "error": str(e)}
                     faillist.append(message)
-                    qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
+                    #qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
                     continue
             else:
                 message = {"account_id": account_id,
@@ -508,7 +497,7 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                            "asset_name": targettname,
                            "error": str(dashboard)}
                 faillist.append(message)
-                qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
+                #qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
                 continue
         elif dashboard['Dashboard']['Version']['Status'] == "CREATION_FAILED":
             try:
@@ -517,12 +506,12 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                 newdashboard = qu.create_dashboard(target_session, targettid, sourcedid, targettname, res,
                                                 'ENABLED', 'ENABLED', 'COLLAPSED', ('VersionDescription', '1'),
                                                 ('ThemeArn', TargetThemeArn), namespace_name)
-                qu.log_events_to_cloudwatch(
-                    {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
-                     "hashed_namespace": namespace_name, "asset_type": "Dashboards",
-                     "asset_guid": targettid, "asset_name": targettname,
-                     "success": "Dashboard: " + targettid + " is successfully created"}, logs, log_group,
-                    success_log)
+                # qu.log_events_to_cloudwatch(
+                #     {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
+                #      "hashed_namespace": namespace_name, "asset_type": "Dashboards",
+                #      "asset_guid": targettid, "asset_name": targettname,
+                #      "success": "Dashboard: " + targettid + " is successfully created"}, logs, log_group,
+                #     success_log)
             except Exception as e:
                 message = {
                     "account_id": account_id,
@@ -536,7 +525,7 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                     "asset_name": targettname,
                     "error": str(e)}
                 faillist.append(message)
-                qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
+                #qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
                 continue
 
         else:
@@ -546,12 +535,12 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                 newdashboard = qu.create_dashboard(target_session, targettid, sourcedid, targettname, res,
                                                 'ENABLED', 'ENABLED', 'COLLAPSED', ('VersionDescription', '1'),
                                                 ('ThemeArn', TargetThemeArn), namespace_name)
-                qu.log_events_to_cloudwatch(
-                    {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
-                     "hashed_namespace": namespace_name, "asset_type": "Dashboards",
-                     "asset_guid": targettid, "asset_name": targettname,
-                     "success": "Dashboard: " + targettid + " is successfully created"}, logs, log_group,
-                    success_log)
+                # qu.log_events_to_cloudwatch(
+                #     {"account_id": account_id, "package": package, "deployment_time": now, "namespace": namespace,
+                #      "hashed_namespace": namespace_name, "asset_type": "Dashboards",
+                #      "asset_guid": targettid, "asset_name": targettname,
+                #      "success": "Dashboard: " + targettid + " is successfully created"}, logs, log_group,
+                #     success_log)
             except Exception as e:
                 faillist.append({
                     "account_id": account_id,
@@ -581,7 +570,7 @@ def migrate_dashboards(now, account_id, package, target_session, region, dir, na
                            "namespace": namespace, "hashed_namespace": namespace_name, "asset_type": "Dashboards",
                            "error_type": "Dashboard Creation Status is not Successful", "dashboard": res}
                 faillist.append(message)
-                qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
+                #qu.log_events_to_cloudwatch(message, logs, log_group, error_log)
     return faillist
 
 

@@ -1,4 +1,6 @@
-import deployment_utils as du
+# test case
+# migrate one dataset across account: success
+# migrate one dataset with use based RLS across account: success
 import boto3
 import time
 import json
@@ -24,8 +26,8 @@ datasetID = '5813ee12-2c1e-481a-8d8a-3ad8a3443ca9'
 sourceaccountid = '841207543475'
 # source_role_name = '<execution role for the source account>'
 source_aws_region = 'us-east-1'
-source_folder_name = 'Staging'
-source_folder_ID = '05b880a9-fa54-4835-bff6-fb5f040b45c3'
+#source_folder_name = 'Staging'
+#source_folder_ID = '05b880a9-fa54-4835-bff6-fb5f040b45c3'
 # source_staging_folder_name = 'Staging'
 # source_staging_folder_ID = '05b880a9-fa54-4835-bff6-fb5f040b45c3'
 source_is_dev = False # analysis exists in dev folder
@@ -120,21 +122,18 @@ def get_target_placeholder(placeholder):
         if target_is_main:
             target_placeholder = re.sub(r'-[A-Z]+', '', placeholder)
         else:
-            target_placeholder = re.sub(r'-[A-Z]+', '', placeholder) + '-' + target_folder_name
+            target_placeholder = re.sub(r'-[A-Z]+', '', placeholder) + '-'
     else:
-        if source_folder_name != 'DEV':
-            target_placeholder = placeholder.replace(('-' + source_folder_name), '')
-        else:
-            target_placeholder = placeholder
+        target_placeholder = placeholder
     return target_placeholder
 
 
-# data source naming convention: name-DEV, name-UAT, name-PROD
+
 def get_target_data_source_id(data_source_id):
     try:
         res = qu.describe_data_source(sourcesession, data_source_id)
         source_name = res['DataSource']['Name']
-        target_name = source_name.replace(('-' + source_folder_name), '')
+        target_name = source_name
         logger.info('target data source name is: %s', target_name)
         target_datasource = qu.get_datasource_ids(target_name, targetsession)
         target_data_source_id = target_datasource[0]
@@ -147,6 +146,13 @@ def get_target_data_source_id(data_source_id):
         raise
 
 # Get already migrated datasets list
+# get datasets in target account
+targetds = qu.data_sets(targetsession)
+# already_migrated record the datasets ids of target account
+already_migrated_ds = []
+for ds in targetds:
+    already_migrated_ds.append(ds['DataSetId'])
+
 
 faillist=[]
 newlist=[]
@@ -159,7 +165,7 @@ deployment_config = {
     "target_permission": target_permission,
     "source_account_id": sourceaccountid,
     "target_account_id": targetaccountid,
-    #'already_migrated_dataset': already_migrated_ds,
+    'already_migrated_ds': already_migrated_ds,
     'dataset_fail_list' : faillist,
     'dataset_new_list': newlist
 }
