@@ -84,7 +84,7 @@
           "TableType": "EXTERNAL_TABLE"
         }
       }
-    },
+},
       "objectaccess": {"Type": "AWS::Glue::Table",
   "Properties": {
     "CatalogId": {
@@ -307,6 +307,373 @@
   "TableType": "EXTERNAL_TABLE"
 }
 }
+},
+      "datadict": {"Type": "AWS::Glue::Table",
+"Properties": {
+"CatalogId": {
+"Ref": "AWS::AccountId"
+},
+"DatabaseName": {"Ref": "adminconsoledb"},
+"TableInput": {
+"Description": "data dictionry",
+"Name": "data_dict",
+"Parameters": {
+"classification": "csv"
+},
+"StorageDescriptor": {
+"Columns": [
+{
+  "Comment": "datasetname",
+  "Name": "datasetname",
+  "Type": "string"
+},
+{
+  "Comment": "datasetid",
+  "Name": "datasetid",
+  "Type": "string"
+},
+{
+  "Comment": "columnname",
+  "Name": "columnname",
+  "Type": "string"
+},
+{
+  "Comment": "columntype",
+  "Name": "columntype",
+  "Type": "string"
+},
+{
+  "Comment": "columndesc",
+  "Name": "columndesc",
+  "Type": "string"
 }
+],
+"Compressed": false,
+            "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+            "Location": "value of datadict in Lambda stack",
+            "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+            "SerdeInfo": {
+              "Parameters": {
+                "field.delim": ","
+              },
+              "SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+            },
+            "StoredAsSubDirectories": false
+          },
+          "TableType": "EXTERNAL_TABLE"
+}
+}
+},
+      "datasetsinfo": {"Type": "AWS::Glue::Table",
+"Properties": {
+"CatalogId": {
+"Ref": "AWS::AccountId"
+},
+"DatabaseName": {"Ref": "adminconsoledb"},
+"TableInput": {
+"Description": "datasets info",
+"Name": "datasets_info",
+"Parameters": {
+"classification": "csv"
+},
+"StorageDescriptor": {
+"Columns": [
+{
+  "Comment": "aws_region",
+  "Name": "aws_region",
+  "Type": "string"
+},
+{
+  "Comment": "dashboard_name",
+  "Name": "dashboard_name",
+  "Type": "string"
+},
+{
+  "Comment": "dashboardid",
+  "Name": "dashboardid",
+  "Type": "string"
+},
+{
+  "Comment": "analysis",
+  "Name": "analysis",
+  "Type": "string"
+},
+{
+  "Comment": "analysis_id",
+  "Name": "analysis_id",
+  "Type": "string"
+},
+{
+  "Comment": "dataset_name",
+  "Name": "dataset_name",
+  "Type": "string"
+},
+{
+  "Comment": "dataset_id",
+  "Name": "dataset_id",
+  "Type": "string"
+},
+{
+  "Comment": "lastupdatedtime",
+  "Name": "lastupdatedtime",
+  "Type": "string"
+},
+{
+  "Comment": "data_source_name",
+  "Name": "data_source_name",
+  "Type": "string"
+},
+{
+  "Comment": "data_source_id",
+  "Name": "data_source_id",
+  "Type": "string"
+},
+{
+  "Comment": "catalog",
+  "Name": "catalog",
+  "Type": "string"
+},
+{
+  "Comment": "sqlname/schema",
+  "Name": "sqlname/schema",
+  "Type": "string"
+},
+{
+  "Comment": "sqlquery/table_name",
+  "Name": "sqlquery/table_name",
+  "Type": "string"
+}
+],
+"Compressed": false,
+            "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+            "Location": "value of dataset info in Lambda stack",
+            "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+            "SerdeInfo": {
+              "Parameters": {
+                "field.delim": ","
+              },
+              "SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+            },
+            "StoredAsSubDirectories": false
+          },
+          "TableType": "EXTERNAL_TABLE"
+}
+}
+},
+      "datasetsanalysisvisual": {"Type": "AWS::Glue::Table",
+"Properties": {
+"CatalogId": {
+"Ref": "AWS::AccountId"
+},
+"DatabaseName": {"Ref": "adminconsoledb"},
+"TableInput": {
+"Description": "datasets_analysis_visual",
+"Name": "datasets_analysis_visual",
+"Parameters": {
+"classification": "csv"
+},
+"StorageDescriptor": {
+"Columns": [
+{
+  "Comment": "analysisid",
+  "Name": "analysisid",
+  "Type": "string"
+},
+{
+  "Comment": "sheet_id",
+  "Name": "sheet_id",
+  "Type": "string"
+},
+{
+  "Comment": "visual_id",
+  "Name": "visual_id",
+  "Type": "string"
+},
+{
+  "Comment": "datasetid",
+  "Name": "datasetid",
+  "Type": "string"
+}
+],
+"Compressed": false,
+            "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+            "Location": "value of datasetsanalysisvisual in Lambda stack",
+            "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+            "SerdeInfo": {
+              "Parameters": {
+                "field.delim": ","
+              },
+              "SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+            },
+            "StoredAsSubDirectories": false
+          },
+          "TableType": "EXTERNAL_TABLE"
+}
+}
+},
+      "datasetsdashboardvisual": {"Type": "AWS::Glue::Table",
+"Properties": {
+"CatalogId": {
+"Ref": "AWS::AccountId"
+},
+"DatabaseName": {"Ref": "adminconsoledb"},
+"TableInput": {
+"Description": "datasets_dashboard_visual",
+"Name": "datasets_dashboard_visual",
+"Parameters": {
+"classification": "csv"
+},
+"StorageDescriptor": {
+"Columns": [
+{
+  "Comment": "dashboardid",
+  "Name": "dashboardid",
+  "Type": "string"
+},
+{
+  "Comment": "sheet_id",
+  "Name": "sheet_id",
+  "Type": "string"
+},
+{
+  "Comment": "visual_id",
+  "Name": "visual_id",
+  "Type": "string"
+},
+{
+  "Comment": "datasetid",
+  "Name": "datasetid",
+  "Type": "string"
+}
+],
+"Compressed": false,
+            "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+            "Location": "value of datasets_dashboard_visual in Lambda stack",
+            "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+            "SerdeInfo": {
+              "Parameters": {
+                "field.delim": ","
+              },
+              "SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+            },
+            "StoredAsSubDirectories": false
+          },
+          "TableType": "EXTERNAL_TABLE"
+}
+}
+},
+      "visualloadcount": {"Type": "AWS::Glue::Table",
+"Properties": {
+"CatalogId": {
+"Ref": "AWS::AccountId"
+},
+"DatabaseName": {"Ref": "adminconsoledb"},
+"TableInput": {
+"Description": "visual_load_count",
+"Name": "visual_load_count",
+"Parameters": {
+"classification": "csv"
+},
+"StorageDescriptor": {
+"Columns": [
+{
+  "Comment": "time_stamp",
+  "Name": "time_stamp",
+  "Type": "integer"
+},
+{
+  "Comment": "dashboardid",
+  "Name": "dashboardid",
+  "Type": "string"
+},
+{
+  "Comment": "sheetid",
+  "Name": "sheetid",
+  "Type": "string"
+},
+{
+  "Comment": "visualid",
+  "Name": "visualid",
+  "Type": "string"
+},
+{
+  "Comment": "count_visual_load_time",
+  "Name": "count_visual_load_time",
+  "Type": "double"
+}
+],
+"Compressed": false,
+            "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+            "Location": "value of visual_load_count in Lambda stack",
+            "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+            "SerdeInfo": {
+              "Parameters": {
+                "field.delim": ","
+              },
+              "SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+            },
+            "StoredAsSubDirectories": false
+          },
+          "TableType": "EXTERNAL_TABLE"
+}
+}
+},
+      "visualloadtime": {"Type": "AWS::Glue::Table",
+"Properties": {
+"CatalogId": {
+"Ref": "AWS::AccountId"
+},
+"DatabaseName": {"Ref": "adminconsoledb"},
+"TableInput": {
+"Description": "visual_load_time",
+"Name": "visual_load_time",
+"Parameters": {
+"classification": "csv"
+},
+"StorageDescriptor": {
+"Columns": [
+{
+  "Comment": "time_stamp",
+  "Name": "time_stamp",
+  "Type": "integer"
+},
+{
+  "Comment": "dashboardid",
+  "Name": "dashboardid",
+  "Type": "string"
+},
+{
+  "Comment": "sheetid",
+  "Name": "sheetid",
+  "Type": "string"
+},
+{
+  "Comment": "visualid",
+  "Name": "visualid",
+  "Type": "string"
+},
+{
+  "Comment": "avg_visual_load_time",
+  "Name": "avg_visual_load_time",
+  "Type": "double"
+}
+],
+"Compressed": false,
+            "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+            "Location": "value of visualloadtime in Lambda stack",
+            "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+            "SerdeInfo": {
+              "Parameters": {
+                "field.delim": ","
+              },
+              "SerializationLibrary": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+            },
+            "StoredAsSubDirectories": false
+          },
+          "TableType": "EXTERNAL_TABLE"
+}
+}
+}
+
     }
 }
