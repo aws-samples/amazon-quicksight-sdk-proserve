@@ -697,7 +697,7 @@
         ],
         "SourceEntity": {
           "SourceTemplate": {
-            "Arn": "arn:aws:quicksight:us-east-1:889399602426:template/Admin-Console-Public-CFN-Template",
+            "Arn": "arn:aws:quicksight:us-east-1:079531517712:template/Admin-Console-Public-CFN-Template",
             "DataSetReferences": [
               {
                 "DataSetArn": {
@@ -722,6 +722,18 @@
                   "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/Admin-Console-dataset-info"
                 },
                 "DataSetPlaceholder": "Admin-Console-dataset-info"
+              },
+              {
+                "DataSetArn": {
+                  "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/05ef22a6-6854-4fe9-bbd5-41893defbb7e"
+                },
+                "DataSetPlaceholder": "Admin-Console-dashboard-visual-load-time"
+              },
+              {
+                "DataSetArn": {
+                  "Fn::Sub": "arn:aws:quicksight:${AWS::Region}:${AWS::AccountId}:dataset/4b632c32-5179-441e-9274-ad5645ccf07d"
+                },
+                "DataSetPlaceholder": "Admin-Console-analysis-usage"
               }
             ]
           }
