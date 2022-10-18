@@ -38,7 +38,7 @@ def lambda_handler(event, context):
     quicksight_user_arn = os.getenv('QUICKSIGHT_USER_ARN')
 
     try:
-        qs_client = boto3.client('quicksight', region_name='us-east-1', config=default_botocore_config())
+        qs_client = boto3.client('quicksight', config=default_botocore_config())
 
         response = qs_client.get_dashboard_embed_url(
             AwsAccountId=account_id,

@@ -84,7 +84,7 @@ def get_secret(session, secret_name):
             decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
             return decoded_binary_secret
 
-def get_user_arn(session, username, region='us-east-1', namespace='default'):
+def get_user_arn(session, username, region, namespace='default'):
     sts_client = session.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
     if username == 'root':
@@ -95,7 +95,7 @@ def get_user_arn(session, username, region='us-east-1', namespace='default'):
 
 def get_target(
     targetsession, rds, redshift, s3Bucket, s3Key, vpc, tag, targetadmin,
-    rdscredential,redshiftcredential, region='us-east-1', namespace='default',
+    rdscredential,redshiftcredential, region, namespace='default',
     version='1'):
     sts_client = targetsession.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]

@@ -79,7 +79,7 @@ class QuicksightEmbedStack(core.Stack):
             memory_size=512,
             environment={
                 'DASHBOARD_ID': 'CHANGEME_DASHBOARD_ID',
-                'QUICKSIGHT_USER_ARN': f'arn:aws:quicksight:us-east-1:{core.Aws.ACCOUNT_ID}:user/default/quicksight-migration-user'
+                'QUICKSIGHT_USER_ARN': f'arn:aws:quicksight:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:user/default/quicksight-migration-user'
             }
         )
 
