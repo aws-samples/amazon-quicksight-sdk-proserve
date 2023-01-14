@@ -6,6 +6,7 @@ import io
 import os
 import tempfile
 from typing import Any, Callable, Dict, List, Optional, Union
+import time
 
 import botocore
 
@@ -43,14 +44,18 @@ def lambda_handler(event, context):
     s3 = boto3.resource('s3')
     bucketname = 'admin-console' + account_id
     bucket = s3.Bucket(bucketname)
-
-    key = 'monitoring/quicksight/datsets_info/datsets_info.csv'
-    key2 = 'monitoring/quicksight/datsets_ingestion/datsets_ingestion.csv'
+    now = int(time.time())
+    key = 'monitoring/quicksight/datasets_info/dataset_info.csv'
+    key2 = 'monitoring/quicksight/dataset_attributes/dataset_attributes_' + str(now) + '.csv'
     key3 = 'monitoring/quicksight/data_dictionary/data_dictionary.csv'
+    key4 = 'monitoring/quicksight/datasets_dashboard_visual/datasets_dashboard_visual.csv'
+    key5 = 'monitoring/quicksight/datasets_analysis_visual/datasets_analysis_visual.csv'
     tmpdir = tempfile.mkdtemp()
     local_file_name = 'datsets_info.csv'
-    local_file_name2 = 'datsets_ingestion.csv'
+    local_file_name2 = 'dataset_attributes_' + str(now) + '.csv'
     local_file_name3 = 'data_dictionary.csv'
+    local_file_name4 = 'datasets_dashboard_visual.csv'
+    local_file_name5 = 'datasets_analysis_visual.csv'
     path = os.path.join(tmpdir, local_file_name)
     # print(path)
 
@@ -60,15 +65,26 @@ def lambda_handler(event, context):
     path3 = os.path.join(tmpdir, local_file_name3)
     # print(path3)
 
-    access = []
+    path4 = os.path.join(tmpdir, local_file_name4)
+    # print(path4)
 
-    data_dictionary = []
+    path5 = os.path.join(tmpdir, local_file_name5)
+    # print(path5)
+
+    dataset_info = []  # dataset - dashboard level for datasets that are used in dashboards only
+    dataset_attributes = []  # dataset level for all datasets - timestamp - level: datasetname, dsid, SpiceSize, ImportMode, LastUpdatedTime, now
+    data_dictionary = []  # dataset - column level for all datasets
+    datasets_dashboard_visual = []  # dashboardid, sheet_id, visual_id, visual_type, datasetId
+    datasets_analysis_visual = []  # analysisid, sheet_id, visual_id, visual_type, datasetId
+
+
 
     dashboards = list_dashboards(account_id, lambda_aws_region)
+    analyses = list_analyses(account_id, lambda_aws_region)
+
 
     for dashboard in dashboards:
         dashboardid = dashboard['DashboardId']
-
         response = describe_dashboard(account_id, dashboardid, lambda_aws_region)
         Dashboard = response['Dashboard']
         Name = Dashboard['Name']
@@ -96,15 +112,18 @@ def lambda_handler(event, context):
             try:
                 dataset = describe_data_set(account_id, dsid, lambda_aws_region)
                 dsname = dataset['DataSet']['Name']
-                print(dsname)
+                # print(dsname)
                 LastUpdatedTime = dataset['DataSet']['LastUpdatedTime']
-                print(LastUpdatedTime)
+                # print(LastUpdatedTime)
                 PhysicalTableMap = dataset['DataSet']['PhysicalTableMap']
-                print(PhysicalTableMap)
+                # print(PhysicalTableMap)
+                SpiceSize = dataset['DataSet']['ConsumedSpiceCapacityInBytes']
+                # print(SpiceSize)
+                ImportMode = dataset['DataSet']['ImportMode']
                 for sql in PhysicalTableMap:
                     # print(sql)
                     sql = PhysicalTableMap[sql]
-                    print(sql)
+                    # print(sql)
                     if 'RelationalTable' in sql:
                         DataSourceArn = sql['RelationalTable']['DataSourceArn']
                         DataSourceid = DataSourceArn.split("/")
@@ -115,10 +134,9 @@ def lambda_handler(event, context):
                         Schema = sql['RelationalTable']['Schema']
                         sqlName = sql['RelationalTable']['Name']
 
-                        access.append(
-                            [lambda_aws_region, Name, dashboardid, SourceName, Sourceid, dsname, dsid, LastUpdatedTime,
+                        dataset_info.append(
+                            [lambda_aws_region, Name, dashboardid, SourceName, Sourceid, dsname, dsid, LastUpdatedTime, SpiceSize, ImportMode,
                              datasourcename, DataSourceid, Catalog, Schema, sqlName])
-                        print(access)
 
                     if 'CustomSql' in sql:
                         DataSourceArn = sql['CustomSql']['DataSourceArn']
@@ -129,10 +147,9 @@ def lambda_handler(event, context):
                         SqlQuery = sql['CustomSql']['SqlQuery'].replace("\n", " ")
                         sqlName = sql['CustomSql']['Name']
 
-                        access.append(
-                            [lambda_aws_region, Name, dashboardid, SourceName, Sourceid, dsname, dsid, LastUpdatedTime,
+                        dataset_info.append(
+                            [lambda_aws_region, Name, dashboardid, SourceName, Sourceid, dsname, dsid, LastUpdatedTime, SpiceSize, ImportMode,
                              datasourcename, DataSourceid, 'N/A', sqlName, SqlQuery])
-                    print(access)
 
             except Exception as e:
                 if str(e).find('flat file'):
@@ -141,11 +158,9 @@ def lambda_handler(event, context):
                     raise e
 
 
-
-    print(access)
     with open(path, 'w', newline='') as outfile:
         writer = csv.writer(outfile, delimiter='|')
-        for line in access:
+        for line in dataset_info:
             writer.writerow(line)
     outfile.close()
     # upload file from tmp to s3 key
@@ -159,6 +174,9 @@ def lambda_handler(event, context):
             datasetname = item['Name']
             dataset_details = describe_data_set(account_id, dsid, lambda_aws_region)
             OutputColumns = dataset_details['DataSet']['OutputColumns']
+            LastUpdatedTime = dataset_details['DataSet']['LastUpdatedTime']
+            SpiceSize = dataset_details['DataSet']['ConsumedSpiceCapacityInBytes']
+            ImportMode = dataset_details['DataSet']['ImportMode']
             for column in OutputColumns:
                 columnname = column['Name']
                 columntype = column['Type']
@@ -169,13 +187,25 @@ def lambda_handler(event, context):
                 data_dictionary.append(
                     [datasetname, dsid, columnname, columntype, columndesc]
                 )
+            dataset_attributes.append(
+                [datasetname, dsid, SpiceSize, ImportMode, LastUpdatedTime, now]
+            )
         except Exception as e:
             if str(e).find('data set type is not supported'):
                 pass
             else:
                 raise e
 
-    print(data_dictionary)
+    # print(data_dictionary)
+    with open(path2, 'w', newline='') as outfile:
+        writer = csv.writer(outfile, delimiter=',')
+        for line in dataset_attributes:
+            writer.writerow(line)
+    outfile.close()
+    # upload file from tmp to s3 key
+    bucket.upload_file(path2, key2)
+
+    # print(data_dictionary)
     with open(path3, 'w', newline='') as outfile:
         writer = csv.writer(outfile, delimiter=',')
         for line in data_dictionary:
@@ -183,6 +213,67 @@ def lambda_handler(event, context):
     outfile.close()
     # upload file from tmp to s3 key
     bucket.upload_file(path3, key3)
+
+    for dashboard in dashboards:
+        dashboardid = dashboard['DashboardId']
+        try:
+            dashboard_def = describe_dashboard_definition(account_id, dashboardid, lambda_aws_region)
+            dashboard_name = dashboard_def['Name']
+            # print(dashboard_def)
+            for sheet in dashboard_def['Definition']['Sheets']:
+                sheet_id = sheet['SheetId']
+                sheet_name = sheet['Name']
+                for visual in sheet['Visuals']:
+                    visual_type = list(visual.keys())[0]
+                    visual_def = visual[visual_type]
+                    visual_id = visual_def['VisualId']
+                    dataset_identifier = search_key(visual_def, 'DataSetIdentifier')
+                    for DataSet in dashboard_def['Definition']['DataSetIdentifierDeclarations']:
+                        if dataset_identifier is not None and DataSet['Identifier'] == dataset_identifier:
+                            datasetId = DataSet['DataSetArn'].split('/')[-1]
+                            datasets_dashboard_visual.append([dashboardid, dashboard_name, sheet_id, sheet_name, visual_id, visual_type, datasetId])
+        except Exception as e:
+            print(e)
+            pass
+
+    with open(path4, 'w', newline='') as outfile:
+        writer = csv.writer(outfile, delimiter=',')
+        for line in datasets_dashboard_visual:
+            writer.writerow(line)
+    outfile.close()
+    # upload file from tmp to s3 key
+    bucket.upload_file(path4, key4)
+
+
+    for analysis in analyses:
+        analysisid = analysis['AnalysisId']
+        try:
+            analysis_def = describe_analysis_definition(account_id, analysisid, lambda_aws_region)
+            analysis_name = analysis_def['Name']
+            # print(analysis_def)
+            for sheet in analysis_def['Definition']['Sheets']:
+                sheet_id = sheet['SheetId']
+                sheet_name = sheet['Name']
+                for visual in sheet['Visuals']:
+                    visual_type = list(visual.keys())[0]
+                    visual_def = visual[visual_type]
+                    visual_id = visual_def['VisualId']
+                    dataset_identifier = search_key(visual_def, 'DataSetIdentifier')
+                    for DataSet in analysis_def['Definition']['DataSetIdentifierDeclarations']:
+                        if dataset_identifier is not None and DataSet['Identifier'] == dataset_identifier:
+                            datasetId = DataSet['DataSetArn'].split('/')[-1]
+                            datasets_analysis_visual.append([analysisid, analysis_name, sheet_id, sheet_name, visual_id, visual_type, datasetId])
+        except Exception as e:
+            print(e)
+            pass
+
+    with open(path5, 'w', newline='') as outfile:
+        writer = csv.writer(outfile, delimiter=',')
+        for line in datasets_analysis_visual:
+            writer.writerow(line)
+    outfile.close()
+    # upload file from tmp to s3 key
+    bucket.upload_file(path5, key5)
 
 
 
@@ -266,6 +357,23 @@ def describe_dashboard(account_id, dashboardid, aws_region):
 def describe_analysis(account_id, id, aws_region):
     qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
     res = qs_client.describe_analysis(
+        AwsAccountId=account_id,
+        AnalysisId=id
+    )
+    return res
+
+def describe_dashboard_definition(account_id, dashboardid, aws_region):
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
+    res = qs_client.describe_dashboard_definition(
+        AwsAccountId=account_id,
+        DashboardId=dashboardid
+    )
+    return res
+
+
+def describe_analysis_definition(account_id, id, aws_region):
+    qs_client = boto3.client('quicksight', region_name=aws_region, config=default_botocore_config())
+    res = qs_client.describe_analysis_definition(
         AwsAccountId=account_id,
         AnalysisId=id
     )
@@ -357,3 +465,20 @@ def describe_data_source_permissions(account_id, DataSourceId, aws_region):
         DataSourceId=DataSourceId
     )
     return res
+
+
+def search_key(dict_obj, key):
+    if type(dict_obj) is dict:
+        if key in dict_obj:
+            return dict_obj[key]
+        else:
+            for k in dict_obj:
+                res = search_key(dict_obj[k], key)
+                if res is not None:
+                    return res
+    elif type(dict_obj) is list:
+        for item in dict_obj:
+            res = search_key(item, key)
+            if res is not None:
+                return res
+    return None
