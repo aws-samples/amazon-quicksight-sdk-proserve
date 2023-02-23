@@ -1,0 +1,91 @@
+{
+  "inputContentType": "CSV",
+  "outputContentType": "CSV",
+  "input": [
+    {
+      "name": "Zipcode",
+      "type": "DECIMAL"
+    },
+    {
+      "name": "Total_Relationship_Count",
+      "type": "INTEGER"
+    },
+    {
+      "name": "Total Trans Amt",
+      "type": "INTEGER"
+    },
+    {
+      "name": "Total Revolving Bal",
+      "type": "INTEGER"
+    },
+    {
+        "name": "Total Open To Buy",
+        "type": "DECIMAL"
+    },
+    {
+        "name": "Tenure Year",
+        "type": "INTEGER"
+    },
+    {
+        "name": "Months Inactive 12M",
+        "type": "INTEGER"
+    },
+    {
+        "name": "Monthly Transaction",
+        "type": "INTEGER"
+    },
+    {
+        "name": "Marital_Status",
+        "type": "STRING"
+    },
+    {
+        "name": "Income Level",
+        "type": "STRING"
+    },
+    {
+        "name": "Gender",
+        "type": "STRING"
+    },
+    {
+        "name": "Education",
+        "type": "STRING"
+    },
+    {
+        "name": "Dependent",
+        "type": "INTEGER"
+    },
+    {
+        "name": "Credit Limit",
+        "type": "DECIMAL"
+    },
+    {
+        "name": "Contacts Count 12M",
+        "type": "INTEGER"
+    },
+    {
+        "name": "Client Number",
+        "type": "INTEGER"
+    },
+    {
+        "name": "Card Category",
+        "type": "STRING"
+    },
+    {
+        "name": "Age",
+        "type": "INTEGER"
+    }   
+],
+  "output": [
+    {
+      "name": "Status",
+      "type": "STRING"
+    }	
+  ],
+  "description": "description",
+  "version": "v1",
+  "instanceCount": 1,
+  "instanceTypes": [
+    "ml.m5.2xlarge"
+  ],
+  "defaultInstanceType": "ml.m5.2xlarge"
+}
