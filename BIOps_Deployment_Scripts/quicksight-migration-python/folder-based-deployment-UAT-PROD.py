@@ -43,7 +43,7 @@ Developer needs to delete or remove the older version dashboard manually.
 
 # source info
 sourceaccountid = '728932513184'
-# source_role_name = '<execution role for the source account>'
+source_role_name = '<execution role for the source account>'
 source_aws_region = 'us-east-1'
 source_folder_name = 'UAT'
 source_folder_ID = 'e3e52bbc-bffb-466f-80e2-279318e43f2f'
@@ -370,7 +370,7 @@ def migrate_dataset(source_dataset_ID, source_ses, target_ses):
         for key, value in PT.items():
             for k, v in value.items():
                 data_source_id = v['DataSourceArn'].split("/")[1]
-                v['DataSourceArn'] = 'arn:aws:quicksight:us-east-1:' + account_id + ':datasource/' + get_target_data_source_id(data_source_id)
+                v['DataSourceArn'] = 'arn:aws:quicksight:'+target_aws_region+':' + account_id + ':datasource/' + get_target_data_source_id(data_source_id)
     except Exception as e:
         faillist.append({"DataSetId": source_dataset_ID,
                          "Name": name,
@@ -859,8 +859,8 @@ def get_sheet_id_visual_id(dashboard_id):
         for visual in sheet['Visuals']:
             visual_def = list(visual.values())[0]
             visual_id = visual_def['VisualId']
-            if 'FormatText' in visual_def['Title'] and 'PlainText' in visual_def['Title']['FormatText']:
-                visual_name = visual_def['Title']['FormatText']['PlainText']
+            if 'FormatText' in visual_def['Title'] and ('PlainText' in visual_def['Title']['FormatText'] or 'RichText' in visual_def['Title']['FormatText']):
+                visual_name = visual_def['Title']['FormatText']['PlainText'] if 'PlainText' in visual_def['Title']['FormatText'] else 'PlainText' in visual_def['Title']['RichText']
                 sheet_id_visual_id.append(
                     {'Timestamp': now, 'DashboardId': dashboard_id, 'SheetId': sheet_id, 'SheetName': sheet_name, 'VisualId': visual_id, 'VisualName': visual_name}
                                           )
