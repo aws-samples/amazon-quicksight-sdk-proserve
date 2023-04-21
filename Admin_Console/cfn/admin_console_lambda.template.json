@@ -64,7 +64,7 @@
                     "Fn::Join": [
                         "",
                         [
-                            "admin-console",
+                            "admin-console-",
                             {
                                 "Ref": "AWS::AccountId"
                             }

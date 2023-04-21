@@ -1,9 +1,10 @@
 -- Admin-Console-CFN-Main
 SELECT COALESCE("d"."accountid", "l"."accountid")               "accountid"
-     , COALESCE("d"."user_name", "l"."username", "g"."user")    "user_name"
+     , COALESCE("d"."user_name", "l"."user_name", "g"."user")   "user_name"
      , "d"."awsregion"
      , "d"."dashboard_name"
-     , "d"."dashboardid"
+     , "d"."dashboardId"
+     , "d"."asset_type"
      , "d"."event_time"
      , "d"."latest_event_time"
      , "g"."namespace"
@@ -17,6 +18,26 @@ SELECT COALESCE("d"."accountid", "l"."accountid")               "accountid"
      , COALESCE("do1"."ownership", "do2"."ownership")           "ownership"
 FROM (((( (SELECT "useridentity"."accountid"
                 , "useridentity"."type"
+                , "split_part"("useridentity"."sessioncontext"."sessionissuer"."arn", '/', 2)    "assumed_role"
+                , COALESCE(cast(json_extract("requestparameters", '$.roleSessionName') as varchar),
+                           "concat"("split_part"("useridentity"."arn", '/', 2), '/',
+                                    "split_part"("useridentity"."arn", '/', 3)))                 "user_name"
+                , "awsregion"
+                , "split_part"("split_part"("serviceeventdetails", 'analysisName":', 2), ',', 1) "dashboard_name"
+                , "split_part"(
+            "split_part"("split_part"("split_part"("serviceeventdetails", 'analysisId":', 2), ',', 1), 'analysis/',
+                         2), '"}', 1)                                                            "dashboardId"
+                , 'analysis'                                                                     "asset_type"
+                , "date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ')                                "event_time"
+                , "max"("date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ'))                         "latest_event_time"
+           FROM "admin-console"."cloudtrail_logs"
+           WHERE ((("eventsource" = 'quicksight.amazonaws.com') AND ("eventname" = 'GetAnalysis')) AND
+                  ("date_trunc"('day', "date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ')) >
+                   CAST((current_date - INTERVAL '12' MONTH) AS date)))
+           GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9
+           union
+           SELECT "useridentity"."accountid"
+                , "useridentity"."type"
                 , "split_part"("useridentity"."sessioncontext"."sessionissuer"."arn", '/', 2)     "assumed_role"
                 , COALESCE(cast(json_extract("requestparameters", '$.roleSessionName') as varchar),
                            "concat"("split_part"("useridentity"."arn", '/', 2), '/',
@@ -24,36 +45,70 @@ FROM (((( (SELECT "useridentity"."accountid"
                 , "awsregion"
                 , "split_part"("split_part"("serviceeventdetails", 'dashboardName":', 2), ',', 1) "dashboard_name"
                 , "split_part"(
-            "split_part"("split_part"("split_part"("serviceeventdetails", 'dashboardId":', 2), ',', 1), 'dashboard/',
-                         2), '"}', 1)                                                             "dashboardId"
+                   "split_part"("split_part"("split_part"("serviceeventdetails", 'dashboardId":', 2), ',', 1),
+                                'dashboard/',
+                                2), '"}', 1)                                                      "dashboardId"
+                , 'dashboard'                                                                     "asset_type"
                 , "date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ')                                 "event_time"
                 , "max"("date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ'))                          "latest_event_time"
            FROM "admin-console"."cloudtrail_logs"
            WHERE ((("eventsource" = 'quicksight.amazonaws.com') AND ("eventname" = 'GetDashboard')) AND
                   ("date_trunc"('day', "date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ')) >
-                   CAST((current_date - INTERVAL '3' MONTH) AS date)))
-           GROUP BY 1, 2, 3, 4, 5, 6, 7, 8) d
+                   CAST((current_date - INTERVAL '12' MONTH) AS date)))
+           GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9) d
     FULL JOIN (
-        SELECT "username"
+        SELECT "user_name"
              , "accountid"
-             , "min"("eventtime") "firstlogin"
-             , "max"("eventtime") "lastlogin"
-        FROM (SELECT "eventtime"
+             , "min"("event_time") "firstlogin"
+             , "max"("event_time") "lastlogin"
+        FROM (SELECT "useridentity"."accountid"
+                   , "useridentity"."type"
+                   , "split_part"("useridentity"."sessioncontext"."sessionissuer"."arn", '/', 2)    "assumed_role"
+                   , COALESCE(cast(json_extract("requestparameters", '$.roleSessionName') as varchar),
+                              "concat"("split_part"("useridentity"."arn", '/', 2), '/',
+                                       "split_part"("useridentity"."arn", '/', 3)))                 "user_name"
                    , "awsregion"
-                   , "sourceipaddress"
-                   , "concat"("split_part"("split_part"("resources"[1]."arn", ':', 6), '/', 2), '/',
-                              cast(json_extract("requestparameters", '$.roleSessionName') as varchar)) "username"
-                   , "resources"[1]."accountid"                                                        "accountid"
+                   , "split_part"("split_part"("serviceeventdetails", 'analysisName":', 2), ',', 1) "dashboard_name"
+                   , "split_part"(
+                    "split_part"("split_part"("split_part"("serviceeventdetails", 'analysisId":', 2), ',', 1),
+                                 'analysis/',
+                                 2), '"}', 1)                                                       "dashboardId"
+                   , 'analysis'                                                                     "asset_type"
+                   , "date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ')                                "event_time"
+                   , "max"("date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ'))                         "latest_event_time"
               FROM "admin-console"."cloudtrail_logs"
-              WHERE ("eventname" = 'AssumeRoleWithSAML')
-              GROUP BY 1, 2, 3, 4, 5) sub1
+              WHERE ((("eventsource" = 'quicksight.amazonaws.com') AND ("eventname" = 'GetAnalysis')) AND
+                     ("date_trunc"('day', "date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ')) >
+                      CAST((current_date - INTERVAL '12' MONTH) AS date)))
+              GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9
+              union
+              SELECT "useridentity"."accountid"
+                   , "useridentity"."type"
+                   , "split_part"("useridentity"."sessioncontext"."sessionissuer"."arn", '/', 2)     "assumed_role"
+                   , COALESCE(cast(json_extract("requestparameters", '$.roleSessionName') as varchar),
+                              "concat"("split_part"("useridentity"."arn", '/', 2), '/',
+                                       "split_part"("useridentity"."arn", '/', 3)))                  "user_name"
+                   , "awsregion"
+                   , "split_part"("split_part"("serviceeventdetails", 'dashboardName":', 2), ',', 1) "dashboard_name"
+                   , "split_part"(
+                      "split_part"("split_part"("split_part"("serviceeventdetails", 'dashboardId":', 2), ',', 1),
+                                   'dashboard/',
+                                   2), '"}', 1)                                                      "dashboardId"
+                   , 'dashboard'                                                                     "asset_type"
+                   , "date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ')                                 "event_time"
+                   , "max"("date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ'))                          "latest_event_time"
+              FROM "admin-console"."cloudtrail_logs"
+              WHERE ((("eventsource" = 'quicksight.amazonaws.com') AND ("eventname" = 'GetDashboard')) AND
+                     ("date_trunc"('day', "date_parse"("eventtime", '%Y-%m-%dT%H:%i:%sZ')) >
+                      CAST((current_date - INTERVAL '12' MONTH) AS date)))
+              GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9) sub1
         GROUP BY 1, 2
-    ) l ON (("d"."user_name" = "l"."username") AND ("d"."accountid" = "l"."accountid")))
+    ) l ON (("d"."user_name" = "l"."user_name") AND ("d"."accountid" = "l"."accountid")))
     FULL JOIN "admin-console".group_membership g
     ON (
             (("d"."accountid" = "g"."account_id") AND ("d"."user_name" = "g"."user"))
             OR
-            (("l"."accountid" = "g"."account_id") AND ("l"."username" = "g"."user"))
+            (("l"."accountid" = "g"."account_id") AND ("l"."user_name" = "g"."user"))
         )
     )
     LEFT JOIN (
@@ -71,7 +126,7 @@ FROM (((( (SELECT "useridentity"."accountid"
               GROUP BY 1, 2, 3, 4, 5, 6, 7, 8) sub2
         WHERE ("principal_type" = 'group')
     ) do1 ON ((((("d"."accountid" = "do1"."account_id") AND ("d"."awsregion" = "do1"."aws_region")) AND
-                ("d"."dashboardid" = "do1"."object_id")) AND ("do1"."principal_name" = "g"."group")) AND
+                ("d"."dashboardId" = "do1"."object_id")) AND ("do1"."principal_name" = "g"."group")) AND
               ("do1"."namespace" = "g"."namespace")))
          LEFT JOIN (
     SELECT *
@@ -88,15 +143,21 @@ FROM (((( (SELECT "useridentity"."accountid"
           GROUP BY 1, 2, 3, 4, 5, 6, 7, 8) sub3
     WHERE ("principal_type" = 'user')
 ) do2 ON ((((("d"."accountid" = "do2"."account_id") AND ("d"."awsregion" = "do2"."aws_region")) AND
-            ("d"."dashboardid" = "do2"."object_id")) AND ("do2"."principal_name" = "d"."user_name")) AND
+            ("d"."dashboardId" = "do2"."object_id")) AND ("do2"."principal_name" = "d"."user_name")) AND
           ("do2"."namespace" = "g"."namespace")))
-GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16;
+GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17;
 
 -- Admin-Console-analysis-usage
 select a.*,
        b.sheet_id,
        b.visual_id,
-       b.datasetid
+       b.datasetid,
+       b.sheet_name,
+       b.visual_type,
+       b.analysis_name,
+       d.dataset_name,
+       d.spicesize,
+       d.importmode
 from (
          SELECT "useridentity"."accountid"
               , "useridentity"."type"
@@ -119,10 +180,20 @@ from (
      ) a
          join (select * from "admin-console"."datasets_analysis_visual") b
               on a.analysisId = b.analysisid
+         join (select *
+               from "admin-console"."dataset_attributes"
+               where "event_time" = (select max("event_time") from "admin-console"."dataset_attributes")) d
+              on b."datasetid" = d."datasetid";
 
 
 -- Admin-Console-dashboard-visual-load-time
-select a.*, b.time_stamp, b.avg_visual_load_time, c.count_visual_load_time
+select a.*,
+       b.time_stamp,
+       b.avg_visual_load_time,
+       c.count_visual_load_time,
+       d.dataset_name,
+       d.spicesize,
+       d.importmode
 from "admin-console"."datasets_dashboard_visual" a
          join "admin-console"."visual_load_time" b
               on a."dashboardid" = b."dashboardId"
@@ -133,13 +204,19 @@ from "admin-console"."datasets_dashboard_visual" a
                   and b."sheetId" = c."sheetId"
                   and b."visualId" = c."visualId"
                   and b."time_stamp" = c."time_stamp"
-
+         join (select *
+               from "admin-console"."dataset_attributes"
+               where "event_time" = (select max("event_time") from "admin-console"."dataset_attributes")) d
+              on a."datasetid" = d."datasetid";
 
 -- Admin-Console-dataset-info
-SELECT *
+SELECT i.*,
+       d."columnname",
+       d."columntype",
+       d."columndesc"
 FROM "admin-console".datasets_info i
          join "admin-console".data_dict d
-              on i.dataset_id = d.datasetid
+              on i.datasetid = d.datasetid;
 
 
 -- Admin-Console-Object-Access
@@ -227,7 +304,7 @@ from (select *
 
 
 -- Admin-Console-Unused-Datasets-Query-History
-select alldatasets."datasetname",
+select alldatasets."dataset_name",
        alldatasets."datasetid",
        alldatasets."spicesize",
        alldatasets."importmode",

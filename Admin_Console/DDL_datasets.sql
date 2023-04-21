@@ -1,5 +1,5 @@
 CREATE EXTERNAL TABLE `admin-console.data_dict`(
-`datasetname` string,
+`dataset_name` string,
 `datasetid` string,
 `columnname` string,
 `columntype` string,
@@ -28,7 +28,7 @@ TBLPROPERTIES (
   `analysis` string COMMENT 'from deserializer',
   `analysis_id` string COMMENT 'from deserializer',
   `dataset_name` string COMMENT 'from deserializer',
-  `dataset_id` string COMMENT 'from deserializer',
+  `datasetid` string COMMENT 'from deserializer',
   `lastupdatedtime` string COMMENT 'from deserializer',
   `spicesize` string COMMENT 'from deserializer',
   `importmode` string COMMENT 'from deserializer',
@@ -53,12 +53,12 @@ TBLPROPERTIES (
   'typeOfData'='file')
 
 CREATE EXTERNAL TABLE `admin-console.dataset_attributes`(
-`datasetname` string,
+`dataset_name` string,
 `datasetid` string,
 `spicesize` string,
 `importmode` string,
 `lastupdatedtime` string,
-`event_time` int
+`event_epoch_time` int
 )
 ROW FORMAT DELIMITED
   FIELDS TERMINATED BY ','
