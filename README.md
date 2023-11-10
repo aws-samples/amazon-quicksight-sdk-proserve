@@ -7,6 +7,7 @@
   Updates: CFN support added, Data dictionary added
 5. Granular access control added
 6. Dataset_Refresh_Optimizer added
+7. Update Week Start For All Analysis in an Account added
 
 Author: AWS ProServe
 Email: aws-proserve-quicksight@amazon.com
